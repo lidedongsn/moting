@@ -5,18 +5,22 @@ struct MotingApp: App {
     private let env: AppEnvironment?
     private let bootError: String?
     @StateObject private var recorder: RecordingController
+    private let floatingPanel: FloatingPanelController
 
     init() {
+        let recorder: RecordingController
         do {
             let env = try AppEnvironment.bootstrap()
             self.env = env
             bootError = nil
-            _recorder = StateObject(wrappedValue: RecordingController(env: env))
+            recorder = RecordingController(env: env)
         } catch {
             env = nil
             bootError = "启动失败：\(error.localizedDescription)"
-            _recorder = StateObject(wrappedValue: RecordingController(env: nil))
+            recorder = RecordingController(env: nil)
         }
+        _recorder = StateObject(wrappedValue: recorder)
+        floatingPanel = FloatingPanelController(recorder: recorder)
     }
 
     var body: some Scene {
