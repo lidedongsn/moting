@@ -27,6 +27,19 @@ public enum ModelSource: Sendable, Equatable {
     case githubArchive(url: URL, sha256: String, size: Int64, stripPrefix: String)
 }
 
+/// 在会议测试集（WenetSpeech test_meeting 抽样 400 条，M2 Air）上的实测结果
+public struct Benchmark: Sendable, Equatable {
+    /// 字错率（%），越低越准
+    public var cer: Double
+    /// 处理 1 小时会议需要的分钟数（实时模型为 nil）
+    public var minutesPerHour: Double?
+
+    public init(cer: Double, minutesPerHour: Double? = nil) {
+        self.cer = cer
+        self.minutesPerHour = minutesPerHour
+    }
+}
+
 /// 可下载安装的模型；ModelStore 只依赖这个协议
 public protocol DownloadableModel: Sendable {
     var id: String { get }
@@ -50,15 +63,17 @@ public struct StreamingModel: Identifiable, Sendable, Equatable, DownloadableMod
     public var files: [ModelFile]
     /// 角色 → 文件名。transducer：encoder/decoder/joiner/tokens；paraformer：encoder/decoder/tokens
     public var roles: [String: String]
+    public var benchmark: Benchmark?
 
     public init(id: String, displayName: String, repo: String, kind: StreamingModelKind,
-                files: [ModelFile], roles: [String: String]) {
+                files: [ModelFile], roles: [String: String], benchmark: Benchmark? = nil) {
         self.id = id
         self.displayName = displayName
         self.repo = repo
         self.kind = kind
         self.files = files
         self.roles = roles
+        self.benchmark = benchmark
     }
 
     public var source: ModelSource { .huggingFace(repo: repo) }

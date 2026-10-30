@@ -16,6 +16,10 @@ final class ProcessingModel: ObservableObject {
     /// 主窗口选中的会议（通知点击后跳转）
     @Published var selectedMeetingID: UUID?
 
+    static let autoTranscribeKey = "pipeline.autoTranscribe"
+    /// "wait"：用电池时等插电；"now"：立即处理
+    static let batteryPolicyKey = "pipeline.batteryPolicy"
+
     private let env: AppEnvironment?
     private let notifier = Notifier()
     private var powerMonitor: PowerMonitor?
@@ -45,9 +49,15 @@ final class ProcessingModel: ObservableObject {
     }
 
     /// 录音结束后调用：入队（用电池时等待插电）
+    /// 录音结束后调用：按"通用"设置决定是否自动精准转写、用电池时是否立即处理
     func enqueueAfterRecording(_ meetingID: UUID) {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: Self.autoTranscribeKey) as? Bool ?? true else { return }
         lastRecordedMeetingID = meetingID
         lastStatus = enqueue(meetingID)?.status
+        if lastStatus == .waitingForPower, defaults.string(forKey: Self.batteryPolicyKey) == "now" {
+            processNow(meetingID)
+        }
     }
 
     @discardableResult

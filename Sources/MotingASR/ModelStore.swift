@@ -186,6 +186,9 @@ private final class FileDownloader: NSObject, URLSessionDownloadDelegate, @unche
         // 30 秒没有数据就放弃，尽快换下一个来源
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 6 * 3600
+        // 不写系统网络缓存（~/Library/Caches/<bundle id>），不在 app 目录之外留文件
+        config.urlCache = nil
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
         if let proxy, let host = proxy.host {
             let port = proxy.port ?? 80
             config.connectionProxyDictionary = [

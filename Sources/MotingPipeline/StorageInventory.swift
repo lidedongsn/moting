@@ -14,6 +14,11 @@ public struct StorageItem: Identifiable, Sendable {
 
 public struct StorageReport: Sendable {
     public var items: [StorageItem]
+
+    public init(items: [StorageItem]) {
+        self.items = items
+    }
+
     public var total: Int64 { items.reduce(0) { $0 + $1.bytes } }
     /// 未使用模型的合计，可以一键清理
     public var reclaimable: Int64 { items.filter { !$0.inUse }.reduce(0) { $0 + $1.bytes } }

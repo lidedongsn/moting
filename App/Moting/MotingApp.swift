@@ -27,7 +27,7 @@ struct MotingApp: App {
         Window("Moting", id: "main") {
             Group {
                 if let env {
-                    MeetingListView(env: env, recorder: recorder, processing: recorder.processing)
+                    MainWindow(env: env, recorder: recorder, processing: recorder.processing)
                 } else {
                     Text(bootError ?? "").padding()
                 }
@@ -41,7 +41,7 @@ struct MotingApp: App {
         }
         Settings {
             if let env {
-                SettingsView(live: recorder.live, env: env)
+                SettingsRoot(live: recorder.live, processing: recorder.processing, env: env)
             }
         }
         MenuBarExtra {

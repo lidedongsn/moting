@@ -16,6 +16,7 @@ public struct OfflineModel: DownloadableModel, Identifiable, Equatable {
     /// 自带标点则跳过标点模型
     public var hasPunctuation: Bool
     public var supportsHotwords: Bool
+    public var benchmark: Benchmark? = nil
 }
 
 /// 辅助模型：人声检测、说话人分段、声纹、标点
