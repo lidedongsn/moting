@@ -99,3 +99,87 @@ private final class ProgressLog: @unchecked Sendable {
     }
     #expect(ModelCatalog.all.contains(ModelCatalog.default))
 }
+
+// MARK: - 离线 / 辅助模型：直链与压缩包来源
+
+private func sha(_ data: Data) -> String {
+    SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+}
+
+/// 用 tar 现做一个 tar.bz2：包内目录 prefix/ 下放若干文件
+private func makeArchive(in dir: URL, prefix: String, files: [String: String]) throws -> (URL, String, Int64) {
+    let staging = dir.appendingPathComponent("staging")
+    for (name, content) in files {
+        let url = staging.appendingPathComponent(prefix).appendingPathComponent(name)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(content.utf8).write(to: url)
+    }
+    let archive = dir.appendingPathComponent("pkg.tar.bz2")
+    let tar = Process()
+    tar.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+    tar.arguments = ["-cjf", archive.path, "-C", staging.path, prefix]
+    try tar.run()
+    tar.waitUntilExit()
+    let data = try Data(contentsOf: archive)
+    return (archive, sha(data), Int64(data.count))
+}
+
+private func file(_ name: String, _ content: String) -> ModelFile {
+    ModelFile(name: name, sha256: sha(Data(content.utf8)), size: Int64(content.utf8.count))
+}
+
+@Test func installsFromArchiveExtractingOnlyListedFiles() async throws {
+    let s = Sandbox()
+    try FileManager.default.createDirectory(at: s.root, withIntermediateDirectories: true)
+    let (archive, digest, size) = try makeArchive(in: s.root, prefix: "pkg-1",
+                                                  files: ["model.onnx": "mmmm", "tok/vocab.json": "{}", "README.md": "说明"])
+    let m = AuxModel(id: "aux-test", displayName: "测试",
+                     source: .githubArchive(url: archive, sha256: digest, size: size, stripPrefix: "pkg-1"),
+                     files: [file("model.onnx", "mmmm"), file("tok/vocab.json", "{}")])
+    let store = ModelStore(root: s.models)
+    try await store.install(m) { _ in }
+    #expect(store.isInstalled(m))
+    let dir = store.directory(for: m)
+    #expect(!FileManager.default.fileExists(atPath: dir.appendingPathComponent("README.md").path))
+    #expect(store.diskUsage(m) == 6)
+}
+
+@Test func archiveChecksumMismatchLeavesNothing() async throws {
+    let s = Sandbox()
+    try FileManager.default.createDirectory(at: s.root, withIntermediateDirectories: true)
+    let (archive, _, size) = try makeArchive(in: s.root, prefix: "pkg-2", files: ["model.onnx": "mmmm"])
+    let m = AuxModel(id: "aux-bad", displayName: "测试",
+                     source: .githubArchive(url: archive, sha256: String(repeating: "0", count: 64), size: size, stripPrefix: "pkg-2"),
+                     files: [file("model.onnx", "mmmm")])
+    let store = ModelStore(root: s.models)
+    await #expect(throws: ModelStoreError.checksumMismatch("pkg.tar.bz2")) { try await store.install(m) { _ in } }
+    #expect(!store.isInstalled(m))
+    #expect(store.diskUsage(m) == 0)
+}
+
+@Test func installsDirectFilesIntoSubdirectories() async throws {
+    let s = Sandbox()
+    let base = s.root.appendingPathComponent("direct")
+    try FileManager.default.createDirectory(at: base.appendingPathComponent("tokenizer"), withIntermediateDirectories: true)
+    try Data("vvvv".utf8).write(to: base.appendingPathComponent("tokenizer/vocab.json"))
+    let m = AuxModel(id: "aux-direct", displayName: "测试", source: .direct(baseURL: base),
+                     files: [file("tokenizer/vocab.json", "vvvv")])
+    let store = ModelStore(root: s.models)
+    try await store.install(m) { _ in }
+    #expect(store.isInstalled(m))
+    #expect(store.diskUsage(m) == 4)
+}
+
+@Test func offlineCatalogIsComplete() {
+    for m in OfflineCatalog.all {
+        #expect(!m.files.isEmpty)
+        for name in m.roles.values where !name.hasSuffix("/") {
+            #expect(m.files.contains { $0.name == name }, "\(m.id) 缺少 \(name)")
+        }
+    }
+    #expect(OfflineCatalog.all.contains(OfflineCatalog.default))
+    for aux in [OfflineCatalog.vad, OfflineCatalog.segmentation, OfflineCatalog.embedding, OfflineCatalog.punctuation] {
+        #expect(!aux.files.isEmpty)
+        #expect(aux.files.allSatisfy { $0.sha256.count == 64 && $0.size > 0 })
+    }
+}

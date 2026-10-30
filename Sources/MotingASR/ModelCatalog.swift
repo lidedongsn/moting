@@ -17,7 +17,30 @@ public struct ModelFile: Sendable, Equatable {
     }
 }
 
-public struct StreamingModel: Identifiable, Sendable, Equatable {
+/// 模型从哪里下载
+public enum ModelSource: Sendable, Equatable {
+    /// HuggingFace 仓库，逐文件下载，可回退镜像
+    case huggingFace(repo: String)
+    /// 直链：文件地址为 baseURL/<文件名>
+    case direct(baseURL: URL)
+    /// GitHub 发布页的 tar.bz2：整包校验后只解出 files 中的文件（包内路径为 stripPrefix/<文件名>）
+    case githubArchive(url: URL, sha256: String, size: Int64, stripPrefix: String)
+}
+
+/// 可下载安装的模型；ModelStore 只依赖这个协议
+public protocol DownloadableModel: Sendable {
+    var id: String { get }
+    var displayName: String { get }
+    var source: ModelSource { get }
+    /// 文件名可含子目录（如 tokenizer/vocab.json）
+    var files: [ModelFile] { get }
+}
+
+extension DownloadableModel {
+    public var totalSize: Int64 { files.reduce(0) { $0 + $1.size } }
+}
+
+public struct StreamingModel: Identifiable, Sendable, Equatable, DownloadableModel {
     /// 本地目录名
     public var id: String
     public var displayName: String
@@ -38,7 +61,7 @@ public struct StreamingModel: Identifiable, Sendable, Equatable {
         self.roles = roles
     }
 
-    public var totalSize: Int64 { files.reduce(0) { $0 + $1.size } }
+    public var source: ModelSource { .huggingFace(repo: repo) }
 }
 
 /// 实时识别候选模型（只收录 int8 版本）。sha256 / size 取自 HuggingFace API

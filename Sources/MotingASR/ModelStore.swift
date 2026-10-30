@@ -17,20 +17,28 @@ public final class ModelStore: @unchecked Sendable {
         self.mirrors = mirrors
     }
 
-    public func directory(for m: StreamingModel) -> URL {
+    public func directory(for m: some DownloadableModel) -> URL {
         root.appendingPathComponent(m.id, isDirectory: true)
     }
 
     /// 所有文件存在且大小一致（完整性在下载时已用 SHA-256 校验过）
-    public func isInstalled(_ m: StreamingModel) -> Bool {
+    public func isInstalled(_ m: some DownloadableModel) -> Bool {
         m.files.allSatisfy { fileSize(directory(for: m).appendingPathComponent($0.name)) == $0.size }
     }
 
-    /// 逐个文件下载到 .part，SHA-256 校验通过后改名；已存在且大小一致的文件跳过。
-    /// 每个文件依次尝试各镜像：<mirror>/<repo>/resolve/main/<name>
-    public func install(_ m: StreamingModel, progress: @escaping @Sendable (Double) -> Void) async throws {
+    /// HuggingFace / 直链：逐个文件下载到 .part，SHA-256 校验通过后改名；已存在且大小一致的文件跳过。
+    /// HuggingFace 每个文件依次尝试各镜像：<mirror>/<repo>/resolve/main/<name>。
+    /// GitHub 压缩包：整包校验后只解出列出的文件
+    public func install(_ m: some DownloadableModel, progress: @escaping @Sendable (Double) -> Void) async throws {
         let dir = directory(for: m)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        if case .githubArchive(let url, let sha, let size, let prefix) = m.source {
+            if !isInstalled(m) {
+                try await installArchive(m, url: url, sha256: sha, size: size, prefix: prefix, into: dir, progress: progress)
+            }
+            progress(1.0)
+            return
+        }
         let total = Double(max(m.totalSize, 1))
         var done: Int64 = 0
         for file in m.files {
@@ -40,8 +48,18 @@ public final class ModelStore: @unchecked Sendable {
                 progress(Double(done) / total)
                 continue
             }
+            try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
             let base = done
-            try await download(file, repo: m.repo, to: target) { bytes in
+            let urls: [URL]
+            switch m.source {
+            case .huggingFace(let repo):
+                urls = mirrors.map { $0.appendingPathComponent(repo).appendingPathComponent("resolve/main").appendingPathComponent(file.name) }
+            case .direct(let baseURL):
+                urls = [baseURL.appendingPathComponent(file.name)]
+            case .githubArchive:
+                urls = []
+            }
+            try await download(file, from: urls, to: target) { bytes in
                 progress(Double(base + bytes) / total)
             }
             done += file.size
@@ -50,27 +68,31 @@ public final class ModelStore: @unchecked Sendable {
         progress(1.0)
     }
 
-    public func remove(_ m: StreamingModel) throws {
+    public func remove(_ m: some DownloadableModel) throws {
         let dir = directory(for: m)
         if FileManager.default.fileExists(atPath: dir.path) {
             try FileManager.default.removeItem(at: dir)
         }
     }
 
-    public func diskUsage(_ m: StreamingModel) -> Int64 {
-        guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory(for: m).path) else { return 0 }
-        return names.reduce(0) { $0 + (fileSize(directory(for: m).appendingPathComponent($1)) ?? 0) }
+    public func diskUsage(_ m: some DownloadableModel) -> Int64 {
+        let keys: [URLResourceKey] = [.fileSizeKey, .isRegularFileKey]
+        guard let e = FileManager.default.enumerator(at: directory(for: m), includingPropertiesForKeys: keys) else { return 0 }
+        var total: Int64 = 0
+        for case let url as URL in e {
+            guard let v = try? url.resourceValues(forKeys: Set(keys)), v.isRegularFile == true else { continue }
+            total += Int64(v.fileSize ?? 0)
+        }
+        return total
     }
 
     // MARK: - 内部
 
-    private func download(_ file: ModelFile, repo: String, to target: URL,
+    private func download(_ file: ModelFile, from urls: [URL], to target: URL,
                           progress: @escaping @Sendable (Int64) -> Void) async throws {
         let part = target.appendingPathExtension("part")
         defer { try? FileManager.default.removeItem(at: part) }
-        for mirror in mirrors {
-            let url = mirror.appendingPathComponent(repo).appendingPathComponent("resolve/main")
-                .appendingPathComponent(file.name)
+        for url in urls {
             var tmp: URL?
             do {
                 tmp = try await FileDownloader.download(url, progress: progress)
@@ -89,6 +111,37 @@ public final class ModelStore: @unchecked Sendable {
             return
         }
         throw ModelStoreError.allMirrorsFailed(file.name)
+    }
+
+    /// 下载压缩包 → 整包 SHA-256 → 只解出列出的文件 → 逐个核对大小后移入模型目录；临时文件全部清理
+    private func installArchive(_ m: some DownloadableModel, url: URL, sha256: String, size: Int64, prefix: String,
+                                into dir: URL, progress: @escaping @Sendable (Double) -> Void) async throws {
+        let work = FileManager.default.temporaryDirectory.appendingPathComponent("moting-archive-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: work) }
+        let tmp = try await FileDownloader.download(url) { bytes in progress(Double(bytes) / Double(max(size, 1)) * 0.9) }
+        let archive = work.appendingPathComponent(url.lastPathComponent)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        try FileManager.default.moveItem(at: tmp, to: archive)
+        guard try Self.sha256(of: archive) == sha256 else {
+            throw ModelStoreError.checksumMismatch(url.lastPathComponent)
+        }
+        let out = work.appendingPathComponent("out")
+        try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+        let tar = Process()
+        tar.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+        tar.arguments = ["-xjf", archive.path, "-C", out.path] + m.files.map { "\(prefix)/\($0.name)" }
+        try tar.run()
+        tar.waitUntilExit()
+        guard tar.terminationStatus == 0 else { throw ModelStoreError.allMirrorsFailed(url.lastPathComponent) }
+        for file in m.files {
+            let src = out.appendingPathComponent(prefix).appendingPathComponent(file.name)
+            guard fileSize(src) == file.size else { throw ModelStoreError.checksumMismatch(file.name) }
+            let target = dir.appendingPathComponent(file.name)
+            try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? FileManager.default.removeItem(at: target)
+            try FileManager.default.moveItem(at: src, to: target)
+        }
     }
 
     private func fileSize(_ url: URL) -> Int64? {
