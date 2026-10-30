@@ -29,7 +29,7 @@ public final class VoiceSegmenter: SpeechSegmenting {
     private let minSilence: Float
     private let maxSpan: Float
     /// 每次从文件读多少采样（10 秒）
-    static let readChunk = 160_000
+    public static let readChunk = 160_000
 
     public init(vadModel: URL, minSilence: TimeInterval = 0.5, maxSpan: TimeInterval = 20) throws {
         guard FileManager.default.fileExists(atPath: vadModel.path) else {

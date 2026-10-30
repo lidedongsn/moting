@@ -1,8 +1,12 @@
 import CSherpaOnnx
 import Foundation
 
+public protocol Punctuating {
+    func punctuate(_ text: String) -> String
+}
+
 /// 给没有标点的识别结果加标点（CT-Transformer）
-public final class Punctuator {
+public final class Punctuator: Punctuating {
     private let handle: OpaquePointer
 
     public init(model: AuxModel, directory: URL) throws {

@@ -39,3 +39,19 @@ private func seg(_ v: UUID, _ start: TimeInterval, _ text: String, _ ch: AudioCh
     #expect(try repo.segments(versionID: v).isEmpty)
     #expect(try repo.latestVersion(meetingID: m.id, kind: .draft) == nil)
 }
+
+@Test func unfinishedFinalVersionIsHidden() throws {
+    let (_, repo, m) = try setup()
+    let v = try repo.createVersion(meetingID: m.id, kind: .final, engine: "e", model: "m", createdAt: Date())
+    #expect(try repo.latestVersion(meetingID: m.id, kind: .final) == nil)
+    try repo.markCompleted(v, at: Date())
+    #expect(try repo.latestVersion(meetingID: m.id, kind: .final) == v)
+}
+
+@Test func deleteVersionRemovesSegments() throws {
+    let (_, repo, m) = try setup()
+    let v = try repo.createVersion(meetingID: m.id, kind: .final, engine: "e", model: "m", createdAt: Date())
+    try repo.append(seg(v, 0, "一"))
+    try repo.deleteVersion(v)
+    #expect(try repo.segments(versionID: v).isEmpty)
+}

@@ -10,6 +10,8 @@ struct TranscriptVersionRecord: Codable, FetchableRecord, PersistableRecord {
     var engine: String
     var model: String
     var createdAt: Date
+    /// 正式稿处理完成的时间；未完成的正式稿不对外显示
+    var completedAt: Date?
 }
 
 struct SegmentRecord: Codable, FetchableRecord, PersistableRecord {
@@ -36,7 +38,7 @@ public final class TranscriptRepository: Sendable {
         let id = UUID()
         try db.writer.write { db in
             try TranscriptVersionRecord(id: id.uuidString, meetingId: meetingID.uuidString, kind: kind.rawValue,
-                                        engine: engine, model: model, createdAt: createdAt).insert(db)
+                                        engine: engine, model: model, createdAt: createdAt, completedAt: nil).insert(db)
         }
         return id
     }
@@ -48,13 +50,29 @@ public final class TranscriptRepository: Sendable {
         }
     }
 
+    /// 最新版本；正式稿只算已完成的（处理中的半成品不显示）
     public func latestVersion(meetingID: UUID, kind: TranscriptKind) throws -> UUID? {
         try db.writer.read { db in
-            try TranscriptVersionRecord
+            var q = TranscriptVersionRecord
                 .filter(Column("meetingId") == meetingID.uuidString && Column("kind") == kind.rawValue)
+            if kind == .final { q = q.filter(Column("completedAt") != nil) }
+            return try q
                 .order(Column("createdAt").desc)
                 .fetchOne(db)
                 .flatMap { UUID(uuidString: $0.id) }
+        }
+    }
+
+    public func markCompleted(_ versionID: UUID, at: Date) throws {
+        try db.writer.write { db in
+            try db.execute(sql: "UPDATE transcriptVersion SET completedAt = ? WHERE id = ?", arguments: [at, versionID.uuidString])
+        }
+    }
+
+    /// 删除版本，片段随外键级联删除
+    public func deleteVersion(_ versionID: UUID) throws {
+        try db.writer.write { db in
+            _ = try TranscriptVersionRecord.deleteOne(db, key: versionID.uuidString)
         }
     }
 
