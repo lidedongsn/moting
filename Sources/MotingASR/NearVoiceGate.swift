@@ -8,6 +8,10 @@ public struct NearVoiceGate: Sendable {
     private static let marginOverFloor = 10.0      // 至少高出底噪 10dB
     private static let marginBelowSpeech = 12.0    // 比用户音量低 12dB 以上视为远处
     private static let floorRisePerFrame = 0.01    // 底噪每帧最多上升 0.01dB（约 0.5dB/秒）
+    private static let silenceDB = -90.0           // 低于此视为数字静音，不参与底噪估计
+    private static let releaseAfterFrames = 50     // 连续 1 秒没有近场帧后开始回落
+    private static let releasePerFrame = 0.04      // 用户音量每帧回落 0.04dB（约 2dB/秒）
+    private static let speechAboveFloor = 27.0     // 用户音量最低回落到底噪之上 27dB：门限不低于底噪 + 15dB，长时间只听不说时远处说话仍被过滤
 
     private let lookaheadFrames: Int
     private let hangoverFrames: Int
@@ -21,6 +25,7 @@ public struct NearVoiceGate: Sendable {
     private var outputIndex = 0                    // 下一个输出采样在输入时间轴上的位置（可能为负，表示开头补的零）
     private var floor: Double?
     private var speechLevel = -30.0
+    private var framesSinceNear = 0
 
     public init(lookahead: TimeInterval = 0.2, hangover: TimeInterval = 0.3) {
         lookaheadFrames = Int(lookahead * 16_000) / Self.frame
@@ -53,10 +58,24 @@ public struct NearVoiceGate: Sendable {
             for i in 0..<Self.frame { sum += pending[i] * pending[i] }
             pending.removeFirst(Self.frame)
             let db = 10 * log10(Double(sum / Float(Self.frame)) + 1e-12)
-            let f = min(floor ?? db, db)
-            floor = db > f ? f + Self.floorRisePerFrame : f
-            let near = db >= max(f + Self.marginOverFloor, speechLevel - Self.marginBelowSpeech)
-            if near { speechLevel = speechLevel * 0.95 + db * 0.05 }
+            // 全零帧（设备刚启动等）不参与底噪估计，否则底噪会被拉到 -120dB
+            if db > Self.silenceDB {
+                let f = min(floor ?? db, db)
+                floor = db > f ? f + Self.floorRisePerFrame : f
+            }
+            let f = floor ?? db
+            let near = db > Self.silenceDB && db >= max(f + Self.marginOverFloor, speechLevel - Self.marginBelowSpeech)
+            if near {
+                // 上升慢、下降快：一次大声不会把"用户音量"抬得过高
+                speechLevel += (db - speechLevel) * (db > speechLevel ? 0.02 : 0.05)
+                framesSinceNear = 0
+            } else {
+                framesSinceNear += 1
+                // 一段时间没有近场帧：用户音量逐渐回落（大声之后恢复、适应小声的麦克风），但不低于底噪 + 20dB
+                if framesSinceNear > Self.releaseAfterFrames {
+                    speechLevel = max(speechLevel - Self.releasePerFrame, f + Self.speechAboveFloor)
+                }
+            }
             flags.append(near)
         }
     }
