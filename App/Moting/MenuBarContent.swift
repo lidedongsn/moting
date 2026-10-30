@@ -17,7 +17,8 @@ struct MenuBarContent: View {
                 Button("暂停") { recorder.pause() }
             }
             Button("★ 标记重点") { recorder.mark() }
-            Button("结束录音") { recorder.stop() }
+            Button(recorder.isStopping ? "正在结束…" : "结束录音") { recorder.stop() }
+                .disabled(recorder.isStopping)
         default:
             Button(recorder.isStarting ? "正在启动…" : "开始录音") { recorder.start() }
                 .disabled(recorder.isStarting)
@@ -27,10 +28,7 @@ struct MenuBarContent: View {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }
-        Button("退出") {
-            recorder.stop()
-            NSApp.terminate(nil)
-        }
+        Button("退出") { NSApp.terminate(nil) }
     }
 
     private func levelText(_ ch: AudioChannel) -> String {

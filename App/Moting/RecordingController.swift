@@ -19,6 +19,7 @@ final class RecordingController: ObservableObject {
     @Published private(set) var elapsed: TimeInterval = 0
     @Published private(set) var levels: [AudioChannel: Float] = [:]
     @Published private(set) var isStarting = false
+    @Published private(set) var isStopping = false
     @Published var lastError: String?
 
     private let env: AppEnvironment?
@@ -31,7 +32,7 @@ final class RecordingController: ObservableObject {
         // ⌘Q 等方式退出时先正常结束录音，避免会议停在"录音中"
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
                                                object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.stop() }
+            MainActor.assumeIsolated { self?.stopSynchronously() }
         }
     }
 
@@ -59,10 +60,29 @@ final class RecordingController: ObservableObject {
     func resume() { perform { try $0.resume() } }
     func mark() { perform { _ = try $0.addMark() } }
 
+    /// 停止设备、销毁聚合设备、写盘可能要好几秒，放到后台，界面先显示"正在结束…"
     func stop() {
-        perform { try $0.stop() }
+        guard let session, !isStopping, state == .recording || state == .paused else { return }
+        isStopping = true
         ticker?.invalidate()
         ticker = nil
+        Task.detached {
+            let error: Error?
+            do { try session.stop(); error = nil } catch let e { error = e }
+            await self.didStop(error)
+        }
+    }
+
+    /// 仅用于 app 退出：此时必须等收尾完成
+    private func stopSynchronously() {
+        guard let session else { return }
+        try? session.stop()
+    }
+
+    private func didStop(_ error: Error?) {
+        isStopping = false
+        if let error { lastError = Self.describe(error) }
+        refresh()
         levels = [:]
     }
 

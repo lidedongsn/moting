@@ -22,8 +22,9 @@ struct RecorderBar: View {
                     Button("暂停", systemImage: "pause.fill") { recorder.pause() }
                 }
                 Button("标记", systemImage: "star.fill") { recorder.mark() }
-                Button("结束", systemImage: "stop.fill") { recorder.stop() }
+                Button(recorder.isStopping ? "正在结束…" : "结束", systemImage: "stop.fill") { recorder.stop() }
                     .tint(.red)
+                    .disabled(recorder.isStopping)
             default:
                 Text("未在录音").foregroundStyle(.secondary)
                 Spacer()
