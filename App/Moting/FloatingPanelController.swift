@@ -65,7 +65,7 @@ final class FloatingPanelController {
         panel.sharingType = .none
         panel.minSize = NSSize(width: 240, height: 40)
         panel.alphaValue = ui.opacity
-        panel.contentView = NSHostingView(rootView: FloatingPanelView(recorder: recorder, ui: ui))
+        panel.contentView = NSHostingView(rootView: FloatingPanelView(recorder: recorder, live: recorder.live, ui: ui))
         if !panel.setFrameUsingName("MotingFloatingPanel") {
             // 首次出现：屏幕右下角
             if let screen = NSScreen.main?.visibleFrame {

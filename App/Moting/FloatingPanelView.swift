@@ -4,7 +4,11 @@ import SwiftUI
 /// 悬浮窗内容：顶部状态栏、中间字幕区、底部操作区；收起时只剩一条胶囊
 struct FloatingPanelView: View {
     @ObservedObject var recorder: RecordingController
+    @ObservedObject var live: LiveTranscriptModel
     @ObservedObject var ui: FloatingPanelState
+
+    static let micColor = Color(red: 0x64 / 255, green: 0xD2 / 255, blue: 0xFF / 255)
+    static let systemColor = Color(red: 0xFF / 255, green: 0xD6 / 255, blue: 0x0A / 255)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -58,30 +62,74 @@ struct FloatingPanelView: View {
     }
 
     private var subtitles: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             ForEach(recorder.warnings, id: \.self) { w in
                 Label(w, systemImage: "exclamationmark.triangle.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: 0)
-            // P2 接入实时识别后，这里滚动显示最近 4–6 句，我 / 对方分色，未定稿片段为灰色
-            Text("实时字幕将在接入语音识别后显示")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-            HStack(spacing: 10) {
-                Label("我", systemImage: "circle.fill")
-                    .foregroundStyle(Color(red: 0.39, green: 0.82, blue: 1))
-                Label("对方", systemImage: "circle.fill")
-                    .foregroundStyle(Color(red: 1, green: 0.84, blue: 0.04))
+            switch live.modelState {
+            case .ready:
+                transcriptLines
+            case .missing:
+                modelPrompt("实时字幕需要先下载识别模型（约 \(ByteCountFormatter.string(fromByteCount: live.selectedModel.totalSize, countStyle: .file))）",
+                            action: ("下载", { live.installSelected() }))
+            case .downloading(let p):
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("正在下载识别模型… \(Int(p * 100))%").font(.system(size: 11)).foregroundStyle(.secondary)
+                    ProgressView(value: p).progressViewStyle(.linear).tint(.white.opacity(0.7))
+                    Text("下载完成后，下一次录音开始显示字幕").font(.system(size: 10)).foregroundStyle(.tertiary)
+                }
+                .frame(maxHeight: .infinity)
+            case .loading:
+                modelPrompt("正在加载识别模型…", action: nil)
+            case .failed(let msg):
+                modelPrompt(msg, action: ("重试", { live.installSelected() }))
             }
-            .font(.system(size: 10))
-            .labelStyle(SmallDotLabelStyle())
-            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+    }
+
+    @ViewBuilder
+    private var transcriptLines: some View {
+        if live.lines.isEmpty {
+            Text("等待说话…").font(.system(size: 12)).foregroundStyle(.tertiary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollViewReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(live.lines) { line in
+                            (Text(line.channel == .mic ? "我：" : "对方：")
+                                .foregroundColor(line.channel == .mic ? Self.micColor : Self.systemColor)
+                             + Text(line.text)
+                                .foregroundColor(line.isFinal ? .white : .white.opacity(0.5)))
+                                .font(.system(size: 12))
+                                .lineSpacing(2)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .id(line.id)
+                        }
+                    }
+                }
+                .onChange(of: live.lines) { _, lines in
+                    if let last = lines.last { withAnimation(.easeOut(duration: 0.15)) { proxy.scrollTo(last.id, anchor: .bottom) } }
+                }
+            }
+        }
+    }
+
+    private func modelPrompt(_ text: String, action: (String, () -> Void)?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Spacer(minLength: 0)
+            Text(text).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if let action {
+                pillButton(action.0, action: action.1)
+            }
+            Spacer(minLength: 0)
+        }
     }
 
     private var actions: some View {
@@ -148,14 +196,5 @@ private struct MiniLevel: View {
             }
         }
         .frame(height: 12)
-    }
-}
-
-private struct SmallDotLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 3) {
-            configuration.icon.font(.system(size: 5))
-            configuration.title
-        }
     }
 }

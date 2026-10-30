@@ -9,6 +9,7 @@ struct MeetingListView: View {
     @ObservedObject var recorder: RecordingController
     @State private var meetings: [Meeting] = []
     @State private var usage: Int64 = 0
+    @State private var modelsUsage: Int64 = 0
     @State private var pendingDelete: Meeting?
 
     var body: some View {
@@ -25,6 +26,7 @@ struct MeetingListView: View {
                 for try await list in repository.observeAll() {
                     meetings = list
                     usage = paths.meetingsDiskUsage()
+                    modelsUsage = paths.modelsDiskUsage()
                 }
             } catch {
                 recorder.lastError = "读取会议列表失败：\(error.localizedDescription)"
@@ -78,7 +80,7 @@ private extension MeetingListView {
     var storageFooter: some View {
         HStack(spacing: 8) {
             Image(systemName: "internaldrive").foregroundStyle(.secondary)
-            Text("录音共占用 \(Self.bytes(usage))")
+            Text("录音 \(Self.bytes(usage)) · 模型 \(Self.bytes(modelsUsage))")
             Text(paths.meetingsRoot.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

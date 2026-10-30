@@ -39,6 +39,11 @@ struct MotingApp: App {
                 Text(recorder.lastError ?? "")
             }
         }
+        Settings {
+            if let env {
+                SettingsView(live: recorder.live, modelsRoot: env.paths.modelsRoot)
+            }
+        }
         MenuBarExtra {
             MenuBarContent(recorder: recorder)
         } label: {
