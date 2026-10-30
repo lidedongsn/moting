@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import MotingCapture
 import MotingCore
@@ -27,6 +28,11 @@ final class RecordingController: ObservableObject {
 
     init(env: AppEnvironment?) {
         self.env = env
+        // ⌘Q 等方式退出时先正常结束录音，避免会议停在"录音中"
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
+                                               object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.stop() }
+        }
     }
 
     func start() {

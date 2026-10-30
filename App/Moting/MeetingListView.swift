@@ -8,6 +8,22 @@ struct MeetingListView: View {
     @State private var meetings: [Meeting] = []
 
     var body: some View {
+        VStack(spacing: 0) {
+            RecorderBar(recorder: recorder)
+            Divider()
+            list
+        }
+        .frame(minWidth: 560, minHeight: 360)
+        .task {
+            do {
+                for try await list in repository.observeAll() { meetings = list }
+            } catch {
+                recorder.lastError = "读取会议列表失败：\(error.localizedDescription)"
+            }
+        }
+    }
+
+    private var list: some View {
         List(meetings) { m in
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -29,14 +45,6 @@ struct MeetingListView: View {
             if meetings.isEmpty {
                 ContentUnavailableView("还没有会议记录", systemImage: "waveform",
                                        description: Text("从菜单栏图标开始录音"))
-            }
-        }
-        .frame(minWidth: 480, minHeight: 320)
-        .task {
-            do {
-                for try await list in repository.observeAll() { meetings = list }
-            } catch {
-                recorder.lastError = "读取会议列表失败：\(error.localizedDescription)"
             }
         }
     }
