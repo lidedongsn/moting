@@ -26,7 +26,8 @@ private func track(_ seconds: [Float]) throws -> URL {
     defer { try? FileManager.default.removeItem(at: url) }
     let e = try WaveformEnvelope.compute(url, bins: 12)
     #expect(e[6] == 1)
-    #expect(e[0] < 0.2 && e[3] < 0.2 && e[9] < 0.2 && e[11] < 0.2)
+    // 开方压缩会抬高小声部分，但仍应明显低于响的那段
+    #expect([0, 3, 9, 11].allSatisfy { e[$0] < 0.4 })
     #expect(e.allSatisfy { $0 >= 0 && $0 <= 1 })
 }
 

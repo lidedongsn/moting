@@ -517,7 +517,8 @@ struct TranscriptLine: View {
                 RoundedRectangle(cornerRadius: 1.5).fill(color).frame(width: 3, height: 14)
                 Text(name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
             }
-            .frame(width: 70, alignment: .leading)
+            .frame(minWidth: 40, maxWidth: 84, alignment: .leading)
+            .fixedSize(horizontal: true, vertical: false)
             .contentShape(Rectangle())
             .onTapGesture { onRename?() }
             .help(onRename == nil ? "" : "点击改名")

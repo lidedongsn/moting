@@ -36,11 +36,13 @@ struct MainWindow: View {
                 }
             }
             .toolbar {
+                // 放在最后，排在工具栏最右边
                 ToolbarItem(placement: .primaryAction) { RecordButton(recorder: recorder) }
             }
         }
         .frame(minWidth: 900, minHeight: 600)
-        .modifier(HideWindowTitle())
+        // 标题留空而不是移除：移除后工具栏按钮会挤到左边
+        .navigationTitle("")
         .task {
             do {
                 for try await list in env.repository.observeAll() {
@@ -274,17 +276,6 @@ struct RecordButton: View {
             .buttonStyle(.plain)
             .disabled(recorder.isStarting)
             .help("开始录音（⌥⌘R，任何 app 里都能按）")
-        }
-    }
-}
-
-/// 去掉工具栏里的窗口标题（macOS 15+；14 上保持原样）
-private struct HideWindowTitle: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(macOS 15.0, *) {
-            content.toolbar(removing: .title)
-        } else {
-            content
         }
     }
 }
