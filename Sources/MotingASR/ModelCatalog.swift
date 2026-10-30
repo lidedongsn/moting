@@ -88,8 +88,8 @@ public enum ModelCatalog {
 
     public static let all: [StreamingModel] = [bilingualZipformer, chineseZipformer2025, bilingualParaformer]
 
-    /// 默认模型；Task 7 对比后由用户选定
-    public static var `default`: StreamingModel { bilingualZipformer }
+    /// 默认模型：2026-10-30 三模型对比后由用户选定（中英文都较好、内存最省）
+    public static var `default`: StreamingModel { bilingualParaformer }
 
     public static func model(id: String) -> StreamingModel? {
         all.first { $0.id == id }
