@@ -10,11 +10,16 @@ public enum ModelStoreError: Error, Equatable {
 public final class ModelStore: @unchecked Sendable {
     public let root: URL
     private let mirrors: [URL]
+    private let proxy: URL?
 
-    public init(root: URL, mirrors: [URL] = [URL(string: "https://huggingface.co")!,
-                                            URL(string: "https://hf-mirror.com")!]) {
+    /// 默认 hf-mirror 优先：国内直连 huggingface.co 常超时，hf-mirror 可达。
+    /// proxy 形如 http://127.0.0.1:7897；系统代理关闭但本机有代理时用它
+    public init(root: URL, mirrors: [URL] = [URL(string: "https://hf-mirror.com")!,
+                                            URL(string: "https://huggingface.co")!],
+                proxy: URL? = nil) {
         self.root = root
         self.mirrors = mirrors
+        self.proxy = proxy
     }
 
     public func directory(for m: some DownloadableModel) -> URL {
@@ -95,7 +100,7 @@ public final class ModelStore: @unchecked Sendable {
         for url in urls {
             var tmp: URL?
             do {
-                tmp = try await FileDownloader.download(url, progress: progress)
+                tmp = try await FileDownloader.download(url, proxy: proxy, progress: progress)
                 try? FileManager.default.removeItem(at: part)
                 try FileManager.default.moveItem(at: tmp!, to: part)
             } catch {
@@ -119,7 +124,7 @@ public final class ModelStore: @unchecked Sendable {
         let work = FileManager.default.temporaryDirectory.appendingPathComponent("moting-archive-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: work) }
-        let tmp = try await FileDownloader.download(url) { bytes in progress(Double(bytes) / Double(max(size, 1)) * 0.9) }
+        let tmp = try await FileDownloader.download(url, proxy: proxy) { bytes in progress(Double(bytes) / Double(max(size, 1)) * 0.9) }
         let archive = work.appendingPathComponent(url.lastPathComponent)
         defer { try? FileManager.default.removeItem(at: tmp) }
         try FileManager.default.moveItem(at: tmp, to: archive)
@@ -169,9 +174,20 @@ private final class FileDownloader: NSObject, URLSessionDownloadDelegate, @unche
         self.progress = progress
     }
 
-    static func download(_ url: URL, progress: @escaping @Sendable (Int64) -> Void) async throws -> URL {
+    static func download(_ url: URL, proxy: URL?, progress: @escaping @Sendable (Int64) -> Void) async throws -> URL {
         let d = FileDownloader(progress: progress)
-        let session = URLSession(configuration: .default, delegate: d, delegateQueue: nil)
+        let config = URLSessionConfiguration.default
+        // 30 秒没有数据就放弃，尽快换下一个来源
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 6 * 3600
+        if let proxy, let host = proxy.host {
+            let port = proxy.port ?? 80
+            config.connectionProxyDictionary = [
+                "HTTPEnable": 1, "HTTPProxy": host, "HTTPPort": port,
+                "HTTPSEnable": 1, "HTTPSProxy": host, "HTTPSPort": port,
+            ]
+        }
+        let session = URLSession(configuration: config, delegate: d, delegateQueue: nil)
         defer { session.finishTasksAndInvalidate() }
         return try await withCheckedThrowingContinuation { c in
             d.continuation = c

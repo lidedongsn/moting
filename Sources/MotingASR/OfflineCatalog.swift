@@ -45,7 +45,8 @@ public enum OfflineCatalog {
             ModelFile(name: "tokens.txt", sha256: "f449eb28dc567533d7fa59be34e2abca8784f771850c78a47fb731a31429a1dc", size: 315_894),
         ],
         kind: .senseVoice, roles: ["model": "model.int8.onnx", "tokens": "tokens.txt"],
-        hasPunctuation: true, supportsHotwords: false)
+        // 实测开了 use_itn 输出仍无标点，交给标点模型
+        hasPunctuation: false, supportsHotwords: false)
 
     public static let paraformerZh = OfflineModel(
         id: "offline-paraformer-zh-int8-2025-10-07", displayName: "Paraformer 中文大模型",
@@ -121,7 +122,7 @@ public enum OfflineCatalog {
 
     public static let embedding = AuxModel(
         id: "aux-3dspeaker-campplus-zh-en", displayName: "声纹（3D-Speaker CAM++ 中英）",
-        source: .direct(baseURL: github.appendingPathComponent("speaker-recongition-models")),
+        source: .huggingFace(repo: "csukuangfj/speaker-embedding-models"),
         files: [ModelFile(name: "3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx",
                           sha256: "aa3cfc16963a10586a9393f5035d6d6b57e98d358b347f80c2a30bf4f00ceba2", size: 28_281_164)])
 
