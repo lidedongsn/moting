@@ -33,6 +33,6 @@ let package = Package(
         .testTarget(name: "MotingStorageTests", dependencies: ["MotingStorage"]),
         .testTarget(name: "MotingCaptureTests", dependencies: ["MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "MotingRecordingTests", dependencies: ["MotingRecording"]),
-        .testTarget(name: "MotingASRTests", dependencies: ["MotingASR"], swiftSettings: [.swiftLanguageMode(.v5)]),
+        .testTarget(name: "MotingASRTests", dependencies: ["MotingASR", "MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
     ]
 )
