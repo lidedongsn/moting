@@ -95,6 +95,21 @@ public final class TranscriptRepository: Sendable {
         }
     }
 
+    /// 任意版本的转写文字包含 text 的会议（% 与 _ 按普通字符处理）
+    public func meetingIDs(matching text: String) throws -> Set<UUID> {
+        let t = text.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return [] }
+        let escaped = t.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "%", with: "\\%").replacingOccurrences(of: "_", with: "\\_")
+        return try db.writer.read { db in
+            let ids = try String.fetchAll(db, sql: """
+                SELECT DISTINCT v.meetingId FROM segment s JOIN transcriptVersion v ON s.versionId = v.id
+                WHERE s.text LIKE ? ESCAPE '\\'
+                """, arguments: ["%\(escaped)%"])
+            return Set(ids.compactMap(UUID.init(uuidString:)))
+        }
+    }
+
     public func segments(versionID: UUID) throws -> [TranscriptSegment] {
         try db.writer.read { db in
             try SegmentRecord.filter(Column("versionId") == versionID.uuidString).order(Column("start")).fetchAll(db)

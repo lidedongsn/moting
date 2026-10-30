@@ -55,3 +55,14 @@ private func seg(_ v: UUID, _ start: TimeInterval, _ text: String, _ ch: AudioCh
     try repo.deleteVersion(v)
     #expect(try repo.segments(versionID: v).isEmpty)
 }
+
+@Test func searchFindsTranscriptText() throws {
+    let (meetings, repo, m) = try setup()
+    let other = Meeting(id: UUID(), title: "o", startedAt: Date(), endedAt: nil, status: .done)
+    try meetings.insert(other, tracks: [])
+    let v = try repo.createVersion(meetingID: m.id, kind: .draft, engine: "e", model: "m", createdAt: Date())
+    try repo.append(seg(v, 0, "测试环境谁来搭"))
+    #expect(try repo.meetingIDs(matching: "环境") == [m.id])
+    #expect(try repo.meetingIDs(matching: "不存在的词").isEmpty)
+    #expect(try repo.meetingIDs(matching: "100%_").isEmpty)   // 通配符按普通字符处理
+}

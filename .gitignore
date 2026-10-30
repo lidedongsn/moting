@@ -7,3 +7,4 @@ DerivedData/
 *.xcuserstate
 .DS_Store
 Vendor/
+.build-ui/
