@@ -4,10 +4,10 @@ import MotingStorage
 import SwiftUI
 
 struct MeetingListView: View {
-    let repository: MeetingRepository
-    let paths: AppPaths
+    let env: AppEnvironment
     @ObservedObject var recorder: RecordingController
     @State private var meetings: [Meeting] = []
+    @State private var selection: Meeting.ID?
     @State private var usage: Int64 = 0
     @State private var modelsUsage: Int64 = 0
     @State private var pendingDelete: Meeting?
@@ -16,17 +16,29 @@ struct MeetingListView: View {
         VStack(spacing: 0) {
             RecorderBar(recorder: recorder)
             Divider()
-            list
+            NavigationSplitView {
+                list
+                    .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 360)
+            } detail: {
+                if let m = meetings.first(where: { $0.id == selection }) {
+                    MeetingDetailView(meeting: m, env: env, recorder: recorder) { pendingDelete = $0 }
+                        .id(m.id)
+                } else {
+                    ContentUnavailableView("选择一场会议", systemImage: "waveform",
+                                           description: Text("在左侧选择会议，查看转写稿、回放录音"))
+                }
+            }
             Divider()
             storageFooter
         }
-        .frame(minWidth: 560, minHeight: 360)
+        .frame(minWidth: 820, minHeight: 520)
         .task {
             do {
-                for try await list in repository.observeAll() {
+                for try await list in env.repository.observeAll() {
                     meetings = list
-                    usage = paths.meetingsDiskUsage()
-                    modelsUsage = paths.modelsDiskUsage()
+                    if selection == nil { selection = list.first?.id }
+                    usage = env.paths.meetingsDiskUsage()
+                    modelsUsage = env.paths.modelsDiskUsage()
                 }
             } catch {
                 recorder.lastError = "读取会议列表失败：\(error.localizedDescription)"
@@ -35,24 +47,23 @@ struct MeetingListView: View {
     }
 
     private var list: some View {
-        List(meetings) { m in
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(m.title).font(.headline)
+        List(meetings, selection: $selection) { m in
+            VStack(alignment: .leading, spacing: 3) {
+                Text(m.title).font(.headline).lineLimit(1)
+                HStack(spacing: 6) {
                     Text(m.startedAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(m.endedAt.map { $0.timeIntervalSince(m.startedAt).clockText } ?? "—").monospacedDigit()
+                    Spacer()
+                    Text(m.status.displayName)
+                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .background(.quaternary, in: Capsule())
                 }
-                Spacer()
-                Text(m.endedAt.map { $0.timeIntervalSince(m.startedAt).clockText } ?? "—")
-                    .monospacedDigit().foregroundStyle(.secondary)
-                Text(m.status.displayName)
-                    .font(.caption)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(.quaternary, in: Capsule())
+                .font(.caption).foregroundStyle(.secondary)
             }
             .padding(.vertical, 2)
+            .tag(m.id)
             .contextMenu {
-                Button("在 Finder 中显示") { reveal(paths.meetingDirectory(m.id)) }
+                Button("在 Finder 中显示") { reveal(env.paths.meetingDirectory(m.id)) }
                 Divider()
                 Button("删除会议…", role: .destructive) { pendingDelete = m }
                     .disabled(m.status == .recording)
@@ -77,6 +88,8 @@ struct MeetingListView: View {
 }
 
 private extension MeetingListView {
+    var paths: AppPaths { env.paths }
+
     var storageFooter: some View {
         HStack(spacing: 8) {
             Image(systemName: "internaldrive").foregroundStyle(.secondary)
@@ -109,7 +122,8 @@ private extension MeetingListView {
             if FileManager.default.fileExists(atPath: dir.path) {
                 try FileManager.default.removeItem(at: dir)
             }
-            try repository.delete(m.id)
+            if selection == m.id { selection = nil }
+            try env.repository.delete(m.id)
         } catch {
             recorder.lastError = "删除失败：\(error.localizedDescription)"
         }
