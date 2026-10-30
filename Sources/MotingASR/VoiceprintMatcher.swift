@@ -1,8 +1,13 @@
 import CSherpaOnnx
 import Foundation
 
+/// 提取声纹向量（测试可用假实现）
+public protocol VoiceprintMatching {
+    func embedding(_ samples: [Float]) throws -> [Float]
+}
+
 /// 声纹：提取说话人向量并比对（3D-Speaker CAM++）
-public final class VoiceprintMatcher {
+public final class VoiceprintMatcher: VoiceprintMatching {
     private let handle: OpaquePointer
 
     public init(embeddingModel: AuxModel, directory: URL) throws {

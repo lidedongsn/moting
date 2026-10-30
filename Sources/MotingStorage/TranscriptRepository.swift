@@ -69,6 +69,12 @@ public final class TranscriptRepository: Sendable {
         }
     }
 
+    public func isCompleted(_ versionID: UUID) throws -> Bool {
+        try db.writer.read { db in
+            try TranscriptVersionRecord.fetchOne(db, key: versionID.uuidString)?.completedAt != nil
+        }
+    }
+
     /// 删除版本，片段随外键级联删除
     public func deleteVersion(_ versionID: UUID) throws {
         try db.writer.write { db in
