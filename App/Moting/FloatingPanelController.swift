@@ -12,6 +12,7 @@ final class FloatingPanelController {
 
     static let expandedSize = NSSize(width: 300, height: 210)
     static let collapsedSize = NSSize(width: 300, height: 40)
+    static let maxSize = NSSize(width: 520, height: 480)
 
     init(recorder: RecordingController) {
         self.recorder = recorder
@@ -37,6 +38,7 @@ final class FloatingPanelController {
     func show() {
         let panel = self.panel ?? makePanel()
         self.panel = panel
+        constrainToScreen(panel)
         panel.orderFrontRegardless()
     }
 
@@ -64,8 +66,12 @@ final class FloatingPanelController {
         // 共享屏幕时不被采集；新版 macOS 部分采集方式可能无视此设置，P2 实测
         panel.sharingType = .none
         panel.minSize = NSSize(width: 240, height: 40)
+        panel.maxSize = Self.maxSize
         panel.alphaValue = ui.opacity
-        panel.contentView = NSHostingView(rootView: FloatingPanelView(recorder: recorder, live: recorder.live, ui: ui))
+        let host = NSHostingView(rootView: FloatingPanelView(recorder: recorder, live: recorder.live, ui: ui))
+        // 不让窗口跟随 SwiftUI 内容的理想高度变化：字幕越多窗口越高，会冲出屏幕。字幕在框内滚动
+        host.sizingOptions = []
+        panel.contentView = host
         if !panel.setFrameUsingName("MotingFloatingPanel") {
             // 首次出现：屏幕右下角
             if let screen = NSScreen.main?.visibleFrame {
@@ -84,7 +90,32 @@ final class FloatingPanelController {
         let top = frame.maxY
         frame.size = NSSize(width: frame.width, height: target.height)
         frame.origin.y = top - target.height
-        panel.setFrame(frame, display: true, animate: true)
+        panel.setFrame(Self.constrained(frame, to: panel.screen ?? NSScreen.main), display: true, animate: true)
+    }
+
+    /// 修正超出大小范围或跑出屏幕的窗口（包括之前保存下来的异常尺寸）
+    private func constrainToScreen(_ panel: NSPanel) {
+        var frame = panel.frame
+        let base = ui.collapsed ? Self.collapsedSize : Self.expandedSize
+        if ui.collapsed { frame.size.height = base.height }
+        if frame.height > Self.maxSize.height || frame.width > Self.maxSize.width {
+            let top = frame.maxY
+            frame.size = NSSize(width: min(frame.width, Self.maxSize.width), height: min(frame.height, Self.maxSize.height))
+            frame.origin.y = top - frame.height
+        }
+        let fixed = Self.constrained(frame, to: panel.screen ?? NSScreen.main)
+        if fixed != panel.frame { panel.setFrame(fixed, display: true) }
+    }
+
+    /// 把窗口完整放进屏幕可见区域内
+    static func constrained(_ frame: NSRect, to screen: NSScreen?) -> NSRect {
+        guard let visible = screen?.visibleFrame else { return frame }
+        var f = frame
+        f.size.width = min(f.width, visible.width)
+        f.size.height = min(f.height, visible.height)
+        f.origin.x = min(max(f.minX, visible.minX), visible.maxX - f.width)
+        f.origin.y = min(max(f.minY, visible.minY), visible.maxY - f.height)
+        return f
     }
 }
 
