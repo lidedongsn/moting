@@ -163,3 +163,54 @@ private final class Fixture {
     }
     #expect(abs(try f.samples(m.id, .mic) - 160_000) <= 3_200)
 }
+
+/// 记录 onTrackAudio 回调
+private final class ForwardLog: @unchecked Sendable {
+    private let lock = NSLock()
+    private var items: [(AudioChannel, Int, Int)] = []   // (声道, 采样数, 起始位置)
+    func add(_ ch: AudioChannel, _ n: Int, _ start: Int) { lock.withLock { items.append((ch, n, start)) } }
+    var all: [(AudioChannel, Int, Int)] { lock.withLock { items } }
+}
+
+@Test func forwardedStartMatchesTrackPosition() throws {
+    let f = try Fixture()
+    let log = ForwardLog()
+    f.session.onTrackAudio = { ch, samples, start in log.add(ch, samples.count, start) }
+    _ = try f.session.start()
+    f.clock.advance(1)
+    f.system.emitSamples(1_600)
+    f.session.waitForPendingWrites()
+    #expect(log.all.count == 1)
+    #expect(log.all.first?.0 == .system)
+    #expect(log.all.first?.1 == 1_600)
+    #expect(log.all.first?.2 == 14_400)
+}
+
+@Test func pausedAudioIsNotForwarded() throws {
+    let f = try Fixture()
+    let log = ForwardLog()
+    f.session.onTrackAudio = { ch, samples, start in log.add(ch, samples.count, start) }
+    _ = try f.session.start()
+    f.mic.emitSamples(1_600)
+    try f.session.pause()
+    f.mic.emitSamples(1_600)
+    f.session.waitForPendingWrites()
+    #expect(log.all.count == 1)
+    try f.session.resume()
+    f.mic.emitSamples(1_600)
+    f.session.waitForPendingWrites()
+    #expect(log.all.count == 2)
+    #expect(log.all.last?.2 == 1_600)
+}
+
+@Test func droppedLeadIsNotForwarded() throws {
+    let f = try Fixture()
+    let log = ForwardLog()
+    f.session.onTrackAudio = { ch, samples, start in log.add(ch, samples.count, start) }
+    _ = try f.session.start()
+    f.clock.advance(1)
+    f.mic.emitSamples(16_000)
+    f.mic.emitSamples(8_000)   // 超前 0.5s，全部丢弃
+    f.session.waitForPendingWrites()
+    #expect(log.all.map(\.1) == [16_000])
+}
