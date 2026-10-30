@@ -474,3 +474,43 @@
   然后在 spec 中记录哪些情况会泄漏。
 
 - [ ] **Step 4：提交** `docs: 共享屏幕隐藏实测结论`（如有代码改动，用 `feat(app): ...`）
+
+---
+
+### Task 9：近场人声门限（用户补充需求）
+
+**Files:**
+- Create: `Sources/MotingASR/NearVoiceGate.swift`
+- Modify: `Sources/MotingASR/LiveTranscriber.swift`（麦克风一路在 accept 前经过门限）
+- Test: `Tests/MotingASRTests/NearVoiceGateTests.swift`
+
+**Interfaces:**
+- Produces:
+
+  ```swift
+  /// 按 20ms 帧判断：明显低于用户说话音量的声音置零。输出与输入等长，整体延迟 lookahead（默认 200ms），开头补零
+  public struct NearVoiceGate: Sendable {
+      public init(lookahead: TimeInterval = 0.2, hangover: TimeInterval = 0.3)
+      public mutating func process(_ samples: [Float]) -> [Float]
+  }
+  ```
+
+  规则：
+  - 底噪：慢速最小值跟踪
+  - 用户音量：对判为"近场"的帧做指数平均，初始值 -30 dBFS
+  - 一帧判为"近场"的条件：电平 ≥ max(底噪 + 10dB, 用户音量 - 12dB)
+  - 输出帧保留的条件：前后 [-hangover, +lookahead] 范围内有近场帧；否则置零
+
+- [ ] **Step 1：写失败测试**
+
+  ```swift
+  @Test func nearSpeechPassesAndNoiseIsMuted()   // -60dB 噪声中夹 -25dB 的 1 秒语音：语音段输出能量保留，纯噪声段输出全零
+  @Test func farSpeechIsMuted()                  // 先有几秒 -25dB 近场语音，再来 -45dB 的远处语音 → 远处语音段输出全零
+  @Test func onsetIsPreserved()                  // 近场语音开头 100ms 不被置零（预读）
+  @Test func outputLengthEqualsInput()           // 任意块长输入，累计输出长度等于累计输入
+  @Test func quietStartIsNotOverFiltered()       // 一开始还没学到用户音量时，-35dB 的说话能通过
+  ```
+
+- [ ] **Step 2：运行确认失败，实现，运行确认通过**
+- [ ] **Step 3：接入 LiveTranscriber（仅 .mic）**，重跑 `liveTranscriberWithRealModel`，确认识别结果不变（TTS 音频音量正常，应全部通过）
+- [ ] **Step 4：提交** `feat(asr): 麦克风近场人声门限，过滤远处说话与环境声`

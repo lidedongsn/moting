@@ -25,6 +25,8 @@ public enum TranscriptEvent: Sendable {
 public final class LiveTranscriber: @unchecked Sendable {
     private struct ChannelState {
         let stream: RecognitionStream
+        /// 仅麦克风一路：过滤远处说话与环境声
+        var gate: NearVoiceGate?
         var sentenceID = UUID()
         var sentenceStart: Int?
         var position = 0
@@ -46,7 +48,7 @@ public final class LiveTranscriber: @unchecked Sendable {
         self.versionID = versionID
         self.onEvent = onEvent
         for ch in AudioChannel.allCases {
-            states[ch] = ChannelState(stream: recognizer.makeStream())
+            states[ch] = ChannelState(stream: recognizer.makeStream(), gate: ch == .mic ? NearVoiceGate() : nil)
         }
     }
 
@@ -56,7 +58,7 @@ public final class LiveTranscriber: @unchecked Sendable {
             guard var st = states[channel] else { return }
             if st.sentenceStart == nil { st.sentenceStart = startSample }
             st.position = startSample + samples.count
-            st.stream.accept(samples)
+            st.stream.accept(st.gate?.process(samples) ?? samples)
             st.stream.decode()
             let text = st.stream.text
             if text.isEmpty {

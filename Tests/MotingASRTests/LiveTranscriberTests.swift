@@ -97,7 +97,8 @@ func liveTranscriberWithRealModel() throws {
     let t0 = Date()
     var i = 0
     while i < samples.count {
-        t.feed(.system, Array(samples[i..<min(i + 320, samples.count)]), startSample: i)   // 20ms 一块，和真实采集一致
+        // 20ms 一块，和真实采集一致；走麦克风一路，同时验证近场门限不误伤正常说话
+        t.feed(.mic, Array(samples[i..<min(i + 320, samples.count)]), startSample: i)
         i += 320
     }
     t.finish()
