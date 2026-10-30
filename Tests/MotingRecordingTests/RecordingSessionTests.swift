@@ -5,7 +5,7 @@ import MotingCore
 import MotingStorage
 @testable import MotingRecording
 
-private struct Fixture {
+private final class Fixture {
     let clock = TestClock()
     let mic = FakeAudioSource(.mic)
     let system = FakeAudioSource(.system)
@@ -17,6 +17,10 @@ private struct Fixture {
         repo = MeetingRepository(db: try AppDatabase.inMemory())
         let clock = clock
         session = RecordingSession(paths: paths, repository: repo, sources: [mic, system], now: { clock.now })
+    }
+
+    deinit {
+        try? FileManager.default.removeItem(at: paths.root)
     }
 
     func samples(_ id: UUID, _ ch: AudioChannel) throws -> Int {

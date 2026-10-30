@@ -19,6 +19,7 @@ private func size(_ url: URL) throws -> Int {
 
 @Test func recoversInterruptedMeeting() throws {
     let (repo, paths, m) = try setup(status: .recording)
+    defer { try? FileManager.default.removeItem(at: paths.root) }
     FileManager.default.createFile(atPath: paths.trackURL(m.id, .mic).path, contents: Data(count: 16_001))
     FileManager.default.createFile(atPath: paths.trackURL(m.id, .system).path, contents: Data(count: 32_000))
     try repo.beginPause(meetingID: m.id, at: Date(timeIntervalSince1970: 1_000.5))
@@ -40,12 +41,14 @@ private func size(_ url: URL) throws -> Int {
 
 @Test func leavesFinishedMeetingsAlone() throws {
     let (repo, paths, m) = try setup(status: .pendingProcessing)
+    defer { try? FileManager.default.removeItem(at: paths.root) }
     #expect(try RecordingRecovery.run(repository: repo, paths: paths, now: Date()).isEmpty)
     #expect(try repo.meeting(m.id)?.status == .pendingProcessing)
 }
 
 @Test func missingTrackFileIsTolerated() throws {
     let (repo, paths, m) = try setup(status: .recording)
+    defer { try? FileManager.default.removeItem(at: paths.root) }
     FileManager.default.createFile(atPath: paths.trackURL(m.id, .mic).path, contents: Data(count: 32_000))
     #expect(try RecordingRecovery.run(repository: repo, paths: paths, now: Date()) == [m.id])
     #expect(try repo.meeting(m.id)?.status == .interrupted)

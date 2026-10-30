@@ -27,7 +27,7 @@ struct MotingApp: App {
         Window("Moting", id: "main") {
             Group {
                 if let env {
-                    MeetingListView(repository: env.repository, recorder: recorder)
+                    MeetingListView(repository: env.repository, paths: env.paths, recorder: recorder)
                 } else {
                     Text(bootError ?? "").padding()
                 }

@@ -82,3 +82,27 @@ private func meeting(_ t: TimeInterval, status: MeetingStatus = .recording) -> M
     #expect(FileManager.default.fileExists(atPath: paths.databaseURL.path))
     try? FileManager.default.removeItem(at: dir)
 }
+
+@Test func deleteRemovesMeetingAndChildren() throws {
+    let repo = try makeRepo()
+    let m = meeting(100)
+    try repo.insert(m, tracks: [AudioTrackInfo(meetingID: m.id, channel: .mic, relativePath: "x", sampleRate: 16_000)])
+    try repo.addMark(Mark(meetingID: m.id, at: 1))
+    try repo.beginPause(meetingID: m.id, at: Date())
+    try repo.delete(m.id)
+    #expect(try repo.meeting(m.id) == nil)
+    #expect(try repo.tracks(m.id).isEmpty)
+    #expect(try repo.marks(m.id).isEmpty)
+    #expect(try repo.pauses(m.id).isEmpty)
+}
+
+@Test func storageUsageCountsMeetingFiles() throws {
+    let paths = AppPaths(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+    defer { try? FileManager.default.removeItem(at: paths.root) }
+    let id = UUID()
+    try paths.ensureMeetingDirectory(id)
+    FileManager.default.createFile(atPath: paths.trackURL(id, .mic).path, contents: Data(count: 1_000))
+    FileManager.default.createFile(atPath: paths.trackURL(id, .system).path, contents: Data(count: 3_000))
+    #expect(paths.meetingsDiskUsage() == 4_000)
+    #expect(paths.diskUsage(of: id) == 4_000)
+}

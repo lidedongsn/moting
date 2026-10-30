@@ -60,6 +60,11 @@ public final class MeetingRepository: Sendable {
         }
     }
 
+    /// 删除会议记录，音轨 / 标记 / 暂停随外键级联删除。录音文件由调用方删除
+    public func delete(_ id: UUID) throws {
+        _ = try db.writer.write { db in try MeetingRecord.deleteOne(db, key: id.uuidString) }
+    }
+
     public func meeting(_ id: UUID) throws -> Meeting? {
         try db.writer.read { db in try MeetingRecord.fetchOne(db, key: id.uuidString)?.model }
     }

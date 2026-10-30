@@ -9,6 +9,7 @@ import MotingStorage
 @Test(.enabled(if: ProcessInfo.processInfo.environment["MOTING_AUDIO_IT"] == "1"), .timeLimit(.minutes(1)))
 func realSessionStopsCleanly() async throws {
     let paths = AppPaths(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+    defer { try? FileManager.default.removeItem(at: paths.root) }
     let repo = MeetingRepository(db: try AppDatabase.inMemory())
     let session = RecordingSession(paths: paths, repository: repo, sources: [MicSource(), SystemAudioTapSource()])
     let m = try session.start()

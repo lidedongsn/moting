@@ -8,6 +8,7 @@ private func tempURL() -> URL {
 
 @Test func pcmRoundTrip() throws {
     let url = tempURL()
+    defer { try? FileManager.default.removeItem(at: url) }
     let w = try PCMTrackWriter(url: url)
     try w.append([0, 0.5, -0.5, 1.2])
     try w.close()
@@ -19,6 +20,7 @@ private func tempURL() -> URL {
 
 @Test func pcmSilenceAndCount() throws {
     let url = tempURL()
+    defer { try? FileManager.default.removeItem(at: url) }
     let w = try PCMTrackWriter(url: url)
     try w.append([0.1, 0.2, 0.3])
     try w.appendSilence(5)
@@ -30,6 +32,7 @@ private func tempURL() -> URL {
 
 @Test func pcmRepairOddLength() throws {
     let url = tempURL()
+    defer { try? FileManager.default.removeItem(at: url) }
     let w = try PCMTrackWriter(url: url)
     try w.append([0.1, 0.2])
     try w.close()
@@ -44,6 +47,7 @@ private func tempURL() -> URL {
 
 @Test func pcmWriterAppendsToExisting() throws {
     let url = tempURL()
+    defer { try? FileManager.default.removeItem(at: url) }
     let w1 = try PCMTrackWriter(url: url)
     try w1.append([0.1, 0.2, 0.3, 0.4])
     try w1.close()
