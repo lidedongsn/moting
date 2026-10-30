@@ -39,6 +39,11 @@ struct FloatingPanelView: View {
             if ui.collapsed {
                 Text(recorder.state == .paused ? "已暂停" : "录音中").font(.caption).foregroundStyle(.secondary)
             }
+            if !recorder.warnings.isEmpty {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.caption).foregroundStyle(.orange)
+                    .help(recorder.warnings.joined(separator: "\n"))
+            }
             Spacer(minLength: 4)
             if ui.collapsed {
                 iconButton("star.fill", help: "标记重点") { recorder.mark() }
@@ -54,6 +59,12 @@ struct FloatingPanelView: View {
 
     private var subtitles: some View {
         VStack(alignment: .leading, spacing: 6) {
+            ForEach(recorder.warnings, id: \.self) { w in
+                Label(w, systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Spacer(minLength: 0)
             // P2 接入实时识别后，这里滚动显示最近 4–6 句，我 / 对方分色，未定稿片段为灰色
             Text("实时字幕将在接入语音识别后显示")

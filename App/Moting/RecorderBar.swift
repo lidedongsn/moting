@@ -6,6 +6,19 @@ struct RecorderBar: View {
     @ObservedObject var recorder: RecordingController
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            controls
+            ForEach(recorder.warnings, id: \.self) { w in
+                Label(w, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+    }
+
+    private var controls: some View {
         HStack(spacing: 12) {
             switch recorder.state {
             case .recording, .paused:
@@ -33,8 +46,6 @@ struct RecorderBar: View {
                     .buttonStyle(.borderedProminent)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
     }
 }
 
