@@ -80,7 +80,7 @@ struct FloatingPanelView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("正在下载识别模型… \(Int(p * 100))%").font(.system(size: 11)).foregroundStyle(.secondary)
                     ProgressView(value: p).progressViewStyle(.linear).tint(.white.opacity(0.7))
-                    Text("下载完成后，下一次录音开始显示字幕").font(.system(size: 10)).foregroundStyle(.tertiary)
+                    Text("下载完成后，本场录音会自动开始显示字幕").font(.system(size: 10)).foregroundStyle(.tertiary)
                 }
                 .frame(maxHeight: .infinity)
             case .loading:
@@ -97,7 +97,8 @@ struct FloatingPanelView: View {
     @ViewBuilder
     private var transcriptLines: some View {
         if live.lines.isEmpty {
-            Text("等待说话…").font(.system(size: 12)).foregroundStyle(.tertiary)
+            Text(live.waitingToAttach ? "识别模型正在准备，字幕马上开始…" : "等待说话…")
+                .font(.system(size: 12)).foregroundStyle(.tertiary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollViewReader { proxy in

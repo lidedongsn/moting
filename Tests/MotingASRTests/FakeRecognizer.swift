@@ -44,6 +44,8 @@ final class FakeStream: RecognitionStream {
     func reset() {
         resetAt = index
     }
+
+    func inputFinished() {}
 }
 
 /// 收集转写事件

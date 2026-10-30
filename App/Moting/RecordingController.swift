@@ -99,7 +99,7 @@ final class RecordingController: ObservableObject {
     private func stopSynchronously() {
         guard let session else { return }
         try? session.stop()
-        live.end()
+        live.endAndWait()
     }
 
     private func didStop(_ error: Error?) {

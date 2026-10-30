@@ -42,8 +42,11 @@ final class LiveTranscriptModel: ObservableObject {
             UserDefaults.standard.set(selectedModelID, forKey: Self.selectedKey)
             recognizer = nil
             refreshState()
+            preload()
         }
     }
+    /// 正在录音、但还没接上转写器（模型尚未就绪）：界面据此显示"字幕稍后开始"而不是"等待说话"
+    @Published private(set) var waitingToAttach = false
 
     /// 录音会话写入音频后，经由它喂给当前转写器
     let feeder = TranscriberBox()
@@ -51,6 +54,8 @@ final class LiveTranscriptModel: ObservableObject {
     private let env: AppEnvironment?
     private var recognizer: RecognizerBox?
     private var buffer = SubtitleBuffer()
+    /// 当前正在录音的会议；模型晚于录音就绪时据此补接转写器（startSample 是绝对位置，时间戳仍正确）
+    private var activeMeetingID: UUID?
     private static let selectedKey = "asr.selectedModel"
 
     init(env: AppEnvironment?) {
@@ -74,14 +79,22 @@ final class LiveTranscriptModel: ObservableObject {
 
     // MARK: - 录音生命周期
 
-    /// 开始录音后调用：模型就绪则为本场会议建草稿版本并开始转写，否则只录音
+    /// 开始录音后调用：模型就绪则为本场会议建草稿版本并开始转写；
+    /// 否则先只录音，模型就绪（加载完或下载完）后再补接
     func begin(meetingID: UUID) {
         buffer = SubtitleBuffer()
         lines = []
-        guard let env, let box = recognizer, box.modelID == selectedModelID else {
-            if modelState == .ready { modelState = .loading; preload() }
-            return
+        activeMeetingID = meetingID
+        attachIfPossible()
+        if feeder.value == nil {
+            waitingToAttach = true
+            if modelState != .ready { preload() }
         }
+    }
+
+    private func attachIfPossible() {
+        guard let env, let meetingID = activeMeetingID, feeder.value == nil,
+              let box = recognizer, box.modelID == selectedModelID else { return }
         do {
             let versionID = try env.transcripts.createVersion(
                 meetingID: meetingID, kind: .draft, engine: "sherpa-onnx \(sherpaOnnxVersion())",
@@ -91,6 +104,7 @@ final class LiveTranscriptModel: ObservableObject {
                 if case .final(_, let segment) = event { try? transcripts.append(segment) }
                 Task { @MainActor in self?.apply(event) }
             }
+            waitingToAttach = false
         } catch {
             modelState = .failed("创建转写记录失败：\(error.localizedDescription)")
         }
@@ -100,6 +114,15 @@ final class LiveTranscriptModel: ObservableObject {
     func end() {
         feeder.value?.finish()
         feeder.value = nil
+        activeMeetingID = nil
+        waitingToAttach = false
+    }
+
+    /// app 退出时用：等最后一句落库后再返回
+    func endAndWait() {
+        feeder.value?.finishAndWait()
+        feeder.value = nil
+        activeMeetingID = nil
     }
 
     // MARK: - 模型
@@ -169,6 +192,7 @@ final class LiveTranscriptModel: ObservableObject {
                     guard let self, m.id == self.selectedModelID else { return }
                     self.recognizer = box
                     self.modelState = .ready
+                    self.attachIfPossible()
                 }
             } catch {
                 await MainActor.run { [weak self] in

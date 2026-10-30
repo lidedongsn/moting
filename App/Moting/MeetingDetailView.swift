@@ -169,7 +169,8 @@ struct MeetingDetailView: View {
                         .id(s.id)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            player.seek(to: s.start)
+                            // 实时识别给出的句首普遍偏晚，提前 1 秒开始播放，避免切掉第一个字
+                            player.seek(to: max(0, s.start - 1))
                             player.play()
                         }
                         .listRowBackground(isCurrent(s) ? Color.accentColor.opacity(0.15) : Color.clear)

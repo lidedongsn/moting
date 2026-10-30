@@ -110,3 +110,11 @@ func liveTranscriberWithRealModel() throws {
     print(String(format: "音频 %.1f 秒，识别耗时 %.2f 秒，RTF %.3f", audio, cost, cost / audio))
     #expect(!log.finals.isEmpty)
 }
+
+@Test func finishDecodesTailBeforeFinal() {
+    // 结束时识别器里还有没出结果的尾音：应补尾、标记输入结束、再解码后定稿
+    let (t, log) = make([.init(text: "你"), .init(text: "你好吗")])
+    t.feed(.mic, block, startSample: 0)
+    t.finishAndWait()
+    #expect(log.finals.map(\.text) == ["你好吗"])
+}

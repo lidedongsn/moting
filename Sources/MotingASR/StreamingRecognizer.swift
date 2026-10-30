@@ -16,6 +16,8 @@ public protocol RecognitionStream: AnyObject {
     var isEndpoint: Bool { get }
     /// 端点后开始下一句
     func reset()
+    /// 不会再有输入：让识别器把缓存中的尾部也给出结果
+    func inputFinished()
 }
 
 public enum RecognizerError: Error {
@@ -116,5 +118,9 @@ private final class SherpaStream: RecognitionStream {
 
     func reset() {
         SherpaOnnxOnlineStreamReset(recognizer.handle, handle)
+    }
+
+    func inputFinished() {
+        SherpaOnnxOnlineStreamInputFinished(handle)
     }
 }

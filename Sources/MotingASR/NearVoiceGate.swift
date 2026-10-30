@@ -35,6 +35,9 @@ public struct NearVoiceGate: Sendable {
         outputIndex = -delay
     }
 
+    /// 输出相对输入的延迟（采样数）；结束时喂入这么多静音即可把缓存中的尾部全部取出
+    public var latency: Int { delay }
+
     public mutating func process(_ samples: [Float]) -> [Float] {
         analyze(samples)
         delayLine += samples

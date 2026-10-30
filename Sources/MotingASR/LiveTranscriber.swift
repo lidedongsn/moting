@@ -80,15 +80,32 @@ public final class LiveTranscriber: @unchecked Sendable {
         }
     }
 
-    /// 结束录音时调用：把两路未定稿的文字作为 final 发出
+    /// 结束录音时调用：取出门限与识别器缓存中的尾部，把两路未定稿的文字作为 final 发出
     public func finish() {
-        queue.async { [self] in
-            for ch in AudioChannel.allCases {
-                guard var st = states[ch], !st.lastText.isEmpty else { continue }
-                emitFinal(ch, &st, st.lastText)
-                st.lastText = ""
-                states[ch] = st
+        queue.async { [self] in flushAll() }
+    }
+
+    /// 同 finish，但等处理完再返回（app 退出时用，保证最后一句落库）
+    public func finishAndWait() {
+        queue.sync { flushAll() }
+    }
+
+    private func flushAll() {
+        for ch in AudioChannel.allCases {
+            guard var st = states[ch] else { continue }
+            // 门限有 200ms 延迟线，补等长静音把尾部送出来；再补 0.5 秒静音让模型把最后几个字出完
+            if var gate = st.gate {
+                st.stream.accept(gate.process([Float](repeating: 0, count: gate.latency)))
+                st.gate = gate
             }
+            st.stream.accept([Float](repeating: 0, count: 8_000))
+            st.stream.inputFinished()
+            st.stream.decode()
+            let text = st.stream.text.isEmpty ? st.lastText : st.stream.text
+            if !text.isEmpty { emitFinal(ch, &st, text) }
+            st.lastText = ""
+            st.stream.reset()
+            states[ch] = st
         }
     }
 

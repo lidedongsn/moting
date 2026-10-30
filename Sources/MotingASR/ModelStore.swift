@@ -71,12 +71,15 @@ public final class ModelStore: @unchecked Sendable {
         for mirror in mirrors {
             let url = mirror.appendingPathComponent(repo).appendingPathComponent("resolve/main")
                 .appendingPathComponent(file.name)
+            var tmp: URL?
             do {
-                let tmp = try await FileDownloader.download(url, progress: progress)
+                tmp = try await FileDownloader.download(url, progress: progress)
                 try? FileManager.default.removeItem(at: part)
-                try FileManager.default.moveItem(at: tmp, to: part)
+                try FileManager.default.moveItem(at: tmp!, to: part)
             } catch {
-                continue   // 换下一个镜像
+                // 下载到一半或移动失败：删掉系统临时目录里的残留（可能上百 MB），换下一个镜像
+                if let tmp { try? FileManager.default.removeItem(at: tmp) }
+                continue
             }
             guard try Self.sha256(of: part) == file.sha256 else {
                 throw ModelStoreError.checksumMismatch(file.name)
