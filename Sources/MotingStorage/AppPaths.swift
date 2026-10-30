@@ -32,6 +32,14 @@ public struct AppPaths: Sendable {
 
     public var meetingsRoot: URL { root.appendingPathComponent("meetings", isDirectory: true) }
 
+    /// 识别模型目录：root/models/<model-id>/
+    public var modelsRoot: URL { root.appendingPathComponent("models", isDirectory: true) }
+
+    /// 全部模型占用的字节数
+    public func modelsDiskUsage() -> Int64 {
+        Self.diskUsage(modelsRoot)
+    }
+
     /// 全部录音占用的字节数
     public func meetingsDiskUsage() -> Int64 {
         Self.diskUsage(meetingsRoot)

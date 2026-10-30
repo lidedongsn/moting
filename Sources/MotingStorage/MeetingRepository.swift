@@ -40,6 +40,15 @@ public final class MeetingRepository: Sendable {
         }
     }
 
+    /// 去掉首尾空白后为空则不改
+    public func rename(_ id: UUID, to title: String) throws {
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        try db.writer.write { db in
+            try db.execute(sql: "UPDATE meeting SET title = ? WHERE id = ?", arguments: [t, id.uuidString])
+        }
+    }
+
     public func addMark(_ mark: Mark) throws {
         try db.writer.write { db in
             try MarkRecord(id: mark.id.uuidString, meetingId: mark.meetingID.uuidString, at: mark.at).insert(db)

@@ -43,12 +43,14 @@ final class RecordingController: ObservableObject {
     @Published var lastError: String?
 
     private let env: AppEnvironment?
+    let live: LiveTranscriptModel
     private var session: RecordingSession?
     private var ticker: Timer?
     private var monitor = MonitorBox()
 
     init(env: AppEnvironment?) {
         self.env = env
+        live = LiveTranscriptModel(env: env)
         // ⌘Q 等方式退出时先正常结束录音，避免会议停在"录音中"
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
                                                object: nil, queue: .main) { [weak self] _ in
@@ -60,15 +62,16 @@ final class RecordingController: ObservableObject {
         guard let env, session == nil || state == .stopped, !isStarting else { return }
         isStarting = true
         monitor = MonitorBox()
-        let paths = env.paths, repository = env.repository, box = monitor
+        let paths = env.paths, repository = env.repository, box = monitor, feeder = live.feeder
         Task.detached {
             // start() 可能同步等待麦克风授权弹窗，放到后台线程
             let session = RecordingSession(paths: paths, repository: repository,
                                            sources: [MicSource(), SystemAudioTapSource()])
             session.onEvent = { ch, event in box.record(ch, event) }
+            session.onTrackAudio = { ch, samples, start in feeder.value?.feed(ch, samples, startSample: start) }
             do {
-                _ = try session.start()
-                await self.didStart(session)
+                let meeting = try session.start()
+                await self.didStart(session, meetingID: meeting.id)
             } catch {
                 await self.fail(error)
             }
@@ -96,18 +99,21 @@ final class RecordingController: ObservableObject {
     private func stopSynchronously() {
         guard let session else { return }
         try? session.stop()
+        live.endAndWait()
     }
 
     private func didStop(_ error: Error?) {
         isStopping = false
+        live.end()
         if let error { lastError = Self.describe(error) }
         refresh()
         levels = [:]
         statuses = [:]
     }
 
-    private func didStart(_ s: RecordingSession) {
+    private func didStart(_ s: RecordingSession, meetingID: UUID) {
         session = s
+        live.begin(meetingID: meetingID)
         isStarting = false
         refresh()
         ticker = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in

@@ -28,6 +28,7 @@ struct MenuBarContent: View {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }
+        SettingsLink { Text("设置…") }
         Button("退出") { NSApp.terminate(nil) }
     }
 

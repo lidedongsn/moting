@@ -4,27 +4,43 @@ import MotingStorage
 import SwiftUI
 
 struct MeetingListView: View {
-    let repository: MeetingRepository
-    let paths: AppPaths
+    let env: AppEnvironment
     @ObservedObject var recorder: RecordingController
     @State private var meetings: [Meeting] = []
+    @State private var selection: Meeting.ID?
     @State private var usage: Int64 = 0
+    @State private var modelsUsage: Int64 = 0
     @State private var pendingDelete: Meeting?
+    @State private var renaming: Meeting?
+    @State private var renameText = ""
 
     var body: some View {
         VStack(spacing: 0) {
             RecorderBar(recorder: recorder)
             Divider()
-            list
+            NavigationSplitView {
+                list
+                    .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 360)
+            } detail: {
+                if let m = meetings.first(where: { $0.id == selection }) {
+                    MeetingDetailView(meeting: m, env: env, recorder: recorder) { pendingDelete = $0 }
+                        .id(m.id)
+                } else {
+                    ContentUnavailableView("选择一场会议", systemImage: "waveform",
+                                           description: Text("在左侧选择会议，查看转写稿、回放录音"))
+                }
+            }
             Divider()
             storageFooter
         }
-        .frame(minWidth: 560, minHeight: 360)
+        .frame(minWidth: 820, minHeight: 520)
         .task {
             do {
-                for try await list in repository.observeAll() {
+                for try await list in env.repository.observeAll() {
                     meetings = list
-                    usage = paths.meetingsDiskUsage()
+                    if selection == nil { selection = list.first?.id }
+                    usage = env.paths.meetingsDiskUsage()
+                    modelsUsage = env.paths.modelsDiskUsage()
                 }
             } catch {
                 recorder.lastError = "读取会议列表失败：\(error.localizedDescription)"
@@ -33,24 +49,27 @@ struct MeetingListView: View {
     }
 
     private var list: some View {
-        List(meetings) { m in
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(m.title).font(.headline)
+        List(meetings, selection: $selection) { m in
+            VStack(alignment: .leading, spacing: 3) {
+                Text(m.title).font(.headline).lineLimit(1)
+                HStack(spacing: 6) {
                     Text(m.startedAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(m.endedAt.map { $0.timeIntervalSince(m.startedAt).clockText } ?? "—").monospacedDigit()
+                    Spacer()
+                    Text(m.status.displayName)
+                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .background(.quaternary, in: Capsule())
                 }
-                Spacer()
-                Text(m.endedAt.map { $0.timeIntervalSince(m.startedAt).clockText } ?? "—")
-                    .monospacedDigit().foregroundStyle(.secondary)
-                Text(m.status.displayName)
-                    .font(.caption)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(.quaternary, in: Capsule())
+                .font(.caption).foregroundStyle(.secondary)
             }
             .padding(.vertical, 2)
+            .tag(m.id)
             .contextMenu {
-                Button("在 Finder 中显示") { reveal(paths.meetingDirectory(m.id)) }
+                Button("重命名…") {
+                    renameText = m.title
+                    renaming = m
+                }
+                Button("在 Finder 中显示") { reveal(env.paths.meetingDirectory(m.id)) }
                 Divider()
                 Button("删除会议…", role: .destructive) { pendingDelete = m }
                     .disabled(m.status == .recording)
@@ -65,6 +84,20 @@ struct MeetingListView: View {
         } message: {
             Text("录音文件和会议记录会被永久删除，无法恢复。")
         }
+        .alert("重命名会议", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("会议标题", text: $renameText)
+            Button("保存") {
+                if let m = renaming {
+                    do {
+                        try env.repository.rename(m.id, to: renameText)
+                    } catch {
+                        recorder.lastError = "改名失败：\(error.localizedDescription)"
+                    }
+                }
+                renaming = nil
+            }
+            Button("取消", role: .cancel) { renaming = nil }
+        }
         .overlay {
             if meetings.isEmpty {
                 ContentUnavailableView("还没有会议记录", systemImage: "waveform",
@@ -75,10 +108,12 @@ struct MeetingListView: View {
 }
 
 private extension MeetingListView {
+    var paths: AppPaths { env.paths }
+
     var storageFooter: some View {
         HStack(spacing: 8) {
             Image(systemName: "internaldrive").foregroundStyle(.secondary)
-            Text("录音共占用 \(Self.bytes(usage))")
+            Text("录音 \(Self.bytes(usage)) · 模型 \(Self.bytes(modelsUsage))")
             Text(paths.meetingsRoot.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -107,7 +142,8 @@ private extension MeetingListView {
             if FileManager.default.fileExists(atPath: dir.path) {
                 try FileManager.default.removeItem(at: dir)
             }
-            try repository.delete(m.id)
+            if selection == m.id { selection = nil }
+            try env.repository.delete(m.id)
         } catch {
             recorder.lastError = "删除失败：\(error.localizedDescription)"
         }

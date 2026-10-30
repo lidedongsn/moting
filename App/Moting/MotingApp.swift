@@ -27,7 +27,7 @@ struct MotingApp: App {
         Window("Moting", id: "main") {
             Group {
                 if let env {
-                    MeetingListView(repository: env.repository, paths: env.paths, recorder: recorder)
+                    MeetingListView(env: env, recorder: recorder)
                 } else {
                     Text(bootError ?? "").padding()
                 }
@@ -39,10 +39,19 @@ struct MotingApp: App {
                 Text(recorder.lastError ?? "")
             }
         }
+        Settings {
+            if let env {
+                SettingsView(live: recorder.live, modelsRoot: env.paths.modelsRoot)
+            }
+        }
         MenuBarExtra {
             MenuBarContent(recorder: recorder)
         } label: {
-            Image(systemName: recorder.state == .recording || recorder.state == .paused ? "record.circle.fill" : "waveform")
+            if recorder.state == .recording || recorder.state == .paused {
+                Image("MenuBarIconRecording").renderingMode(.original)
+            } else {
+                Image("MenuBarIcon")
+            }
         }
     }
 }

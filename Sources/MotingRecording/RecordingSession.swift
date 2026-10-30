@@ -30,6 +30,10 @@ public final class RecordingSession: @unchecked Sendable {
     /// 给 UI 电平和后续实时识别订阅，在内部队列上回调
     public var onEvent: (@Sendable (AudioChannel, AudioSourceEvent) -> Void)?
 
+    /// 每次真实音频写入轨道后在会话队列上回调：采样（不含补的静音）与它在轨道中的起始位置。
+    /// startSample / 16000 即会议时间，与录音文件严格对齐
+    public var onTrackAudio: (@Sendable (AudioChannel, [Float], _ startSample: Int) -> Void)?
+
     public init(paths: AppPaths, repository: MeetingRepository,
                 sources: [AudioSource], now: @escaping @Sendable () -> Date = Date.init) {
         self.paths = paths
@@ -167,13 +171,18 @@ public final class RecordingSession: @unchecked Sendable {
         let adjust = aligner.adjustment(expectedElapsed: clock.elapsed(at: captured),
                                         written: w.sampleCount, incoming: chunk.samples.count)
         do {
+            let samples: [Float]
             if adjust > 0 {
                 try w.appendSilence(adjust)
-                try w.append(chunk.samples)
+                samples = chunk.samples
             } else {
                 // 超前（设备时钟偏快等）：丢掉开头多出的部分
-                try w.append(Array(chunk.samples.dropFirst(-adjust)))
+                samples = Array(chunk.samples.dropFirst(-adjust))
             }
+            guard !samples.isEmpty else { return }
+            let start = w.sampleCount
+            try w.append(samples)
+            onTrackAudio?(channel, samples, start)
         } catch {
             onEvent?(channel, .interrupted("写盘失败：\(error)"))
         }
