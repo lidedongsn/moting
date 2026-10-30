@@ -2,13 +2,14 @@ import Foundation
 
 /// 会议导出为 Markdown（spec 5.7）。AI 纪要部分在 P4 加入
 public enum MarkdownExporter {
+    /// names：说话人标签 → 用户改过的名字
     public static func export(meeting m: Meeting, segments: [TranscriptSegment], marks: [Mark],
-                              timeZone: TimeZone = .current) -> String {
+                              names: [String: String] = [:], timeZone: TimeZone = .current) -> String {
         var out = "# \(m.title)\n\n"
         out += "- 时间：\(timeRange(m, timeZone))\n"
         var speakers = ["我"]
         for s in segments.sorted(by: { $0.start < $1.start }) {
-            let name = speakerName(s)
+            let name = speakerName(s, names)
             if !speakers.contains(name) { speakers.append(name) }
         }
         out += "- 参会：\(speakers.joined(separator: "、"))\n"
@@ -25,14 +26,15 @@ public enum MarkdownExporter {
             out += "（暂无转写内容）\n"
         } else {
             for s in segments.sorted(by: { $0.start < $1.start }) {
-                out += "**[\(clock(s.start))] \(speakerName(s))：** \(s.text)\n\n"
+                out += "**[\(clock(s.start))] \(speakerName(s, names))：** \(s.text)\n\n"
             }
         }
         return out
     }
 
-    public static func speakerName(_ s: TranscriptSegment) -> String {
-        s.speakerLabel ?? (s.channel == .mic ? "我" : "对方")
+    public static func speakerName(_ s: TranscriptSegment, _ names: [String: String] = [:]) -> String {
+        if let label = s.speakerLabel { return names[label] ?? label }
+        return s.channel == .mic ? "我" : "对方"
     }
 
     /// 00:00:00

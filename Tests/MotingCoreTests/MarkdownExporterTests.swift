@@ -36,3 +36,12 @@ private func seg(_ ch: AudioChannel, _ s: TimeInterval, _ text: String, speaker:
     #expect(md.contains("## 转写稿\n\n（暂无转写内容）"))
     #expect(md.contains("- 时间：2026-10-30 14:00"))
 }
+
+@Test func renamedSpeakersAreUsed() {
+    let m = Meeting(id: UUID(), title: "t", startedAt: start, endedAt: start + 60, status: .done)
+    let md = MarkdownExporter.export(meeting: m, segments: [seg(.system, 5, "你好", speaker: "说话人 1"), seg(.system, 9, "嗯", speaker: "说话人 2")],
+                                     marks: [], names: ["说话人 1": "张三"], timeZone: TimeZone(identifier: "Asia/Shanghai")!)
+    #expect(md.contains("**[00:00:05] 张三：** 你好"))
+    #expect(md.contains("**[00:00:09] 说话人 2：** 嗯"))
+    #expect(md.contains("- 参会：我、张三、说话人 2"))
+}

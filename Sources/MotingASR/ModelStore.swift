@@ -10,7 +10,13 @@ public enum ModelStoreError: Error, Equatable {
 public final class ModelStore: @unchecked Sendable {
     public let root: URL
     private let mirrors: [URL]
-    private let proxy: URL?
+    private let lock = NSLock()
+    private var _proxy: URL?
+    /// 下载代理，可在运行中修改（设置页）
+    public var proxy: URL? {
+        get { lock.withLock { _proxy } }
+        set { lock.withLock { _proxy = newValue } }
+    }
 
     /// 默认 hf-mirror 优先：国内直连 huggingface.co 常超时，hf-mirror 可达。
     /// proxy 形如 http://127.0.0.1:7897；系统代理关闭但本机有代理时用它
@@ -19,7 +25,7 @@ public final class ModelStore: @unchecked Sendable {
                 proxy: URL? = nil) {
         self.root = root
         self.mirrors = mirrors
-        self.proxy = proxy
+        _proxy = proxy
     }
 
     public func directory(for m: some DownloadableModel) -> URL {
