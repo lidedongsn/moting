@@ -47,7 +47,11 @@ struct MotingApp: App {
         MenuBarExtra {
             MenuBarContent(recorder: recorder)
         } label: {
-            Image(systemName: recorder.state == .recording || recorder.state == .paused ? "record.circle.fill" : "waveform")
+            if recorder.state == .recording || recorder.state == .paused {
+                Image("MenuBarIconRecording").renderingMode(.original)
+            } else {
+                Image("MenuBarIcon")
+            }
         }
     }
 }

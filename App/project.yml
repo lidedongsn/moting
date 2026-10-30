@@ -28,5 +28,6 @@ targets:
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "Apple Development"
         INFOPLIST_FILE: Moting/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "6.0"

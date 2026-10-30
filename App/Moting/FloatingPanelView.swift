@@ -7,8 +7,9 @@ struct FloatingPanelView: View {
     @ObservedObject var live: LiveTranscriptModel
     @ObservedObject var ui: FloatingPanelState
 
-    static let micColor = Color(red: 0x64 / 255, green: 0xD2 / 255, blue: 0xFF / 255)
-    static let systemColor = Color(red: 0xFF / 255, green: 0xD6 / 255, blue: 0x0A / 255)
+    // macOS 26 深色系统色，与 app 图标一致
+    static let micColor = Color(red: 0x3C / 255, green: 0xD3 / 255, blue: 0xFE / 255)
+    static let systemColor = Color(red: 0xFF / 255, green: 0xD6 / 255, blue: 0x00 / 255)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,8 +39,8 @@ struct FloatingPanelView: View {
                 .frame(width: 8, height: 8)
                 .shadow(color: recorder.state == .paused ? .orange : .red, radius: 3)
             Text(recorder.elapsed.clockText).font(.system(size: 12, weight: .semibold)).monospacedDigit()
-            MiniLevel(level: recorder.levels[.mic] ?? 0, color: Color(red: 0.39, green: 0.82, blue: 1))
-            MiniLevel(level: recorder.levels[.system] ?? 0, color: Color(red: 1, green: 0.84, blue: 0.04))
+            MiniLevel(level: recorder.levels[.mic] ?? 0, color: Self.micColor)
+            MiniLevel(level: recorder.levels[.system] ?? 0, color: Self.systemColor)
             if ui.collapsed {
                 Text(recorder.state == .paused ? "已暂停" : "录音中").font(.caption).foregroundStyle(.secondary)
             }

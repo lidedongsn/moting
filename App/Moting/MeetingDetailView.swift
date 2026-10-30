@@ -151,10 +151,14 @@ struct MeetingDetailView: View {
             Text(MarkdownExporter.clock(s.start))
                 .font(.caption).monospacedDigit().foregroundStyle(.secondary)
                 .frame(width: 58, alignment: .leading)
-            Text(MarkdownExporter.speakerName(s))
-                .font(.callout.weight(.medium))
-                .foregroundStyle(s.channel == .mic ? Color.blue : Color.orange)
-                .frame(width: 44, alignment: .leading)
+            // 浅色背景下黄色文字看不清：用彩色圆点标识，名字用正常文字色
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(s.channel == .mic ? FloatingPanelView.micColor : FloatingPanelView.systemColor)
+                    .frame(width: 7, height: 7)
+                Text(MarkdownExporter.speakerName(s)).font(.callout.weight(.medium))
+            }
+            .frame(width: 52, alignment: .leading)
             Text(s.text)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
