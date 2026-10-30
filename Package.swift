@@ -5,7 +5,7 @@ let package = Package(
     name: "MotingKit",
     platforms: [.macOS("14.2")],
     products: [
-        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR"]),
+        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR", "MotingPlayback"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.0.0"),
@@ -21,6 +21,7 @@ let package = Package(
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .target(name: "MotingRecording", dependencies: ["MotingCore", "MotingStorage", "MotingCapture"]),
+        .target(name: "MotingPlayback", dependencies: ["MotingCapture"]),
         // sherpa-onnx 静态库由 Scripts/fetch-sherpa-onnx.sh 生成，不入库
         .binaryTarget(name: "CSherpaOnnx", path: "Vendor/CSherpaOnnx.xcframework"),
         .target(
@@ -33,6 +34,7 @@ let package = Package(
         .testTarget(name: "MotingStorageTests", dependencies: ["MotingStorage"]),
         .testTarget(name: "MotingCaptureTests", dependencies: ["MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "MotingRecordingTests", dependencies: ["MotingRecording"]),
+        .testTarget(name: "MotingPlaybackTests", dependencies: ["MotingPlayback", "MotingCapture"]),
         .testTarget(name: "MotingASRTests", dependencies: ["MotingASR", "MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
     ]
 )

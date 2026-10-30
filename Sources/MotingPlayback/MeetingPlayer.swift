@@ -1,13 +1,14 @@
 import AVFoundation
+import Combine
 import MotingCapture
 
 /// 会议录音回放：把"我""对方"两路实时混音播放，按需分段读取文件。
 /// 本进程的声音不会被系统音频 Tap 录进去（Tap 排除了本进程）
 @MainActor
-final class MeetingPlayer: ObservableObject {
-    @Published private(set) var isPlaying = false
-    @Published private(set) var currentTime: TimeInterval = 0
-    let duration: TimeInterval
+public final class MeetingPlayer: ObservableObject {
+    @Published public private(set) var isPlaying = false
+    @Published public private(set) var currentTime: TimeInterval = 0
+    public let duration: TimeInterval
 
     private static let rate = 16_000.0
     private static let chunk = 8_000            // 每个缓冲 0.5 秒
@@ -23,18 +24,20 @@ final class MeetingPlayer: ObservableObject {
     private var generation = 0                  // seek / 停止后作废旧回调
     private var ticker: Timer?
 
-    init(urls: [URL]) {
+    /// volume 仅供测试静音播放
+    public init(urls: [URL], volume: Float = 1) {
         reader = try? PCMMixReader(urls: urls)
         duration = Double(reader?.frameCount ?? 0) / Self.rate
         engine.attach(node)
         engine.connect(node, to: engine.mainMixerNode, format: format)
+        node.volume = volume
     }
 
-    func toggle() {
+    public func toggle() {
         isPlaying ? pause() : play()
     }
 
-    func play() {
+    public func play() {
         guard reader != nil, duration > 0 else { return }
         if currentTime >= duration - 0.05 { seek(to: 0) }
         do {
@@ -51,7 +54,7 @@ final class MeetingPlayer: ObservableObject {
         }
     }
 
-    func pause() {
+    public func pause() {
         tick()
         node.pause()
         isPlaying = false
@@ -59,14 +62,14 @@ final class MeetingPlayer: ObservableObject {
         ticker = nil
     }
 
-    func seek(to t: TimeInterval) {
+    public func seek(to t: TimeInterval) {
         let target = max(0, min(t, duration))
         currentTime = target
         restart(at: Int(target * Self.rate))
         if isPlaying { node.play() }
     }
 
-    func close() {
+    public func close() {
         pause()
         generation += 1
         node.stop()
@@ -94,7 +97,9 @@ final class MeetingPlayer: ObservableObject {
             nextFrame += samples.count
             queued += 1
             let gen = generation
-            node.scheduleBuffer(buf, completionCallbackType: .dataPlayedBack) { [weak self] _ in
+            // 回调由 AVAudioPlayerNode 在它自己的队列上调用：必须显式标成 @Sendable（非主线程隔离），
+            // 否则会被推断为 @MainActor，运行时隔离检查直接崩溃
+            node.scheduleBuffer(buf, completionCallbackType: .dataPlayedBack) { @Sendable [weak self] _ in
                 Task { @MainActor in self?.bufferDone(gen) }
             }
         }

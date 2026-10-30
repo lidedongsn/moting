@@ -1,5 +1,6 @@
 import AppKit
 import MotingCore
+import MotingPlayback
 import MotingStorage
 import SwiftUI
 import UniformTypeIdentifiers
