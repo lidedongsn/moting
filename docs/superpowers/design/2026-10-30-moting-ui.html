@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moting 界面设计稿</title>
+<style>
+:root {
+  --me: #0FA3D8;          /* 我（浅色界面用的加深版） */
+  --me-bright: #3CD3FE;   /* 我（深色 / 图标色） */
+  --them: #C99700;        /* 对方（浅色界面文字用） */
+  --them-bright: #FFD600; /* 对方（深色 / 图标色） */
+  --s2: #F27A5E;          /* 说话人 2 */
+  --s3: #A27BFF;          /* 说话人 3 */
+  --rec: #FF383C;
+  --page: #E9EBEF;
+  --ink: #1D1D1F;
+  --ink-2: #6E6E73;
+  --ink-3: #A1A1A6;
+  --hair: rgba(0,0,0,.08);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); }
+.doc { max-width: 1320px; margin: 0 auto; padding: 48px 32px 96px; }
+.doc > header { max-width: 760px; margin-bottom: 40px; }
+.doc h1 { font-size: 34px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 10px; }
+.doc > header p { font-size: 16px; line-height: 1.65; color: var(--ink-2); margin: 0; }
+section.board { margin: 64px 0 0; }
+section.board > h2 { font-size: 22px; font-weight: 650; margin: 0 0 6px; letter-spacing: -.01em; }
+section.board > p.note { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); margin: 0 0 22px; max-width: 760px; }
+
+/* 桌面背景：用于体现毛玻璃 */
+.desk { border-radius: 18px; padding: 36px; overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 10% 0%, #7FA6D9 0%, transparent 60%),
+    radial-gradient(900px 700px at 100% 100%, #C9A6D8 0%, transparent 55%),
+    linear-gradient(135deg, #A9C3E6, #D7C6E6 55%, #E9D7C8); }
+.desk.dark { background:
+    radial-gradient(1000px 600px at 15% 10%, #233a5c 0%, transparent 60%),
+    radial-gradient(900px 700px at 100% 100%, #3b2a4f 0%, transparent 55%),
+    linear-gradient(135deg, #10151f, #1a1626); }
+
+/* ===== 窗口 ===== */
+.win { border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 286px 1fr;
+  height: 760px; box-shadow: 0 30px 80px rgba(20,30,60,.35), 0 0 0 .5px rgba(0,0,0,.25);
+  background: rgba(246,246,248,.72); backdrop-filter: blur(40px) saturate(1.6); -webkit-backdrop-filter: blur(40px) saturate(1.6); }
+.dark .win { background: rgba(32,32,36,.72); color: #F5F5F7; box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 .5px rgba(255,255,255,.12); }
+
+/* 侧栏：浮在窗口里的玻璃面板（macOS 26 风格） */
+.side { margin: 8px 0 8px 8px; border-radius: 12px; background: rgba(255,255,255,.42);
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7), 0 1px 2px rgba(0,0,0,.06);
+  display: flex; flex-direction: column; min-height: 0; }
+.dark .side { background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.12); }
+.lights { display: flex; gap: 8px; padding: 14px 14px 6px; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.lights i:nth-child(1){ background:#FF5F57 } .lights i:nth-child(2){ background:#FEBC2E } .lights i:nth-child(3){ background:#28C840 }
+.search { margin: 8px 12px 10px; height: 30px; border-radius: 8px; background: rgba(0,0,0,.05);
+  display: flex; align-items: center; gap: 6px; padding: 0 10px; font-size: 13px; color: var(--ink-3); }
+.dark .search { background: rgba(255,255,255,.08); color: #8E8E93; }
+.group { font-size: 11.5px; font-weight: 600; color: var(--ink-3); padding: 12px 18px 4px; }
+.list { overflow: hidden; flex: 1; padding: 0 8px; }
+.row { padding: 9px 10px 10px; border-radius: 9px; margin-bottom: 2px; }
+.row .t { font-size: 13.5px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.row .t span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.row .m { font-size: 12px; color: var(--ink-2); margin-top: 3px; display: flex; justify-content: space-between; }
+.dark .row .m { color: #98989D; }
+.row.sel { background: rgba(15,163,216,.16); box-shadow: inset 0 0 0 .5px rgba(15,163,216,.35); }
+.dark .row.sel { background: rgba(60,211,254,.16); }
+.mini { height: 6px; margin-top: 7px; display: flex; gap: 1px; border-radius: 3px; overflow: hidden; }
+.mini b { display: block; height: 100%; }
+.tag { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; white-space: nowrap; }
+.tag.proc { color: var(--me); background: rgba(15,163,216,.12); }
+.tag.wait { color: #8E6B00; background: rgba(255,214,0,.22); }
+.tag.rec { color: #fff; background: var(--rec); }
+.dark .tag.proc { color: var(--me-bright); }
+.storage { margin: 8px 12px 12px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,.04); font-size: 12px; color: var(--ink-2); }
+.dark .storage { background: rgba(255,255,255,.06); color: #98989D; }
+.storage .bar { height: 5px; border-radius: 3px; background: rgba(0,0,0,.08); margin: 7px 0 6px; display: flex; overflow: hidden; }
+.dark .storage .bar { background: rgba(255,255,255,.1); }
+.storage .bar b { display: block; height: 100%; }
+
+/* 主区 */
+.main { display: flex; flex-direction: column; min-width: 0; background: rgba(255,255,255,.55); margin: 0; }
+.dark .main { background: rgba(28,28,30,.55); }
+.toolbar { height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 18px; }
+.toolbar .sp { flex: 1; }
+.tb { height: 30px; padding: 0 12px; border-radius: 99px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.65); box-shadow: 0 0 0 .5px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); color: var(--ink); }
+.dark .tb { background: rgba(255,255,255,.1); box-shadow: 0 0 0 .5px rgba(255,255,255,.14); color: #F5F5F7; }
+.tb.icon { width: 30px; padding: 0; justify-content: center; }
+.recbtn { height: 30px; padding: 0 14px 0 10px; border-radius: 99px; font-size: 13px; font-weight: 600; color: #fff;
+  background: linear-gradient(#FF4B4F, #E5262B); display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 2px 8px rgba(229,38,43,.35); }
+.recbtn i { width: 10px; height: 10px; border-radius: 50%; background: #fff; display: block; }
+.content { flex: 1; overflow: hidden; padding: 6px 34px 0; display: flex; flex-direction: column; min-height: 0; }
+.title { font-size: 26px; font-weight: 700; letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
+.title .pen { font-size: 14px; color: var(--ink-3); }
+.meta { margin-top: 6px; font-size: 13px; color: var(--ink-2); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.dark .meta { color: #98989D; }
+.people { display: inline-flex; gap: 10px; }
+.people span { display: inline-flex; align-items: center; gap: 5px; }
+.people i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+/* ===== 签名元素：双声道声纹带 ===== */
+.ribbon { margin-top: 20px; border-radius: 14px; padding: 14px 16px 10px; background: rgba(255,255,255,.7);
+  box-shadow: 0 0 0 .5px rgba(0,0,0,.08), 0 8px 24px rgba(20,40,80,.06); }
+.dark .ribbon { background: rgba(255,255,255,.05); box-shadow: 0 0 0 .5px rgba(255,255,255,.1); }
+.ribbon .head { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.play { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; }
+.dark .play { background: #F5F5F7; color: #1D1D1F; }
+.tc { font-variant-numeric: tabular-nums; font-weight: 600; }
+.tc.dim { color: var(--ink-3); font-weight: 500; }
+.lanes { position: relative; margin-top: 12px; }
+.lane { height: 30px; display: flex; align-items: center; gap: 1.5px; }
+.lane.top { align-items: flex-end; }
+.lane.bot { align-items: flex-start; }
+.lane b { flex: 1; min-width: 0; border-radius: 2px; display: block; }
+.axis { height: 1px; background: rgba(0,0,0,.1); }
+.dark .axis { background: rgba(255,255,255,.12); }
+.playhead { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); border-radius: 1px; left: 41%; }
+.dark .playhead { background: #fff; }
+.playhead::before { content: ""; position: absolute; top: -5px; left: -4px; width: 10px; height: 10px; border-radius: 50%; background: inherit; }
+.marks { position: absolute; top: -16px; left: 0; right: 0; height: 12px; }
+.marks span { position: absolute; font-size: 11px; color: #E3A400; transform: translateX(-50%); }
+.played { position: absolute; top: 0; bottom: 0; left: 0; width: 41%; background: linear-gradient(90deg, transparent, rgba(15,163,216,.06)); pointer-events: none; }
+.legend { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-3); margin-top: 6px; }
+
+/* 页签 */
+.tabs { margin-top: 18px; display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 9px; background: rgba(0,0,0,.05); width: max-content; font-size: 13px; }
+.dark .tabs { background: rgba(255,255,255,.08); }
+.tabs span { padding: 5px 14px; border-radius: 7px; color: var(--ink-2); }
+.tabs span.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.dark .tabs span { color: #98989D; } .dark .tabs span.on { background: rgba(255,255,255,.16); color: #fff; }
+.tabline { display: flex; align-items: center; justify-content: space-between; }
+.seg-note { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+.switch { display: inline-flex; padding: 2px; border-radius: 7px; background: rgba(0,0,0,.05); }
+.switch span { padding: 2px 9px; border-radius: 5px; font-size: 12px; }
+.switch span.on { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); color: var(--ink); }
+.dark .switch { background: rgba(255,255,255,.08); } .dark .switch span.on { background: rgba(255,255,255,.16); color: #fff; }
+
+/* 转写稿 */
+.script { margin-top: 14px; overflow: hidden; flex: 1; }
+.line { display: grid; grid-template-columns: 56px 96px 1fr; gap: 12px; padding: 9px 12px; border-radius: 10px; font-size: 14.5px; line-height: 1.6; align-items: baseline; }
+.line .ts { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.line .who { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.line .who i { width: 3px; height: 14px; border-radius: 2px; display: inline-block; }
+.line.now { background: rgba(15,163,216,.1); box-shadow: inset 0 0 0 .5px rgba(15,163,216,.25); }
+.dark .line.now { background: rgba(60,211,254,.12); }
+.line .mk { color: #E3A400; margin-left: 6px; font-size: 12px; }
+
+/* 纪要页 */
+.notes { display: grid; grid-template-columns: 1.25fr 1fr; gap: 26px; margin-top: 16px; }
+.notes h4 { font-size: 13px; color: var(--ink-2); font-weight: 600; margin: 0 0 8px; }
+.notes p { font-size: 15px; line-height: 1.75; margin: 0 0 18px; }
+.todo { display: flex; gap: 10px; padding: 9px 0; border-bottom: .5px solid var(--hair); font-size: 14px; line-height: 1.5; }
+.todo .box { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid #C7C7CC; flex: none; margin-top: 2px; }
+.todo small { display: block; color: var(--ink-2); font-size: 12px; margin-top: 2px; }
+
+/* 处理中横幅 */
+.banner { margin-top: 16px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; font-size: 13px;
+  background: rgba(15,163,216,.08); box-shadow: inset 0 0 0 .5px rgba(15,163,216,.25); }
+.ring { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(var(--me) 0 62%, rgba(15,163,216,.18) 0); position: relative; }
+.ring::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: #F4F8FB; }
+
+/* ===== 悬浮字幕窗 ===== */
+.floatwrap { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+.meeting { border-radius: 14px; height: 420px; position: relative; overflow: hidden;
+  background: linear-gradient(160deg, #2b3445, #161b25); box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.meeting .grid { position: absolute; inset: 14px 14px 56px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.meeting .grid div { border-radius: 10px; background: linear-gradient(160deg, #3b4558, #2a3242); color: #c8d0dc; font-size: 12px; display: flex; align-items: flex-end; padding: 8px; }
+.meeting .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 46px; background: #0f131a; display: flex; justify-content: center; align-items: center; gap: 22px; color: #8a96a8; font-size: 12px; }
+.fp { position: absolute; right: 20px; bottom: 64px; width: 330px; border-radius: 18px; color: #F5F5F7;
+  background: rgba(30,30,34,.62); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow: 0 18px 50px rgba(0,0,0,.45), inset 0 0 0 .5px rgba(255,255,255,.18), inset 0 1px 0 rgba(255,255,255,.12); }
+.fp .h { display: flex; align-items: center; gap: 9px; padding: 11px 12px 8px 14px; font-size: 12.5px; }
+.fp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rec); box-shadow: 0 0 0 3px rgba(255,56,60,.25); }
+.fp .lv { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; }
+.fp .lv b { width: 3px; border-radius: 2px; display: block; }
+.fp .x { margin-left: auto; display: flex; gap: 6px; }
+.fp .x span { width: 24px; height: 24px; border-radius: 7px; background: rgba(255,255,255,.1); display: grid; place-items: center; font-size: 11px; color: #ddd; }
+.fp .body { padding: 2px 14px 10px; font-size: 13.5px; line-height: 1.55; }
+.fp .body p { margin: 0 0 7px; }
+.fp .body .w { font-size: 11.5px; font-weight: 600; margin-right: 6px; }
+.fp .body .pend { color: rgba(255,255,255,.45); }
+.fp .foot { display: flex; gap: 6px; padding: 8px 12px 12px; }
+.fp .foot span { height: 26px; padding: 0 10px; border-radius: 99px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,.1); }
+.fp .foot span.stop { margin-left: auto; background: rgba(255,56,60,.9); color: #fff; }
+.capsule { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); border-radius: 99px; padding: 7px 8px 7px 14px; display: flex; align-items: center; gap: 10px; color: #F5F5F7; font-size: 12.5px;
+  background: rgba(30,30,34,.62); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow: 0 12px 30px rgba(0,0,0,.4), inset 0 0 0 .5px rgba(255,255,255,.18); white-space: nowrap; }
+.capsule .txt { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.capsule .stop { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,56,60,.9); display: grid; place-items: center; font-size: 9px; color: #fff; }
+.after .fp { bottom: 64px; }
+.fp .prog { height: 4px; border-radius: 2px; background: rgba(255,255,255,.12); margin: 4px 14px 0; overflow: hidden; }
+.fp .prog b { display: block; height: 100%; width: 62%; background: linear-gradient(90deg, var(--me-bright), #7DE3FF); }
+
+/* ===== 菜单栏面板 ===== */
+.mbwrap { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+.menubar { height: 26px; border-radius: 8px 8px 0 0; background: rgba(255,255,255,.55); display: flex; justify-content: flex-end; align-items: center; gap: 16px; padding: 0 14px; font-size: 12.5px; }
+.popover { margin-top: 6px; margin-left: auto; width: 320px; border-radius: 16px; padding: 14px;
+  background: rgba(246,246,248,.78); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6);
+  box-shadow: 0 18px 50px rgba(20,30,60,.3), inset 0 0 0 .5px rgba(255,255,255,.7); }
+.bigrec { height: 56px; border-radius: 14px; display: flex; align-items: center; gap: 12px; padding: 0 16px; color: #fff; font-weight: 600; font-size: 15px;
+  background: linear-gradient(#FF4B4F, #E5262B); box-shadow: 0 6px 18px rgba(229,38,43,.35); }
+.bigrec i { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #fff; display: grid; place-items: center; }
+.bigrec i::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #fff; }
+.bigrec small { margin-left: auto; font-weight: 500; opacity: .85; font-size: 12px; }
+.pop-h { font-size: 12px; color: var(--ink-3); font-weight: 600; margin: 14px 2px 6px; }
+.pop-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 8px; border-radius: 8px; font-size: 13px; }
+.pop-row small { color: var(--ink-2); font-size: 12px; }
+.pop-foot { display: flex; justify-content: space-between; border-top: .5px solid var(--hair); margin-top: 10px; padding: 10px 6px 0; font-size: 12.5px; color: var(--ink-2); }
+
+/* ===== 设置 ===== */
+.setwin { border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 220px 1fr; height: 640px;
+  background: rgba(246,246,248,.8); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+  box-shadow: 0 30px 80px rgba(20,30,60,.3), 0 0 0 .5px rgba(0,0,0,.2); }
+.setside { padding: 8px; background: rgba(255,255,255,.35); margin: 8px 0 8px 8px; border-radius: 12px; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.7); }
+.setside .it { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; }
+.setside .it .ic { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; color: #fff; font-size: 12px; }
+.setside .it.on { background: rgba(15,163,216,.16); font-weight: 600; }
+.setmain { padding: 22px 30px; overflow: hidden; background: rgba(255,255,255,.5); }
+.setmain h3 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.01em; }
+.setmain .sub { font-size: 13px; color: var(--ink-2); margin: 0 0 18px; }
+.total { display: flex; align-items: baseline; gap: 10px; }
+.total b { font-size: 34px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.total span { color: var(--ink-2); font-size: 13px; }
+.stack { height: 14px; border-radius: 7px; display: flex; overflow: hidden; margin: 12px 0 10px; background: rgba(0,0,0,.06); }
+.stack b { display: block; height: 100%; }
+.keys { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-2); flex-wrap: wrap; }
+.keys i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+.card { margin-top: 18px; border-radius: 12px; background: rgba(255,255,255,.75); box-shadow: 0 0 0 .5px rgba(0,0,0,.08); }
+.card .ci { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; padding: 11px 14px; border-bottom: .5px solid var(--hair); font-size: 13.5px; }
+.card .ci:last-child { border-bottom: 0; }
+.card .ci small { display: block; color: var(--ink-2); font-size: 12px; margin-top: 2px; }
+.card .ci .sz { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 13px; }
+.btn { height: 26px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; display: inline-flex; align-items: center; background: rgba(0,0,0,.05); box-shadow: 0 0 0 .5px rgba(0,0,0,.1); }
+.btn.danger { color: #D70015; }
+.btn.prim { background: var(--me); color: #fff; box-shadow: none; }
+.chip { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; margin-left: 6px; vertical-align: 1px; }
+.chip.use { color: #1A7F37; background: rgba(52,199,89,.16); }
+.chip.idle { color: var(--ink-2); background: rgba(0,0,0,.06); }
+.cleanup { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; background: rgba(15,163,216,.08); font-size: 13px; box-shadow: inset 0 0 0 .5px rgba(15,163,216,.25); }
+.path { margin-top: 14px; font-size: 12px; color: var(--ink-2); display: flex; justify-content: space-between; }
+.path code { font-family: -apple-system, "PingFang SC"; }
+
+/* 模型页：准确率对比 */
+.mrow { display: grid; grid-template-columns: 22px 1fr 150px auto; gap: 12px; align-items: center; padding: 12px 14px; border-bottom: .5px solid var(--hair); font-size: 13.5px; }
+.mrow:last-child { border-bottom: 0; }
+.radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #C7C7CC; }
+.radio.on { border: 5px solid var(--me); }
+.meter small { display: block; font-size: 11.5px; color: var(--ink-2); margin-bottom: 4px; }
+.meter .m { height: 6px; border-radius: 3px; background: rgba(0,0,0,.07); overflow: hidden; }
+.meter .m b { display: block; height: 100%; background: var(--me); border-radius: 3px; }
+
+.caption { font-size: 13px; color: var(--ink-2); margin-top: 12px; line-height: 1.6; }
+@media (max-width: 900px) {
+  .win, .setwin { grid-template-columns: 1fr; height: auto; }
+  .side, .setside { display: none; }
+  .floatwrap, .mbwrap, .notes { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="doc">
+<header>
+  <h1>Moting 界面设计稿</h1>
+  <p>整体守住 macOS 26 的原生质感：浮动玻璃侧栏、统一工具栏、苹方与等宽数字。唯一放大的设计元素是来自图标的"双声道声纹带"——蓝色是我，黄色是对方，它同时是播放进度条、说话分布和重点标记的位置，在列表里以细条形式出现，一眼看出一场会谁说得多。</p>
+</header>
+
+<!-- ============ 1. 主窗口 · 浅色 · 转写稿 ============ -->
+<section class="board">
+  <h2>主窗口 · 转写稿</h2>
+  <p class="note">左侧按"今天 / 本周 / 更早"分组，每场会议下方有一条迷你声纹带；底部常驻存储用量，点开直达存储页。右侧顶部是声纹带播放器，★ 是会中标记。转写稿按说话人着色，点任意一句从那里播放，正在播放的句子高亮。</p>
+  <div class="desk">
+    <div class="win">
+      <aside class="side">
+        <div class="lights"><i></i><i></i><i></i></div>
+        <div class="search">⌕ 搜索会议和转写内容</div>
+        <div class="list">
+          <div class="group">今天</div>
+          <div class="row sel">
+            <div class="t"><span>周会：接口评审</span><span class="tag proc">转写中 62%</span></div>
+            <div class="m"><span>14:00 · 62 分钟</span><span>4 人</span></div>
+            <div class="mini"><b style="width:18%;background:var(--me)"></b><b style="width:30%;background:var(--them)"></b><b style="width:8%;background:var(--me)"></b><b style="width:22%;background:var(--s2)"></b><b style="width:12%;background:var(--them)"></b><b style="width:10%;background:var(--me)"></b></div>
+          </div>
+          <div class="row">
+            <div class="t"><span>与设计团队对齐首页改版</span><span class="tag wait">等待电源</span></div>
+            <div class="m"><span>10:30 · 38 分钟</span><span>3 人</span></div>
+            <div class="mini"><b style="width:40%;background:var(--them)"></b><b style="width:25%;background:var(--me)"></b><b style="width:35%;background:var(--s3)"></b></div>
+          </div>
+          <div class="group">本周</div>
+          <div class="row">
+            <div class="t"><span>客户回访：华东区续约</span><span></span></div>
+            <div class="m"><span>周二 16:10 · 45 分钟</span><span>2 人</span></div>
+            <div class="mini"><b style="width:55%;background:var(--them)"></b><b style="width:45%;background:var(--me)"></b></div>
+          </div>
+          <div class="row">
+            <div class="t"><span>Q4 预算初审</span><span></span></div>
+            <div class="m"><span>周一 09:30 · 1 小时 12 分</span><span>6 人</span></div>
+            <div class="mini"><b style="width:12%;background:var(--me)"></b><b style="width:28%;background:var(--them)"></b><b style="width:20%;background:var(--s2)"></b><b style="width:25%;background:var(--s3)"></b><b style="width:15%;background:var(--them)"></b></div>
+          </div>
+          <div class="group">更早</div>
+          <div class="row">
+            <div class="t"><span>面试：后端工程师 · 二面</span><span></span></div>
+            <div class="m"><span>10 月 24 日 · 51 分钟</span><span>2 人</span></div>
+            <div class="mini"><b style="width:35%;background:var(--me)"></b><b style="width:65%;background:var(--them)"></b></div>
+          </div>
+        </div>
+        <div class="storage">
+          <div style="display:flex;justify-content:space-between"><span>占用 1.6 GB</span><span style="color:var(--me)">管理</span></div>
+          <div class="bar"><b style="width:9%;background:var(--me)"></b><b style="width:33%;background:#8E8E93"></b></div>
+          <span>录音 412 MB · 模型 1.2 GB</span>
+        </div>
+      </aside>
+      <main class="main">
+        <div class="toolbar">
+          <span class="sp"></span>
+          <span class="tb">⤓ 导出</span>
+          <span class="tb">↻ 重新转写</span>
+          <span class="tb icon">⋯</span>
+          <span class="recbtn"><i></i>开始录音</span>
+        </div>
+        <div class="content">
+          <div class="title">周会：接口评审 <span class="pen">✎</span></div>
+          <div class="meta">
+            <span>10 月 30 日 周四 14:00–15:02</span>
+            <span class="people"><span><i style="background:var(--me)"></i>我</span><span><i style="background:var(--them)"></i>李思远</span><span><i style="background:var(--s2)"></i>王蕾</span><span><i style="background:var(--s3)"></i>说话人 3</span></span>
+          </div>
+          <div class="ribbon">
+            <div class="head"><span class="play">▶</span><span class="tc">25:31</span><span class="tc dim">/ 62:08</span><span style="flex:1"></span><span style="color:var(--ink-2)">1× · 跳过静音</span></div>
+            <div class="lanes">
+              <div class="marks"><span style="left:22%">★</span><span style="left:41%">★</span><span style="left:77%">★</span></div>
+              <div class="played"></div>
+              <div class="lane top" id="laneMe"></div>
+              <div class="axis"></div>
+              <div class="lane bot" id="laneThem"></div>
+              <div class="playhead"></div>
+            </div>
+            <div class="legend"><span>我 · 上</span><span>对方 · 下（按说话人着色）</span></div>
+          </div>
+          <div class="banner"><span class="ring"></span><span><b>正在精准转写 62%</b>　完成后会替换实时草稿，并通知你。</span><span style="flex:1"></span><span class="btn">暂停</span></div>
+          <div class="tabline">
+            <div class="tabs"><span>纪要</span><span class="on">转写稿</span><span>标记 3</span></div>
+            <div class="seg-note">版本 <span class="switch"><span>精准</span><span class="on">实时草稿</span></span></div>
+          </div>
+          <div class="script">
+            <div class="line"><span class="ts">24:52</span><span class="who"><i style="background:var(--them)"></i>李思远</span><span>订单接口这周三之前要把文档定下来，不然前端那边没法联调。</span></div>
+            <div class="line"><span class="ts">25:07</span><span class="who"><i style="background:var(--me)"></i>我</span><span>测试环境谁来搭？上次那套已经被回收了。</span></div>
+            <div class="line now"><span class="ts">25:15</span><span class="who"><i style="background:var(--s2)"></i>王蕾</span><span>我来吧，周五之前能好。顺便把压测脚本也迁过去。<span class="mk">★</span></span></div>
+            <div class="line"><span class="ts">25:34</span><span class="who"><i style="background:var(--them)"></i>李思远</span><span>那就这么定，导出功能这个版本先不做，放到下个迭代。</span></div>
+            <div class="line"><span class="ts">25:49</span><span class="who"><i style="background:var(--me)"></i>我</span><span>好，我会后把待办整理一下发群里。</span></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 主窗口 · 深色 · 纪要 ============ -->
+<section class="board">
+  <h2>主窗口 · 纪要（深色）</h2>
+  <p class="note">纪要页把概要、决策、待办放在一屏：左侧读，右侧勾。待办的负责人和期限由 AI 从转写稿里提取（P4），点待办可跳回原话。深色模式下声纹色用图标的原色，更亮。</p>
+  <div class="desk dark">
+    <div class="win">
+      <aside class="side">
+        <div class="lights"><i></i><i></i><i></i></div>
+        <div class="search">⌕ 搜索会议和转写内容</div>
+        <div class="list">
+          <div class="group">今天</div>
+          <div class="row sel">
+            <div class="t"><span>周会：接口评审</span><span></span></div>
+            <div class="m"><span>14:00 · 62 分钟</span><span>4 人</span></div>
+            <div class="mini"><b style="width:18%;background:var(--me-bright)"></b><b style="width:30%;background:var(--them-bright)"></b><b style="width:8%;background:var(--me-bright)"></b><b style="width:22%;background:var(--s2)"></b><b style="width:12%;background:var(--them-bright)"></b><b style="width:10%;background:var(--me-bright)"></b></div>
+          </div>
+          <div class="row">
+            <div class="t"><span>与设计团队对齐首页改版</span><span></span></div>
+            <div class="m"><span>10:30 · 38 分钟</span><span>3 人</span></div>
+            <div class="mini"><b style="width:40%;background:var(--them-bright)"></b><b style="width:25%;background:var(--me-bright)"></b><b style="width:35%;background:var(--s3)"></b></div>
+          </div>
+        </div>
+        <div class="storage">
+          <div style="display:flex;justify-content:space-between"><span>占用 1.6 GB</span><span style="color:var(--me-bright)">管理</span></div>
+          <div class="bar"><b style="width:9%;background:var(--me-bright)"></b><b style="width:33%;background:#636366"></b></div>
+          <span>录音 412 MB · 模型 1.2 GB</span>
+        </div>
+      </aside>
+      <main class="main">
+        <div class="toolbar">
+          <span class="sp"></span>
+          <span class="tb">⤓ 导出</span>
+          <span class="tb">↻ 重新生成纪要</span>
+          <span class="recbtn"><i></i>开始录音</span>
+        </div>
+        <div class="content">
+          <div class="title">周会：接口评审</div>
+          <div class="meta"><span>10 月 30 日 周四 14:00–15:02</span><span class="people"><span><i style="background:var(--me-bright)"></i>我</span><span><i style="background:var(--them-bright)"></i>李思远</span><span><i style="background:var(--s2)"></i>王蕾</span></span></div>
+          <div class="tabline" style="margin-top:6px">
+            <div class="tabs"><span class="on">纪要</span><span>转写稿</span><span>标记 3</span></div>
+            <div class="seg-note">由 DeepSeek 生成 · 15:06</div>
+          </div>
+          <div class="notes">
+            <div>
+              <h4>概要</h4>
+              <p>本周重点是订单接口的联调准备。文档周三前定稿，测试环境由王蕾周五前搭好，导出功能延后到下个迭代。</p>
+              <h4>决策</h4>
+              <p>导出功能不进本版本；压测脚本随测试环境一起迁移。</p>
+              <h4>议题</h4>
+              <p style="color:#98989D">订单接口文档 · 测试环境 · 版本范围</p>
+            </div>
+            <div>
+              <h4>待办</h4>
+              <div class="todo" style="border-color:rgba(255,255,255,.1)"><span class="box"></span><div>定稿订单接口文档<small>李思远 · 周三</small></div></div>
+              <div class="todo" style="border-color:rgba(255,255,255,.1)"><span class="box"></span><div>搭建测试环境并迁移压测脚本<small>王蕾 · 周五</small></div></div>
+              <div class="todo" style="border-color:rgba(255,255,255,.1)"><span class="box"></span><div>整理会议待办发到群里<small>我 · 今天</small></div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 悬浮字幕窗 ============ -->
+<section class="board">
+  <h2>悬浮字幕窗</h2>
+  <p class="note">更圆、更通透的玻璃卡片，字幕按说话人着色，未定稿的字是半透明。收起后是一枚胶囊，只留计时、最新一句和停止键。录音结束后同一个窗口变成精准转写进度，处理完自动收起。</p>
+  <div class="floatwrap">
+    <div>
+      <div class="meeting">
+        <div class="grid"><div>李思远</div><div>王蕾</div><div>张辰</div><div>我</div></div>
+        <div class="bar">静音　视频　共享屏幕　结束</div>
+        <div class="fp">
+          <div class="h"><span class="dot"></span><span class="tc">25:31</span>
+            <span class="lv"><b style="height:5px;background:var(--me-bright)"></b><b style="height:9px;background:var(--me-bright)"></b><b style="height:12px;background:var(--me-bright)"></b></span>
+            <span class="lv"><b style="height:4px;background:var(--them-bright)"></b><b style="height:7px;background:var(--them-bright)"></b><b style="height:5px;background:rgba(255,255,255,.2)"></b></span>
+            <span class="x"><span>★</span><span>—</span></span></div>
+          <div class="body">
+            <p><span class="w" style="color:var(--them-bright)">李思远</span>订单接口这周三之前要把文档定下来。</p>
+            <p><span class="w" style="color:var(--me-bright)">我</span>测试环境谁来搭？</p>
+            <p><span class="w" style="color:var(--s2)">王蕾</span>我来吧，周五之前<span class="pend">能好，顺便把压测…</span></p>
+          </div>
+          <div class="foot"><span>★ 标记</span><span>❚❚ 暂停</span><span class="stop">■ 结束</span></div>
+        </div>
+      </div>
+      <p class="caption">展开：会中实时字幕</p>
+    </div>
+    <div>
+      <div class="meeting">
+        <div class="grid"><div>李思远</div><div>王蕾</div><div>张辰</div><div>我</div></div>
+        <div class="bar">静音　视频　共享屏幕　结束</div>
+        <div class="capsule"><span class="fp-dot" style="width:8px;height:8px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 3px rgba(255,56,60,.25)"></span><span class="tc">25:31</span><span class="txt"><b style="color:var(--s2);font-weight:600">王蕾</b>　我来吧，周五之前能好</span><span class="stop">■</span></div>
+        <div class="fp" style="bottom:64px">
+          <div class="h"><span style="color:#7DE3FF">◔</span><b>正在精准转写</b><span class="tc" style="margin-left:auto;color:#ccc">62%</span></div>
+          <div class="prog"><b></b></div>
+          <div class="body" style="padding-top:10px;color:rgba(255,255,255,.7);font-size:12.5px">可以关掉这个窗口，完成后会通知你。</div>
+        </div>
+      </div>
+      <p class="caption">上：收起后的胶囊　下：录音结束后的精准转写进度</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. 菜单栏 ============ -->
+<section class="board">
+  <h2>菜单栏面板</h2>
+  <p class="note">点菜单栏图标弹出面板，而不是一串菜单项。左：平时，最大的就是"开始录音"，下面是最近会议和处理进度。右：录音中，菜单栏直接显示计时，面板里是计时、暂停 / 结束和最新两句字幕。</p>
+  <div class="mbwrap">
+    <div class="desk" style="padding:0 0 24px">
+      <div class="menubar"><span>Moting ▮▮▯</span><span>Wi-Fi</span><span>周四 15:20</span></div>
+      <div class="popover" style="margin-right:12px">
+        <div class="bigrec"><i></i>开始录音<small>⌥⌘R</small></div>
+        <div class="pop-h">最近</div>
+        <div class="pop-row"><span>周会：接口评审</span><small>转写中 62%</small></div>
+        <div class="pop-row"><span>与设计团队对齐首页改版</span><small>等待电源 · 现在处理</small></div>
+        <div class="pop-row"><span>客户回访：华东区续约</span><small>周二</small></div>
+        <div class="pop-foot"><span>打开 Moting</span><span>设置…</span></div>
+      </div>
+    </div>
+    <div class="desk" style="padding:0 0 24px">
+      <div class="menubar"><span style="color:var(--rec)">● 25:31</span><span>Wi-Fi</span><span>周四 15:20</span></div>
+      <div class="popover" style="margin-right:12px">
+        <div class="bigrec" style="background:linear-gradient(#2C2C2E,#1C1C1E);box-shadow:0 6px 18px rgba(0,0,0,.25)"><span style="width:10px;height:10px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 4px rgba(255,56,60,.3)"></span><span class="tc" style="font-size:20px">25:31</span><small style="opacity:1;display:flex;gap:6px"><span class="btn" style="background:rgba(255,255,255,.12);color:#fff;box-shadow:none">❚❚</span><span class="btn" style="background:var(--rec);color:#fff;box-shadow:none">结束</span></small></div>
+        <div class="pop-h">正在录音</div>
+        <div class="pop-row"><span><span style="color:var(--me);font-weight:600">我</span>　测试环境谁来搭？</span></div>
+        <div class="pop-row"><span><span style="color:var(--s2);font-weight:600">王蕾</span>　我来吧，周五之前能好</span></div>
+        <div class="pop-foot"><span>★ 标记重点</span><span>显示字幕窗</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. 设置 · 存储 ============ -->
+<section class="board">
+  <h2>设置 · 存储</h2>
+  <p class="note">按系统设置的样式改成左侧分栏。存储页回答三个问题：占了多少、放在哪、能不能删。没在用的模型标"未使用"，一键清理只保留当前在用的。所有文件都在一个文件夹里。</p>
+  <div class="desk">
+    <div class="setwin">
+      <aside class="setside">
+        <div class="lights" style="padding:8px 6px 12px"><i></i><i></i><i></i></div>
+        <div class="it"><span class="ic" style="background:#8E8E93">⚙︎</span>通用</div>
+        <div class="it"><span class="ic" style="background:var(--me)">≋</span>识别模型</div>
+        <div class="it"><span class="ic" style="background:#AF52DE">✦</span>AI 纪要</div>
+        <div class="it"><span class="ic" style="background:#FF9500">♪</span>热词与声纹</div>
+        <div class="it on"><span class="ic" style="background:#34C759">▤</span>存储</div>
+        <div class="it"><span class="ic" style="background:#007AFF">⇣</span>下载</div>
+      </aside>
+      <div class="setmain">
+        <h3>存储</h3>
+        <p class="sub">Moting 的所有文件都在一个文件夹里，可以在这里查看和删除。</p>
+        <div class="total"><b>3.5 GB</b><span>共占用</span></div>
+        <div class="stack"><b style="width:2%;background:var(--me)"></b><b style="width:17%;background:#5E5CE6"></b><b style="width:56%;background:#AEAEB2"></b><b style="width:3%;background:#FF9500"></b></div>
+        <div class="keys"><span><i style="background:var(--me)"></i>录音 30 MB</span><span><i style="background:#5E5CE6"></i>在用模型 600 MB</span><span><i style="background:#AEAEB2"></i>未使用模型 2.8 GB</span><span><i style="background:#FF9500"></i>辅助模型 110 MB</span><span>声纹、热词、数据库 &lt; 1 MB</span></div>
+        <div class="cleanup"><span><b>可以释放 2.8 GB</b>　7 个模型当前没有使用</span><span class="btn prim">清理未使用的模型</span></div>
+        <div class="card">
+          <div class="ci"><div>FireRedASR2 中英<span class="chip use">会后转写在用</span><small>离线识别模型</small></div><span class="sz">1.2 GB</span><span class="btn danger">删除</span></div>
+          <div class="ci"><div>中英双语 Paraformer<span class="chip use">实时字幕在用</span><small>实时识别模型</small></div><span class="sz">240 MB</span><span class="btn danger">删除</span></div>
+          <div class="ci"><div>Qwen3-ASR 0.6B<span class="chip idle">未使用</span><small>离线识别模型</small></div><span class="sz">960 MB</span><span class="btn danger">删除</span></div>
+          <div class="ci"><div>SenseVoice<span class="chip idle">未使用</span><small>离线识别模型</small></div><span class="sz">240 MB</span><span class="btn danger">删除</span></div>
+          <div class="ci"><div>录音（5 场会议）<small>在主窗口按会议删除</small></div><span class="sz">30 MB</span><span class="btn">查看</span></div>
+        </div>
+        <div class="path"><span><code>~/Library/Application Support/Moting</code></span><span style="color:var(--me)">在 Finder 中显示</span></div>
+        <div class="path" style="margin-top:6px"><span>卸载时删除这个文件夹即可清理干净</span><span style="color:#D70015">删除 Moting 全部数据…</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. 设置 · 识别模型 ============ -->
+<section class="board">
+  <h2>设置 · 识别模型</h2>
+  <p class="note">模型不再是一串名字：每个都标出在这台 Mac 上实测的准确率和处理速度，选择有依据。数字等会议测试集评测完成后填入。</p>
+  <div class="desk">
+    <div class="setwin" style="height:400px">
+      <aside class="setside">
+        <div class="lights" style="padding:8px 6px 12px"><i></i><i></i><i></i></div>
+        <div class="it"><span class="ic" style="background:#8E8E93">⚙︎</span>通用</div>
+        <div class="it on"><span class="ic" style="background:var(--me)">≋</span>识别模型</div>
+        <div class="it"><span class="ic" style="background:#AF52DE">✦</span>AI 纪要</div>
+        <div class="it"><span class="ic" style="background:#FF9500">♪</span>热词与声纹</div>
+        <div class="it"><span class="ic" style="background:#34C759">▤</span>存储</div>
+        <div class="it"><span class="ic" style="background:#007AFF">⇣</span>下载</div>
+      </aside>
+      <div class="setmain">
+        <h3>会后精准转写</h3>
+        <p class="sub">准确率和速度来自在这台 Mac 上对 400 条真实会议语音的实测。评测完成后填入，这里先不放数字。</p>
+        <div class="card" style="margin-top:0">
+          <div class="mrow"><span class="radio on"></span><div><b>（评测第一名）</b><small style="display:block;color:var(--ink-2);font-size:12px">大小 · 已下载</small></div>
+            <div class="meter"><small>准确率 实测后填入</small><div class="m"><b style="width:0"></b></div></div><span class="sz" style="color:var(--ink-2);font-size:12.5px">1 小时会议约 — 分钟</span></div>
+          <div class="mrow"><span class="radio"></span><div><b>（评测第二名）</b><small style="display:block;color:var(--ink-2);font-size:12px">大小 · 支持热词 · 未下载</small></div>
+            <div class="meter"><small>准确率 实测后填入</small><div class="m"><b style="width:0"></b></div></div><span class="btn">下载</span></div>
+          <div class="mrow"><span class="radio"></span><div><b>（评测第三名）</b><small style="display:block;color:var(--ink-2);font-size:12px">大小 · 已下载</small></div>
+            <div class="meter"><small>准确率 实测后填入</small><div class="m"><b style="width:0"></b></div></div><span class="sz" style="color:var(--ink-2);font-size:12.5px">1 小时会议约 — 分钟</span></div>
+        </div>
+        <p class="caption">每一行：准确率条（越长越准）、在这台 Mac 上处理 1 小时会议的时间、大小、是否支持热词。选中的模型用于录音结束后的精准转写。</p>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+// 生成声纹带：上半是"我"，下半是"对方"（按说话人着色）。固定种子，保证每次一样
+(function () {
+  let s = 7;
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const me = document.getElementById('laneMe'), them = document.getElementById('laneThem');
+  const N = 180;
+  const segs = [[0,18,'me'],[18,48,'them'],[48,56,'me'],[56,78,'s2'],[78,90,'them'],[90,100,'me']];
+  let env = 0.5;
+  for (let i = 0; i < N; i++) {
+    const p = i / N * 100;
+    const who = (segs.find(([a,b]) => p >= a && p < b) || segs[0])[2];
+    // 平滑包络：缓慢变化 + 句间停顿
+    env = Math.min(1, Math.max(0.15, env + (rnd() - 0.5) * 0.35));
+    const pause = rnd() < 0.08;
+    const h = pause ? 2 : Math.round(4 + env * 24);
+    const mb = document.createElement('b'), tb = document.createElement('b');
+    const col = who === 's2' ? 'var(--s2)' : 'var(--them)';
+    const idle = 'height:2px;background:rgba(0,0,0,.12)';
+    if (who === 'me') { mb.style.cssText = `height:${h}px;background:var(--me)`; tb.style.cssText = idle; }
+    else { mb.style.cssText = idle; tb.style.cssText = `height:${h}px;background:${col}`; }
+    if (p > 41) { mb.style.opacity = tb.style.opacity = .45; }
+    me.appendChild(mb); them.appendChild(tb);
+  }
+})();
+</script>
+</body>
+</html>
