@@ -32,6 +32,12 @@ public struct AppPaths: Sendable {
 
     public var meetingsRoot: URL { root.appendingPathComponent("meetings", isDirectory: true) }
 
+    /// 用户声纹：root/voiceprint/me.f32
+    public var voiceprintURL: URL { root.appendingPathComponent("voiceprint/me.f32") }
+
+    /// 热词表：root/hotwords.txt，每行一个
+    public var hotwordsURL: URL { root.appendingPathComponent("hotwords.txt") }
+
     /// 识别模型目录：root/models/<model-id>/
     public var modelsRoot: URL { root.appendingPathComponent("models", isDirectory: true) }
 
