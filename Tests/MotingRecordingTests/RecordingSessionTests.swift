@@ -127,3 +127,18 @@ private final class Fixture {
     #expect(try f.samples(m.id, .system) == 48_000)
     #expect(abs(try f.samples(m.id, .mic) - 49_600) <= 3_200)
 }
+
+@Test func slowTeardownDoesNotExtendMeeting() throws {
+    let f = try Fixture()
+    let m = try f.session.start()
+    f.clock.advance(2)
+    f.mic.emitSamples(32_000)
+    f.system.emitSamples(32_000)
+    let stopAt = f.clock.now
+    // 停设备、销毁聚合设备耗时 5 秒
+    f.mic.onStop = { f.clock.advance(5) }
+    try f.session.stop()
+    #expect(try f.repo.meeting(m.id)?.endedAt == stopAt)
+    #expect(abs(try f.samples(m.id, .mic) - 32_000) <= 1)
+    #expect(abs(try f.samples(m.id, .system) - 32_000) <= 1)
+}

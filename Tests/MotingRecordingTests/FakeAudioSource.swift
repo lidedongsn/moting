@@ -5,6 +5,8 @@ import MotingCore
 final class FakeAudioSource: AudioSource, @unchecked Sendable {
     let channel: AudioChannel
     var startError: Error?
+    /// 模拟设备收尾耗时：stop() 时推进测试时钟
+    var onStop: (() -> Void)?
     private(set) var stopCount = 0
     private var handler: (@Sendable (AudioSourceEvent) -> Void)?
 
@@ -18,6 +20,7 @@ final class FakeAudioSource: AudioSource, @unchecked Sendable {
     }
 
     func stop() {
+        onStop?()
         stopCount += 1
         handler = nil
     }

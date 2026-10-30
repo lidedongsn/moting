@@ -20,7 +20,7 @@ final class FloatingPanelController {
             .removeDuplicates()
             .sink { [weak self] state in
                 switch state {
-                case .recording, .paused: self?.show()
+                case .recording, .paused, .stopping: self?.show()
                 case .stopped, .idle: self?.hide()
                 }
             }

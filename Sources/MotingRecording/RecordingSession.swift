@@ -4,7 +4,8 @@ import MotingCore
 import MotingStorage
 
 public enum RecordingState: Sendable, Equatable {
-    case idle, recording, paused, stopped
+    /// stopping：已确定结束时刻，正在停设备和收尾
+    case idle, recording, paused, stopping, stopped
 }
 
 /// 一场录音：管理各路音频源、按会议时钟对齐写盘、记录暂停与标记。
@@ -22,6 +23,9 @@ public final class RecordingSession: @unchecked Sendable {
     private var syncTimer: DispatchSourceTimer?
     private var _state: RecordingState = .idle
     private var _meeting: Meeting?
+    /// 用户点结束的时刻；停设备可能耗时数秒，这之后到达的数据丢弃
+    private var stopAt: Date?
+    private var stateBeforeStop: RecordingState = .recording
 
     /// 给 UI 电平和后续实时识别订阅，在内部队列上回调
     public var onEvent: (@Sendable (AudioChannel, AudioSourceEvent) -> Void)?
@@ -112,22 +116,26 @@ public final class RecordingSession: @unchecked Sendable {
         }
     }
 
-    /// 幂等：停源 → 处理完已排队的数据 → 补齐两路长度 → 落盘 → 状态改为待处理
+    /// 幂等：先定下结束时刻 → 停源（可能耗时数秒）→ 处理完结束时刻前的数据 → 补齐两路长度 → 落盘 → 状态改为待处理
     public func stop() throws {
-        let active = queue.sync { _state == .recording || _state == .paused }
-        guard active else { return }
+        let begun: Bool = queue.sync {
+            guard _state == .recording || _state == .paused else { return false }
+            stopAt = now()
+            stateBeforeStop = _state
+            _state = .stopping
+            return true
+        }
+        guard begun else { return }
         sources.forEach { $0.stop() }
         try queue.sync {
-            guard _state == .recording || _state == .paused, let m = _meeting else { return }
+            guard _state == .stopping, let m = _meeting, let end = stopAt else { return }
             syncTimer?.cancel()
             syncTimer = nil
-            let end = now()
-            if _state == .paused {
+            if stateBeforeStop == .paused {
                 try repository.endOpenPause(meetingID: m.id, at: end)
-            } else {
-                clock.pause(at: end)
             }
             let elapsed = clock.elapsed(at: end)
+            clock.pause(at: end)
             for w in writers.values {
                 try? w.appendSilence(aligner.silenceToInsert(expectedElapsed: elapsed, written: w.sampleCount, incoming: 0))
             }
@@ -150,7 +158,11 @@ public final class RecordingSession: @unchecked Sendable {
 
     private func handle(_ channel: AudioChannel, _ event: AudioSourceEvent, at: Date) {
         onEvent?(channel, event)
-        guard case .chunk(let chunk) = event, _state == .recording, let w = writers[channel] else { return }
+        guard case .chunk(let chunk) = event, let w = writers[channel] else { return }
+        // 结束过程中只收结束时刻之前采到的数据（且结束前处于录音而非暂停）
+        let accepting = _state == .recording
+            || (_state == .stopping && stateBeforeStop == .recording && at <= (stopAt ?? at))
+        guard accepting else { return }
         let pad = aligner.silenceToInsert(expectedElapsed: clock.elapsed(at: at),
                                           written: w.sampleCount, incoming: chunk.samples.count)
         do {
