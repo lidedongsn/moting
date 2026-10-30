@@ -6,10 +6,13 @@ public struct AudioChunk: Sendable {
     public var samples: [Float]
     /// 本块 RMS，供 UI 电平显示
     public var level: Float
+    /// 发出这块时，缓冲里还积压着多少秒音频（这块的末尾 = 现在 - pendingLatency）
+    public var pendingLatency: TimeInterval
 
-    public init(samples: [Float], level: Float) {
+    public init(samples: [Float], level: Float, pendingLatency: TimeInterval = 0) {
         self.samples = samples
         self.level = level
+        self.pendingLatency = pendingLatency
     }
 }
 

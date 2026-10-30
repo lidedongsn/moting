@@ -137,7 +137,7 @@ public final class RecordingSession: @unchecked Sendable {
             let elapsed = clock.elapsed(at: end)
             clock.pause(at: end)
             for w in writers.values {
-                try? w.appendSilence(aligner.silenceToInsert(expectedElapsed: elapsed, written: w.sampleCount, incoming: 0))
+                try? w.appendSilence(max(0, aligner.adjustment(expectedElapsed: elapsed, written: w.sampleCount, incoming: 0)))
             }
             closeWriters()
             _state = .stopped
@@ -163,11 +163,17 @@ public final class RecordingSession: @unchecked Sendable {
         let accepting = _state == .recording
             || (_state == .stopping && stateBeforeStop == .recording && at <= (stopAt ?? at))
         guard accepting else { return }
-        let pad = aligner.silenceToInsert(expectedElapsed: clock.elapsed(at: at),
-                                          written: w.sampleCount, incoming: chunk.samples.count)
+        let captured = at.addingTimeInterval(-chunk.pendingLatency)
+        let adjust = aligner.adjustment(expectedElapsed: clock.elapsed(at: captured),
+                                        written: w.sampleCount, incoming: chunk.samples.count)
         do {
-            try w.appendSilence(pad)
-            try w.append(chunk.samples)
+            if adjust > 0 {
+                try w.appendSilence(adjust)
+                try w.append(chunk.samples)
+            } else {
+                // 超前（设备时钟偏快等）：丢掉开头多出的部分
+                try w.append(Array(chunk.samples.dropFirst(-adjust)))
+            }
         } catch {
             onEvent?(channel, .interrupted("写盘失败：\(error)"))
         }

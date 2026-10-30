@@ -6,6 +6,7 @@ final class ChunkPump {
     let queue: DispatchQueue
     let ring = SPSCRingBuffer(capacity: 1 << 18)   // 约 5 秒 48kHz，足够吸收消费端抖动
     private var resampler: Resampler?
+    private var inputSampleRate: Double = 48_000
     private var timer: DispatchSourceTimer?
     private var buffer = [Float](repeating: 0, count: 1 << 16)
     private var handler: (@Sendable (AudioSourceEvent) -> Void)?
@@ -16,6 +17,7 @@ final class ChunkPump {
 
     func start(inputSampleRate: Double, handler: @escaping @Sendable (AudioSourceEvent) -> Void) throws {
         self.handler = handler
+        self.inputSampleRate = inputSampleRate
         resampler = try Resampler(inputSampleRate: inputSampleRate)
         let t = DispatchSource.makeTimerSource(queue: queue)
         t.schedule(deadline: .now() + .milliseconds(20), repeating: .milliseconds(20), leeway: .milliseconds(5))
@@ -27,7 +29,8 @@ final class ChunkPump {
     /// 设备采样率变化或换设备时调用：先把旧数据按旧采样率处理完，再换重采样器
     func reconfigure(inputSampleRate: Double) throws {
         drain()
-        if let tail = try resampler?.flush(), !tail.isEmpty { emit(tail) }
+        if let tail = try resampler?.flush(), !tail.isEmpty { emit(tail, pending: 0) }
+        self.inputSampleRate = inputSampleRate
         resampler = try Resampler(inputSampleRate: inputSampleRate)
     }
 
@@ -39,7 +42,7 @@ final class ChunkPump {
         timer?.cancel()
         timer = nil
         drain()
-        if let tail = try? resampler?.flush(), !tail.isEmpty { emit(tail) }
+        if let tail = try? resampler?.flush(), !tail.isEmpty { emit(tail, pending: 0) }
         resampler = nil
         handler = nil
     }
@@ -49,13 +52,16 @@ final class ChunkPump {
         while true {
             let n = buffer.withUnsafeMutableBufferPointer { ring.read(into: $0.baseAddress!, maxCount: $0.count) }
             guard n > 0 else { break }
-            if let out = try? resampler.process(Array(buffer[0..<n])), !out.isEmpty { emit(out) }
+            // 卡顿后一次取出的积压按各自真实位置标注时间，避免被当成"刚采到"
+            let pending = Double(ring.availableToRead) / inputSampleRate
+            if let out = try? resampler.process(Array(buffer[0..<n])), !out.isEmpty { emit(out, pending: pending) }
         }
     }
 
-    private func emit(_ samples: [Float]) {
+    private func emit(_ samples: [Float], pending: TimeInterval) {
         var sum: Float = 0
         for s in samples { sum += s * s }
-        handler?(.chunk(AudioChunk(samples: samples, level: (sum / Float(samples.count)).squareRoot())))
+        handler?(.chunk(AudioChunk(samples: samples, level: (sum / Float(samples.count)).squareRoot(),
+                                   pendingLatency: pending)))
     }
 }

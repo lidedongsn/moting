@@ -142,3 +142,24 @@ private final class Fixture {
     #expect(abs(try f.samples(m.id, .mic) - 32_000) <= 1)
     #expect(abs(try f.samples(m.id, .system) - 32_000) <= 1)
 }
+
+@Test func backlogBurstDoesNotShiftTrack() throws {
+    let f = try Fixture()
+    let m = try f.session.start()
+    // 消费端卡顿 0.5 秒后一次性吐出积压：第一块其实在 1.0s 就已采到
+    f.clock.advance(1.5)
+    f.system.emit(.chunk(AudioChunk(samples: [Float](repeating: 0.1, count: 16_000), level: 0.1, pendingLatency: 0.5)))
+    f.system.emit(.chunk(AudioChunk(samples: [Float](repeating: 0.1, count: 8_000), level: 0.1, pendingLatency: 0)))
+    #expect(abs(try f.samples(m.id, .system) - 24_000) <= 1)
+}
+
+@Test func clockDriftIsTrimmed() throws {
+    let f = try Fixture()
+    let m = try f.session.start()
+    // 设备时钟偏快：10 秒里送来 10.5 秒的数据
+    for _ in 0..<100 {
+        f.clock.advance(0.1)
+        f.mic.emitSamples(1_680)
+    }
+    #expect(abs(try f.samples(m.id, .mic) - 160_000) <= 3_200)
+}
