@@ -106,3 +106,14 @@ private func meeting(_ t: TimeInterval, status: MeetingStatus = .recording) -> M
     #expect(paths.meetingsDiskUsage() == 4_000)
     #expect(paths.diskUsage(of: id) == 4_000)
 }
+
+@Test func modelsUsageIsSeparateFromMeetings() throws {
+    let paths = AppPaths(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+    defer { try? FileManager.default.removeItem(at: paths.root) }
+    let dir = paths.modelsRoot.appendingPathComponent("m1")
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    FileManager.default.createFile(atPath: dir.appendingPathComponent("a.onnx").path, contents: Data(count: 2_000))
+    #expect(paths.modelsRoot.path.hasSuffix("/models"))
+    #expect(paths.modelsDiskUsage() == 2_000)
+    #expect(paths.meetingsDiskUsage() == 0)
+}
