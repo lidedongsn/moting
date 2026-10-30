@@ -34,6 +34,13 @@ struct MeetingDetailView: View {
             header
             Divider()
             playerBar
+            if let error = player.lastError {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 6)
+            }
             if !marks.isEmpty {
                 marksBar
             }

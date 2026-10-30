@@ -1,6 +1,7 @@
 import AVFoundation
 import Combine
 import MotingCapture
+import MotingObjCSupport
 
 /// 会议录音回放：把"我""对方"两路实时混音播放，按需分段读取文件。
 /// 本进程的声音不会被系统音频 Tap 录进去（Tap 排除了本进程）
@@ -8,6 +9,8 @@ import MotingCapture
 public final class MeetingPlayer: ObservableObject {
     @Published public private(set) var isPlaying = false
     @Published public private(set) var currentTime: TimeInterval = 0
+    /// 无法播放的原因（例如输出设备正在切换、引擎没有运行），界面显示给用户；下次成功播放时清空
+    @Published public private(set) var lastError: String?
     public let duration: TimeInterval
 
     private static let rate = 16_000.0
@@ -23,6 +26,8 @@ public final class MeetingPlayer: ObservableObject {
     private var queued = 0
     private var generation = 0                  // seek / 停止后作废旧回调
     private var ticker: Timer?
+    // 只在 init 写入、deinit 读取
+    nonisolated(unsafe) private var configObserver: NSObjectProtocol?
 
     /// volume 仅供测试静音播放
     public init(urls: [URL], volume: Float = 1) {
@@ -31,6 +36,16 @@ public final class MeetingPlayer: ObservableObject {
         engine.attach(node)
         engine.connect(node, to: engine.mainMixerNode, format: format)
         node.volume = volume
+        // 输出设备切换（插拔耳机、蓝牙等）会让引擎停下：同步暂停，下次播放时重新排缓冲
+        configObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.engineStopped() }
+        }
+    }
+
+    deinit {
+        if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
     }
 
     public func toggle() {
@@ -40,13 +55,27 @@ public final class MeetingPlayer: ObservableObject {
     public func play() {
         guard reader != nil, duration > 0 else { return }
         if currentTime >= duration - 0.05 { seek(to: 0) }
+        // engine.start 抛 Swift 错误；node.play 在引擎没有真正跑起来时抛 Objective-C 异常
+        //（"player did not see an IO cycle"），Swift 接不住，必须经 MOTryCatch
         do {
-            if !engine.isRunning { try engine.start() }
+            if !engine.isRunning {
+                engine.prepare()
+                try engine.start()
+            }
         } catch {
+            fail("音频输出没有启动：\(error.localizedDescription)")
+            return
+        }
+        guard engine.isRunning else {
+            fail("音频输出没有启动")
             return
         }
         if queued == 0 { restart(at: Int(currentTime * Self.rate)) }
-        node.play()
+        if let reason = MOTryCatch({ node.play() }) {
+            fail(reason)
+            return
+        }
+        lastError = nil
         isPlaying = true
         ticker?.invalidate()
         ticker = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -66,7 +95,7 @@ public final class MeetingPlayer: ObservableObject {
         let target = max(0, min(t, duration))
         currentTime = target
         restart(at: Int(target * Self.rate))
-        if isPlaying { node.play() }
+        if isPlaying, let reason = MOTryCatch({ node.play() }) { fail(reason) }
     }
 
     public func close() {
@@ -77,6 +106,22 @@ public final class MeetingPlayer: ObservableObject {
     }
 
     // MARK: - 内部
+
+    private func fail(_ reason: String) {
+        lastError = "无法播放：\(reason)。请稍后再试。"
+        engineStopped()
+    }
+
+    /// 引擎已停或无法播放：回到暂停状态，作废已排的缓冲，下次播放从当前位置重排
+    private func engineStopped() {
+        tick()
+        isPlaying = false
+        ticker?.invalidate()
+        ticker = nil
+        generation += 1
+        node.stop()
+        queued = 0
+    }
 
     private func restart(at frame: Int) {
         generation += 1
