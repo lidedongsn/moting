@@ -76,6 +76,19 @@ public final class TranscriptRepository: Sendable {
         }
     }
 
+    public func setSpeakerLabel(_ segmentID: UUID, label: String?) throws {
+        try db.writer.write { db in
+            try db.execute(sql: "UPDATE segment SET speakerLabel = ? WHERE id = ?", arguments: [label, segmentID.uuidString])
+        }
+    }
+
+    public func deleteSegments(ids: [UUID]) throws {
+        guard !ids.isEmpty else { return }
+        try db.writer.write { db in
+            _ = try SegmentRecord.deleteAll(db, keys: ids.map(\.uuidString))
+        }
+    }
+
     public func segments(versionID: UUID) throws -> [TranscriptSegment] {
         try db.writer.read { db in
             try SegmentRecord.filter(Column("versionId") == versionID.uuidString).order(Column("start")).fetchAll(db)
