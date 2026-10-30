@@ -164,7 +164,11 @@ public final class MeetingPlayer: ObservableObject {
     }
 
     private func tick() {
-        guard let t = node.lastRenderTime, let p = node.playerTime(forNodeTime: t) else { return }
-        currentTime = min(duration, Double(startFrame + Int(p.sampleTime)) / Self.rate)
+        // 引擎没在输出时 lastRenderTime 可能无效，playerTime 会抛 Objective-C 异常（曾导致崩溃）
+        guard let t = node.lastRenderTime, t.isSampleTimeValid || t.isHostTimeValid else { return }
+        var sample: AVAudioFramePosition?
+        _ = MOTryCatch { sample = node.playerTime(forNodeTime: t)?.sampleTime }
+        guard let sample else { return }
+        currentTime = min(duration, Double(startFrame + Int(sample)) / Self.rate)
     }
 }

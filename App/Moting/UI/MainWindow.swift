@@ -40,6 +40,7 @@ struct MainWindow: View {
             }
         }
         .frame(minWidth: 900, minHeight: 600)
+        .modifier(HideWindowTitle())
         .task {
             do {
                 for try await list in env.repository.observeAll() {
@@ -257,14 +258,33 @@ struct RecordButton: View {
             }
             .padding(.horizontal, 6)
         default:
+            // 工具栏会把标准按钮压成纯图标，这里自绘红色胶囊
             Button { recorder.start() } label: {
-                Label(recorder.isStarting ? "正在启动…" : "开始录音", systemImage: "record.circle")
-                    .font(.system(size: 13, weight: .semibold))
+                HStack(spacing: 7) {
+                    Circle().fill(.white).frame(width: 9, height: 9)
+                    Text(recorder.isStarting ? "正在启动…" : "开始录音").font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundStyle(.white)
+                .padding(.leading, 11).padding(.trailing, 13)
+                .frame(height: 28)
+                .background(LinearGradient(colors: [Color(hex: 0xFF4B4F), Color(hex: 0xE5262B)], startPoint: .top, endPoint: .bottom),
+                            in: Capsule())
+                .shadow(color: Theme.record.opacity(0.35), radius: 5, y: 2)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.record)
+            .buttonStyle(.plain)
             .disabled(recorder.isStarting)
             .help("开始录音（⌥⌘R，任何 app 里都能按）")
+        }
+    }
+}
+
+/// 去掉工具栏里的窗口标题（macOS 15+；14 上保持原样）
+private struct HideWindowTitle: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 15.0, *) {
+            content.toolbar(removing: .title)
+        } else {
+            content
         }
     }
 }

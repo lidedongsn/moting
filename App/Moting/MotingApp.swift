@@ -51,6 +51,8 @@ struct MotingApp: App {
                 Text(recorder.lastError ?? "")
             }
         }
+        .defaultSize(width: 1180, height: 800)
+        .windowToolbarStyle(.unified)
         Settings {
             if let env {
                 SettingsRoot(live: recorder.live, processing: recorder.processing, env: env)

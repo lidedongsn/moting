@@ -139,9 +139,11 @@ struct DetailView: View {
     @ToolbarContentBuilder
     private var detailToolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
-            Button("导出", systemImage: "square.and.arrow.up", action: exportMarkdown)
+            Button("导出", systemImage: "square.and.arrow.down", action: exportMarkdown)
+                .labelStyle(.titleAndIcon)
                 .help("导出为 Markdown")
             Button(hasFinal ? "重新转写" : "精准转写", systemImage: "arrow.clockwise") { processing.enqueue(meeting.id) }
+                .labelStyle(.titleAndIcon)
                 .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
                 .help("用离线大模型对整段录音重新识别，生成正式稿（草稿保留）")
             Menu {
@@ -507,7 +509,7 @@ struct TranscriptLine: View {
     let onRename: (() -> Void)?
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text(clock(segment.start))
                 .font(.system(size: 12)).monospacedDigit().foregroundStyle(.tertiary)
                 .frame(width: 52, alignment: .leading)
@@ -515,7 +517,7 @@ struct TranscriptLine: View {
                 RoundedRectangle(cornerRadius: 1.5).fill(color).frame(width: 3, height: 14)
                 Text(name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
             }
-            .frame(width: 92, alignment: .leading)
+            .frame(width: 70, alignment: .leading)
             .contentShape(Rectangle())
             .onTapGesture { onRename?() }
             .help(onRename == nil ? "" : "点击改名")
