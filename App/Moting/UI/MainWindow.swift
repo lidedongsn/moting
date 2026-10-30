@@ -36,8 +36,10 @@ struct MainWindow: View {
                 }
             }
             .toolbar {
-                // 放在最后，排在工具栏最右边
-                ToolbarItem(placement: .primaryAction) { RecordButton(recorder: recorder) }
+                // 有会议时录音按钮由详情页放在工具栏最右；没有选中会议时放在这里
+                if processing.selectedMeetingID == nil || !meetings.contains(where: { $0.id == processing.selectedMeetingID }) {
+                    ToolbarItem(placement: .primaryAction) { RecordButton(recorder: recorder) }
+                }
             }
         }
         .frame(minWidth: 900, minHeight: 600)

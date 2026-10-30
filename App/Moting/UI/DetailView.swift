@@ -156,6 +156,8 @@ struct DetailView: View {
             } label: {
                 Label("更多", systemImage: "ellipsis")
             }
+            // 录音按钮排在最右（设计稿）
+            RecordButton(recorder: recorder)
         }
     }
 
