@@ -5,7 +5,14 @@ import SwiftUI
 struct FloatingPanelView: View {
     @ObservedObject var recorder: RecordingController
     @ObservedObject var live: LiveTranscriptModel
+    @ObservedObject var processing: ProcessingModel
     @ObservedObject var ui: FloatingPanelState
+
+    /// 录音已结束、正在显示会后处理状态
+    private var showingProcessing: Bool {
+        !(recorder.state == .recording || recorder.state == .paused || recorder.state == .stopping)
+            && processing.lastRecordedMeetingID != nil
+    }
 
     // macOS 26 深色系统色，与 app 图标一致
     static let micColor = Color(red: 0x3C / 255, green: 0xD3 / 255, blue: 0xFE / 255)
@@ -13,12 +20,10 @@ struct FloatingPanelView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            if !ui.collapsed {
-                Divider().overlay(Color.white.opacity(0.08))
-                subtitles
-                Divider().overlay(Color.white.opacity(0.08))
-                actions
+            if showingProcessing {
+                processingView
+            } else {
+                recordingView
             }
         }
         .foregroundStyle(.white)
@@ -29,6 +34,49 @@ struct FloatingPanelView: View {
             .strokeBorder(Color.white.opacity(0.12)))
         .environment(\.colorScheme, .dark)
         .contextMenu { opacityMenu }
+    }
+
+    /// 录音结束后：会后精准转写的进度
+    private var processingView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                switch processing.lastStatus {
+                case .done:
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                    Text("精准转写完成").font(.system(size: 12, weight: .semibold))
+                case .failed:
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("精准转写失败，可在主窗口重试").font(.system(size: 12, weight: .semibold))
+                case .waitingForPower:
+                    Image(systemName: "powerplug").foregroundStyle(.secondary)
+                    Text("接通电源后自动精准转写").font(.system(size: 12, weight: .semibold))
+                default:
+                    ProgressView().controlSize(.small)
+                    Text("正在精准转写… \(Int((processing.lastRecordedMeetingID.flatMap { processing.progress[$0] } ?? 0) * 100))%")
+                        .font(.system(size: 12, weight: .semibold)).monospacedDigit()
+                }
+                Spacer()
+                iconButton("xmark", help: "关闭（转写在后台继续）") { processing.dismissLastRecorded() }
+            }
+            if !ui.collapsed, processing.lastStatus == .waitingForPower, let id = processing.lastRecordedMeetingID {
+                pillButton("现在处理") { processing.processNow(id) }
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var recordingView: some View {
+        VStack(spacing: 0) {
+            header
+            if !ui.collapsed {
+                Divider().overlay(Color.white.opacity(0.08))
+                subtitles
+                Divider().overlay(Color.white.opacity(0.08))
+                actions
+            }
+        }
     }
 
     private var header: some View {

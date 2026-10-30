@@ -11,6 +11,7 @@ struct MeetingDetailView: View {
     let env: AppEnvironment
     let onDelete: (Meeting) -> Void
     @ObservedObject var recorder: RecordingController
+    @ObservedObject var processing: ProcessingModel
 
     @StateObject private var player: MeetingPlayer
     @State private var title: String
@@ -19,11 +20,21 @@ struct MeetingDetailView: View {
     @State private var segments: [TranscriptSegment] = []
     @State private var marks: [Mark] = []
     @State private var transcriptKind: TranscriptKind?
+    @State private var hasFinal = false
+    @State private var hasDraft = false
+    /// 有正式稿时，用户可切回实时草稿对比
+    @State private var showDraft = false
+    @State private var job: Job?
+    @State private var names: [String: String] = [:]
+    @State private var renamingSpeaker: String?
+    @State private var speakerNameText = ""
 
-    init(meeting: Meeting, env: AppEnvironment, recorder: RecordingController, onDelete: @escaping (Meeting) -> Void) {
+    init(meeting: Meeting, env: AppEnvironment, recorder: RecordingController, processing: ProcessingModel,
+         onDelete: @escaping (Meeting) -> Void) {
         self.meeting = meeting
         self.env = env
         self.recorder = recorder
+        self.processing = processing
         self.onDelete = onDelete
         _title = State(initialValue: meeting.title)
         _player = StateObject(wrappedValue: MeetingPlayer(urls: AudioChannel.allCases.map { env.paths.trackURL(meeting.id, $0) }))
@@ -44,10 +55,36 @@ struct MeetingDetailView: View {
             if !marks.isEmpty {
                 marksBar
             }
+            processingBanner
             Divider()
+            transcriptToolbar
             transcript
         }
         .task(id: meeting.status) { load() }
+        // 会后处理状态变化（开始、完成、失败）时刷新
+        .task(id: meeting.id) {
+            do {
+                for try await j in env.jobs.observe(meetingID: meeting.id) {
+                    let changed = j?.status != job?.status
+                    job = j
+                    if changed { load() }
+                }
+            } catch {}
+        }
+        .onChange(of: showDraft) { _, _ in load() }
+        .alert("说话人改名", isPresented: Binding(get: { renamingSpeaker != nil }, set: { if !$0 { renamingSpeaker = nil } })) {
+            TextField("名字（留空恢复默认）", text: $speakerNameText)
+            Button("保存") {
+                if let label = renamingSpeaker {
+                    try? env.speakers.setName(meetingID: meeting.id, label: label, name: speakerNameText)
+                    names = (try? env.speakers.names(meetingID: meeting.id)) ?? [:]
+                }
+                renamingSpeaker = nil
+            }
+            Button("取消", role: .cancel) { renamingSpeaker = nil }
+        } message: {
+            Text(renamingSpeaker.map { "把「\($0)」改成真实姓名，转写稿和导出会同步更新。" } ?? "")
+        }
         // 从列表右键改名后同步过来
         .onChange(of: meeting.title) { _, newTitle in
             if !editingTitle { title = newTitle }
@@ -155,13 +192,75 @@ struct MeetingDetailView: View {
         .padding(.bottom, 8)
     }
 
+    // MARK: - 会后处理状态
+
+    @ViewBuilder
+    private var processingBanner: some View {
+        if let job {
+            HStack(spacing: 10) {
+                switch job.status {
+                case .queued, .running:
+                    ProgressView(value: processing.progress[meeting.id] ?? job.progress)
+                        .frame(width: 160)
+                    Text("正在精准转写… \(Int((processing.progress[meeting.id] ?? job.progress) * 100))%")
+                    Text("可以关闭窗口，完成后会通知你").foregroundStyle(.secondary)
+                case .waitingForPower:
+                    Image(systemName: "powerplug")
+                    Text("正在使用电池，接通电源后自动精准转写")
+                    Button("现在处理") { processing.processNow(meeting.id) }
+                case .failed:
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text("精准转写失败：\(job.error ?? "未知错误")").lineLimit(2)
+                    Button("重试") { processing.enqueue(meeting.id) }
+                case .done:
+                    if job.filterOutcome == "fellBack" {
+                        Image(systemName: "info.circle")
+                        Text("麦克风一路与你的声纹匹配度偏低，这次没有过滤旁人声音。可以在设置里重新登记声纹。")
+                    } else if job.filterOutcome == "skippedNoVoiceprint", hasFinal {
+                        Image(systemName: "info.circle")
+                        Text("在设置里登记你的声纹后，可以自动去掉旁边无关的人声。").foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .font(.callout)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+        }
+    }
+
+    private var transcriptToolbar: some View {
+        HStack(spacing: 10) {
+            if hasFinal && hasDraft {
+                Picker("", selection: $showDraft) {
+                    Text("精准转写").tag(false)
+                    Text("实时草稿").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+            } else if let kind = transcriptKind {
+                Text(kind == .draft ? "实时字幕草稿" : "精准转写").font(.callout).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button(hasFinal ? "重新转写" : "精准转写", systemImage: "waveform.badge.magnifyingglass") {
+                processing.enqueue(meeting.id)
+            }
+            .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
+            .help("用离线大模型对整段录音重新识别，生成正式稿（草稿保留）")
+        }
+        .controlSize(.small)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
     // MARK: - 转写稿
 
     @ViewBuilder
     private var transcript: some View {
         if segments.isEmpty {
             ContentUnavailableView("暂无转写内容", systemImage: "text.bubble",
-                                   description: Text("这场会议录音时没有实时字幕（例如当时还没下载识别模型）。会后精准转写将在后续版本加入。"))
+                                   description: Text("点右上角\"精准转写\"，用离线大模型识别整段录音。"))
         } else {
             ScrollViewReader { proxy in
                 List(segments) { s in
@@ -179,13 +278,6 @@ struct MeetingDetailView: View {
                     if player.isPlaying, let id { withAnimation { proxy.scrollTo(id, anchor: .center) } }
                 }
             }
-            .overlay(alignment: .bottomTrailing) {
-                if let kind = transcriptKind {
-                    Text(kind == .draft ? "实时字幕草稿" : "精准转写")
-                        .font(.caption2).foregroundStyle(.secondary)
-                        .padding(6)
-                }
-            }
         }
     }
 
@@ -199,9 +291,17 @@ struct MeetingDetailView: View {
                 Circle()
                     .fill(s.channel == .mic ? FloatingPanelView.micColor : FloatingPanelView.systemColor)
                     .frame(width: 7, height: 7)
-                Text(MarkdownExporter.speakerName(s)).font(.callout.weight(.medium))
+                Text(MarkdownExporter.speakerName(s, names)).font(.callout.weight(.medium)).lineLimit(1)
             }
-            .frame(width: 52, alignment: .leading)
+            .frame(width: 76, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                // 只有分离出的说话人可以改名
+                guard let label = s.speakerLabel else { return }
+                speakerNameText = names[label] ?? ""
+                renamingSpeaker = label
+            }
+            .help(s.speakerLabel == nil ? "" : "点击改名")
             Text(s.text)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -221,16 +321,24 @@ struct MeetingDetailView: View {
 
     private func load() {
         marks = (try? env.repository.marks(meeting.id)) ?? []
-        // 有正式稿用正式稿（P3），否则用实时草稿
-        for kind in [TranscriptKind.final, .draft] {
-            if let v = try? env.transcripts.latestVersion(meetingID: meeting.id, kind: kind) {
-                segments = (try? env.transcripts.segments(versionID: v)) ?? []
-                transcriptKind = kind
-                return
-            }
+        names = (try? env.speakers.names(meetingID: meeting.id)) ?? [:]
+        let final = try? env.transcripts.latestVersion(meetingID: meeting.id, kind: .final)
+        let draft = try? env.transcripts.latestVersion(meetingID: meeting.id, kind: .draft)
+        hasFinal = final != nil
+        hasDraft = draft != nil
+        // 有正式稿默认显示正式稿；用户可切回草稿
+        let chosen: (UUID, TranscriptKind)? = {
+            if let final, !showDraft { return (final, .final) }
+            if let draft { return (draft, .draft) }
+            return final.map { ($0, .final) }
+        }()
+        if let (v, kind) = chosen {
+            segments = (try? env.transcripts.segments(versionID: v)) ?? []
+            transcriptKind = kind
+        } else {
+            segments = []
+            transcriptKind = nil
         }
-        segments = []
-        transcriptKind = nil
     }
 
     private func commitTitle() {
@@ -261,7 +369,7 @@ struct MeetingDetailView: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         var m = meeting
         m.title = title
-        let md = MarkdownExporter.export(meeting: m, segments: segments, marks: marks)
+        let md = MarkdownExporter.export(meeting: m, segments: segments, marks: marks, names: names)
         do {
             try md.write(to: url, atomically: true, encoding: .utf8)
         } catch {

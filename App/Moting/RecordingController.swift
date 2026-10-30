@@ -44,6 +44,7 @@ final class RecordingController: ObservableObject {
 
     private let env: AppEnvironment?
     let live: LiveTranscriptModel
+    let processing: ProcessingModel
     private var session: RecordingSession?
     private var ticker: Timer?
     private var monitor = MonitorBox()
@@ -51,6 +52,7 @@ final class RecordingController: ObservableObject {
     init(env: AppEnvironment?) {
         self.env = env
         live = LiveTranscriptModel(env: env)
+        processing = ProcessingModel(env: env)
         // ⌘Q 等方式退出时先正常结束录音，避免会议停在"录音中"
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification,
                                                object: nil, queue: .main) { [weak self] _ in
@@ -105,6 +107,9 @@ final class RecordingController: ObservableObject {
     private func didStop(_ error: Error?) {
         isStopping = false
         live.end()
+        processing.recordingChanged(false)
+        // 正常结束的录音进入会后精准转写
+        if error == nil, let id = session?.meeting?.id { processing.enqueueAfterRecording(id) }
         if let error { lastError = Self.describe(error) }
         refresh()
         levels = [:]
@@ -114,6 +119,7 @@ final class RecordingController: ObservableObject {
     private func didStart(_ s: RecordingSession, meetingID: UUID) {
         session = s
         live.begin(meetingID: meetingID)
+        processing.recordingChanged(true)
         isStarting = false
         refresh()
         ticker = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in

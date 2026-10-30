@@ -16,14 +16,17 @@ final class FloatingPanelController {
 
     init(recorder: RecordingController) {
         self.recorder = recorder
-        // 开始录音时自动弹出，结束后收起
-        recorder.$state
-            .removeDuplicates()
-            .sink { [weak self] state in
+        // 录音中显示；录音结束后若进入会后精准转写，继续显示进度，处理完自动收起
+        recorder.$state.combineLatest(recorder.processing.$lastRecordedMeetingID)
+            .map { state, processingID in
                 switch state {
-                case .recording, .paused, .stopping: self?.show()
-                case .stopped, .idle: self?.hide()
+                case .recording, .paused, .stopping: true
+                case .stopped, .idle: processingID != nil
                 }
+            }
+            .removeDuplicates()
+            .sink { [weak self] visible in
+                visible ? self?.show() : self?.hide()
             }
             .store(in: &cancellables)
         ui.$collapsed
@@ -68,7 +71,7 @@ final class FloatingPanelController {
         panel.minSize = NSSize(width: 240, height: 40)
         panel.maxSize = Self.maxSize
         panel.alphaValue = ui.opacity
-        let host = NSHostingView(rootView: FloatingPanelView(recorder: recorder, live: recorder.live, ui: ui))
+        let host = NSHostingView(rootView: FloatingPanelView(recorder: recorder, live: recorder.live, processing: recorder.processing, ui: ui))
         // 不让窗口跟随 SwiftUI 内容的理想高度变化：字幕越多窗口越高，会冲出屏幕。字幕在框内滚动
         host.sizingOptions = []
         panel.contentView = host

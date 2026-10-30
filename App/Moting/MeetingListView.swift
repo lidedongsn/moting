@@ -7,7 +7,7 @@ struct MeetingListView: View {
     let env: AppEnvironment
     @ObservedObject var recorder: RecordingController
     @State private var meetings: [Meeting] = []
-    @State private var selection: Meeting.ID?
+    @ObservedObject var processing: ProcessingModel
     @State private var usage: Int64 = 0
     @State private var modelsUsage: Int64 = 0
     @State private var pendingDelete: Meeting?
@@ -22,8 +22,8 @@ struct MeetingListView: View {
                 list
                     .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 360)
             } detail: {
-                if let m = meetings.first(where: { $0.id == selection }) {
-                    MeetingDetailView(meeting: m, env: env, recorder: recorder) { pendingDelete = $0 }
+                if let m = meetings.first(where: { $0.id == processing.selectedMeetingID }) {
+                    MeetingDetailView(meeting: m, env: env, recorder: recorder, processing: processing) { pendingDelete = $0 }
                         .id(m.id)
                 } else {
                     ContentUnavailableView("选择一场会议", systemImage: "waveform",
@@ -38,7 +38,7 @@ struct MeetingListView: View {
             do {
                 for try await list in env.repository.observeAll() {
                     meetings = list
-                    if selection == nil { selection = list.first?.id }
+                    if processing.selectedMeetingID == nil { processing.selectedMeetingID = list.first?.id }
                     usage = env.paths.meetingsDiskUsage()
                     modelsUsage = env.paths.modelsDiskUsage()
                 }
@@ -49,7 +49,7 @@ struct MeetingListView: View {
     }
 
     private var list: some View {
-        List(meetings, selection: $selection) { m in
+        List(meetings, selection: $processing.selectedMeetingID) { m in
             VStack(alignment: .leading, spacing: 3) {
                 Text(m.title).font(.headline).lineLimit(1)
                 HStack(spacing: 6) {
@@ -142,7 +142,7 @@ private extension MeetingListView {
             if FileManager.default.fileExists(atPath: dir.path) {
                 try FileManager.default.removeItem(at: dir)
             }
-            if selection == m.id { selection = nil }
+            if processing.selectedMeetingID == m.id { processing.selectedMeetingID = nil }
             try env.repository.delete(m.id)
         } catch {
             recorder.lastError = "删除失败：\(error.localizedDescription)"
