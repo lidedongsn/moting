@@ -117,3 +117,19 @@ private func meeting(_ t: TimeInterval, status: MeetingStatus = .recording) -> M
     #expect(paths.modelsDiskUsage() == 2_000)
     #expect(paths.meetingsDiskUsage() == 0)
 }
+
+@Test func renameUpdatesTitle() throws {
+    let repo = try makeRepo()
+    let m = meeting(100)
+    try repo.insert(m, tracks: [])
+    try repo.rename(m.id, to: "  周会：接口评审  ")
+    #expect(try repo.meeting(m.id)?.title == "周会：接口评审")
+}
+
+@Test func renameIgnoresBlankTitle() throws {
+    let repo = try makeRepo()
+    let m = meeting(100)
+    try repo.insert(m, tracks: [])
+    try repo.rename(m.id, to: "   ")
+    #expect(try repo.meeting(m.id)?.title == m.title)
+}
