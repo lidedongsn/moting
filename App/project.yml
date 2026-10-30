@@ -1,0 +1,32 @@
+name: Moting
+options:
+  bundleIdPrefix: com.lidedongsn
+  deploymentTarget:
+    macOS: "14.2"
+packages:
+  MotingKit:
+    path: ..
+configs:
+  Debug: debug
+  Release: release
+targets:
+  Moting:
+    type: application
+    platform: macOS
+    sources: [Moting]
+    configFiles:
+      Debug: Local.xcconfig
+      Release: Local.xcconfig
+    dependencies:
+      - package: MotingKit
+        product: MotingKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lidedongsn.moting
+        MACOSX_DEPLOYMENT_TARGET: "14.2"
+        ENABLE_HARDENED_RUNTIME: NO
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        INFOPLIST_FILE: Moting/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: "6.0"
