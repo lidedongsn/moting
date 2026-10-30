@@ -5,7 +5,7 @@ let package = Package(
     name: "MotingKit",
     platforms: [.macOS("14.2")],
     products: [
-        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR", "MotingPlayback"]),
+        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR", "MotingPlayback", "MotingPipeline"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.0.0"),
@@ -21,6 +21,11 @@ let package = Package(
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .target(name: "MotingRecording", dependencies: ["MotingCore", "MotingStorage", "MotingCapture"]),
+        .target(
+            name: "MotingPipeline",
+            dependencies: ["MotingCore", "MotingStorage", "MotingCapture", "MotingASR"],
+            linkerSettings: [.linkedFramework("IOKit")]
+        ),
         // 捕获 AVFoundation 抛出的 Objective-C 异常（Swift 无法捕获）
         .target(name: "MotingObjCSupport"),
         .target(name: "MotingPlayback", dependencies: ["MotingCapture", "MotingObjCSupport"]),
@@ -36,6 +41,7 @@ let package = Package(
         .testTarget(name: "MotingStorageTests", dependencies: ["MotingStorage"]),
         .testTarget(name: "MotingCaptureTests", dependencies: ["MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
         .testTarget(name: "MotingRecordingTests", dependencies: ["MotingRecording"]),
+        .testTarget(name: "MotingPipelineTests", dependencies: ["MotingPipeline"]),
         .testTarget(name: "MotingPlaybackTests", dependencies: ["MotingPlayback", "MotingCapture", "MotingObjCSupport"]),
         .testTarget(name: "MotingASRTests", dependencies: ["MotingASR", "MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
     ]

@@ -133,3 +133,14 @@ private func meeting(_ t: TimeInterval, status: MeetingStatus = .recording) -> M
     try repo.rename(m.id, to: "   ")
     #expect(try repo.meeting(m.id)?.title == m.title)
 }
+
+@Test func updateStatusKeepsEndedAt() throws {
+    let repo = try makeRepo()
+    let m = meeting(100)
+    try repo.insert(m, tracks: [])
+    let end = Date(timeIntervalSince1970: 160)
+    try repo.setStatus(m.id, .pendingProcessing, endedAt: end)
+    try repo.updateStatus(m.id, .processing)
+    #expect(try repo.meeting(m.id)?.status == .processing)
+    #expect(try repo.meeting(m.id)?.endedAt == end)
+}

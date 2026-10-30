@@ -40,6 +40,13 @@ public final class MeetingRepository: Sendable {
         }
     }
 
+    /// 只改状态，不动结束时间（会后处理用）
+    public func updateStatus(_ id: UUID, _ status: MeetingStatus) throws {
+        try db.writer.write { db in
+            try db.execute(sql: "UPDATE meeting SET status = ? WHERE id = ?", arguments: [status.rawValue, id.uuidString])
+        }
+    }
+
     /// 去掉首尾空白后为空则不改
     public func rename(_ id: UUID, to title: String) throws {
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
