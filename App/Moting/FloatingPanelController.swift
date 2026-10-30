@@ -10,8 +10,8 @@ final class FloatingPanelController {
     private var panel: NSPanel?
     private var cancellables: Set<AnyCancellable> = []
 
-    static let expandedSize = NSSize(width: 300, height: 210)
-    static let collapsedSize = NSSize(width: 300, height: 40)
+    static let expandedSize = NSSize(width: 330, height: 220)
+    static let collapsedSize = NSSize(width: 330, height: 44)
     static let maxSize = NSSize(width: 520, height: 480)
 
     init(recorder: RecordingController) {

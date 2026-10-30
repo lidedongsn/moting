@@ -15,8 +15,9 @@ struct FloatingPanelView: View {
     }
 
     // macOS 26 深色系统色，与 app 图标一致
-    static let micColor = Color(red: 0x3C / 255, green: 0xD3 / 255, blue: 0xFE / 255)
-    static let systemColor = Color(red: 0xFF / 255, green: 0xD6 / 255, blue: 0x00 / 255)
+    // 悬浮窗固定为深色玻璃，直接用图标原色
+    static let micColor = Color(hex: 0x3CD3FE)
+    static let systemColor = Color(hex: 0xFFD600)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,11 +28,13 @@ struct FloatingPanelView: View {
             }
         }
         .foregroundStyle(.white)
-        .background(.ultraThinMaterial.opacity(0.6))
-        .background(Color(white: 0.11).opacity(0.86))
-        .clipShape(RoundedRectangle(cornerRadius: ui.collapsed ? 20 : 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: ui.collapsed ? 20 : 12, style: .continuous)
-            .strokeBorder(Color.white.opacity(0.12)))
+        // 玻璃：材质 + 深色底 + 上亮下暗的细描边（macOS 26 Liquid Glass 的近似）
+        .background(.ultraThinMaterial)
+        .background(Color(white: 0.1).opacity(0.55))
+        .clipShape(RoundedRectangle(cornerRadius: ui.collapsed ? 22 : 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: ui.collapsed ? 22 : 18, style: .continuous)
+            .strokeBorder(LinearGradient(colors: [.white.opacity(0.32), .white.opacity(0.06)], startPoint: .top, endPoint: .bottom),
+                          lineWidth: 0.7))
         .environment(\.colorScheme, .dark)
         .contextMenu { opacityMenu }
     }
@@ -151,14 +154,15 @@ struct FloatingPanelView: View {
         } else {
             ScrollViewReader { proxy in
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 7) {
                         ForEach(live.lines) { line in
-                            (Text(line.channel == .mic ? "我：" : "对方：")
+                            (Text(line.channel == .mic ? "我  " : "对方  ")
+                                .font(.system(size: 11.5, weight: .semibold))
                                 .foregroundColor(line.channel == .mic ? Self.micColor : Self.systemColor)
                              + Text(line.text)
-                                .foregroundColor(line.isFinal ? .white : .white.opacity(0.5)))
-                                .font(.system(size: 12))
-                                .lineSpacing(2)
+                                .font(.system(size: 13.5))
+                                .foregroundColor(line.isFinal ? .white : .white.opacity(0.45)))
+                                .lineSpacing(3)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .id(line.id)
                         }
@@ -212,8 +216,8 @@ struct FloatingPanelView: View {
             Image(systemName: name)
                 .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(tint == .white ? Color.white.opacity(0.8) : tint)
-                .frame(width: 22, height: 22)
-                .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                .frame(width: 24, height: 24)
+                .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
         }
         .buttonStyle(.plain)
         .help(help)
@@ -222,10 +226,10 @@ struct FloatingPanelView: View {
     private func pillButton(_ title: String, tint: Color? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 11, weight: .medium))
-                .padding(.horizontal, 9)
-                .frame(height: 24)
-                .background(tint ?? Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                .font(.system(size: 12, weight: .medium))
+                .padding(.horizontal, 11)
+                .frame(height: 26)
+                .background(tint?.opacity(0.9) ?? Color.white.opacity(0.1), in: Capsule())
         }
         .buttonStyle(.plain)
     }

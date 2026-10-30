@@ -6,6 +6,7 @@ struct MotingApp: App {
     private let bootError: String?
     @StateObject private var recorder: RecordingController
     private let floatingPanel: FloatingPanelController
+    private let hotKey: GlobalHotKey
 
     init() {
         let recorder: RecordingController
@@ -21,6 +22,17 @@ struct MotingApp: App {
         }
         _recorder = StateObject(wrappedValue: recorder)
         floatingPanel = FloatingPanelController(recorder: recorder)
+        // ⌥⌘R：任何 app 里开始 / 结束录音
+        hotKey = GlobalHotKey { [weak recorder] in
+            MainActor.assumeIsolated {
+                guard let recorder else { return }
+                switch recorder.state {
+                case .recording, .paused: recorder.stop()
+                case .stopping: break
+                default: recorder.start()
+                }
+            }
+        }
     }
 
     var body: some Scene {
@@ -45,13 +57,18 @@ struct MotingApp: App {
             }
         }
         MenuBarExtra {
-            MenuBarContent(recorder: recorder)
+            MenuBarContent(recorder: recorder, live: recorder.live, processing: recorder.processing, env: env)
         } label: {
-            if recorder.state == .recording || recorder.state == .paused {
-                Image("MenuBarIconRecording").renderingMode(.original)
+            if recorder.state == .recording || recorder.state == .paused || recorder.state == .stopping {
+                // 录音中：菜单栏直接显示红点和计时
+                HStack(spacing: 4) {
+                    Image("MenuBarIconRecording").renderingMode(.original)
+                    Text(clock(recorder.elapsed)).monospacedDigit()
+                }
             } else {
                 Image("MenuBarIcon")
             }
         }
+        .menuBarExtraStyle(.window)
     }
 }

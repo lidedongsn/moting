@@ -1,41 +1,170 @@
+import AppKit
 import MotingCore
 import SwiftUI
 
+/// 菜单栏面板：平时是大号"开始录音"和最近会议；录音中是计时、暂停 / 结束和最新两句字幕
 struct MenuBarContent: View {
     @ObservedObject var recorder: RecordingController
+    @ObservedObject var live: LiveTranscriptModel
+    @ObservedObject var processing: ProcessingModel
+    let env: AppEnvironment?
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
+    @State private var recent: [Meeting] = []
 
-    var body: some View {
-        switch recorder.state {
-        case .recording, .paused:
-            Text("\(recorder.state == .paused ? "已暂停" : "录音中") \(recorder.elapsed.clockText)")
-            Text("我 \(levelText(.mic))  ·  对方 \(levelText(.system))")
-            Divider()
-            if recorder.state == .paused {
-                Button("继续") { recorder.resume() }
-            } else {
-                Button("暂停") { recorder.pause() }
-            }
-            Button("★ 标记重点") { recorder.mark() }
-            Button(recorder.isStopping ? "正在结束…" : "结束录音") { recorder.stop() }
-                .disabled(recorder.isStopping)
-        default:
-            Button(recorder.isStarting ? "正在启动…" : "开始录音") { recorder.start() }
-                .disabled(recorder.isStarting)
-        }
-        Divider()
-        Button("打开 Moting") {
-            openWindow(id: "main")
-            NSApp.activate(ignoringOtherApps: true)
-        }
-        SettingsLink { Text("设置…") }
-        Button("退出") { NSApp.terminate(nil) }
+    private var isRecording: Bool {
+        recorder.state == .recording || recorder.state == .paused || recorder.state == .stopping
     }
 
-    private func levelText(_ ch: AudioChannel) -> String {
-        let v = recorder.levels[ch] ?? 0
-        // 粗略转成 0–5 格
-        let bars = min(5, Int((v * 50).squareRoot() * 2))
-        return String(repeating: "▮", count: bars) + String(repeating: "▯", count: 5 - bars)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if isRecording { recordingCard } else { startButton }
+            if isRecording {
+                section("正在录音")
+                ForEach(live.lines.suffix(2)) { line in
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(line.channel == .mic ? "我" : "对方").fontWeight(.semibold)
+                            .foregroundStyle(line.channel == .mic ? Theme.me : Theme.them)
+                        Text(line.text).foregroundStyle(line.isFinal ? .primary : .secondary).lineLimit(2)
+                    }
+                    .font(.system(size: 13))
+                    .padding(.horizontal, 8).padding(.vertical, 5)
+                }
+                if live.lines.isEmpty {
+                    Text("等待说话…").font(.system(size: 13)).foregroundStyle(.tertiary).padding(.horizontal, 8).padding(.vertical, 5)
+                }
+            } else if !recent.isEmpty {
+                section("最近")
+                ForEach(recent) { m in
+                    Button {
+                        processing.selectedMeetingID = m.id
+                        showMain()
+                    } label: {
+                        HStack {
+                            Text(m.title).lineLimit(1)
+                            Spacer()
+                            Text(status(m)).font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+                        .font(.system(size: 13))
+                        .padding(.horizontal, 8).padding(.vertical, 6)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(MenuRowStyle())
+                }
+            }
+            Divider().padding(.top, 10)
+            HStack {
+                if isRecording {
+                    Button("★ 标记重点") { recorder.mark() }
+                } else {
+                    Button("打开 Moting", action: showMain)
+                }
+                Spacer()
+                Button("设置…") {
+                    openSettings()
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+                Button("退出") { NSApp.terminate(nil) }
+            }
+            .buttonStyle(.borderless)
+            .font(.system(size: 12.5))
+            .foregroundStyle(.secondary)
+            .padding(.top, 10)
+        }
+        .padding(14)
+        .frame(width: 320)
+        .task(id: recorder.state) { loadRecent() }
+    }
+
+    private var startButton: some View {
+        Button { recorder.start() } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().strokeBorder(.white, lineWidth: 3).frame(width: 22, height: 22)
+                    Circle().fill(.white).frame(width: 9, height: 9)
+                }
+                Text(recorder.isStarting ? "正在启动…" : "开始录音").font(.system(size: 15, weight: .semibold))
+                Spacer()
+                Text("⌥⌘R").font(.system(size: 12)).opacity(0.85)
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .frame(height: 56)
+            .background(LinearGradient(colors: [Color(hex: 0xFF4B4F), Color(hex: 0xE5262B)], startPoint: .top, endPoint: .bottom),
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .shadow(color: Theme.record.opacity(0.35), radius: 9, y: 4)
+        }
+        .buttonStyle(.plain)
+        .disabled(recorder.isStarting)
+    }
+
+    private var recordingCard: some View {
+        HStack(spacing: 12) {
+            Circle().fill(recorder.state == .paused ? Color.orange : Theme.record).frame(width: 10, height: 10)
+                .shadow(color: Theme.record.opacity(0.5), radius: 4)
+            Text(clock(recorder.elapsed)).font(.system(size: 20, weight: .semibold)).monospacedDigit()
+            if recorder.state == .paused { Text("已暂停").font(.system(size: 12)).foregroundStyle(.secondary) }
+            Spacer()
+            Button {
+                recorder.state == .paused ? recorder.resume() : recorder.pause()
+            } label: {
+                Image(systemName: recorder.state == .paused ? "play.fill" : "pause.fill").frame(width: 28, height: 26)
+            }
+            .buttonStyle(.bordered)
+            Button(recorder.isStopping ? "正在结束…" : "结束") { recorder.stop() }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.record)
+                .disabled(recorder.isStopping)
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 56)
+        .glassCard(radius: 14, material: .regularMaterial)
+    }
+
+    private func section(_ title: String) -> some View {
+        Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(.tertiary)
+            .padding(.top, 14).padding(.bottom, 4).padding(.horizontal, 2)
+    }
+
+    private func status(_ m: Meeting) -> String {
+        switch m.status {
+        case .processing: "转写中 \(Int((processing.progress[m.id] ?? 0) * 100))%"
+        case .pendingProcessing: "待转写"
+        case .failed: "失败"
+        case .recording: "录音中"
+        case .interrupted: "录音中断"
+        case .done:
+            Calendar.current.isDateInToday(m.startedAt)
+                ? m.startedAt.formatted(.dateTime.hour().minute())
+                : m.startedAt.formatted(.dateTime.month().day())
+        }
+    }
+
+    private func loadRecent() {
+        guard let env else { return }
+        let repo = env.repository
+        Task.detached {
+            let all = (try? repo.meetings(status: .done)) ?? []
+            let others = [MeetingStatus.processing, .pendingProcessing, .failed].flatMap { (try? repo.meetings(status: $0)) ?? [] }
+            let list = Array((all + others).sorted { $0.startedAt > $1.startedAt }.prefix(3))
+            await MainActor.run { recent = list }
+        }
+    }
+
+    private func showMain() {
+        openWindow(id: "main")
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+/// 菜单面板里可点的行：悬停时浅色高亮
+private struct MenuRowStyle: ButtonStyle {
+    @State private var hover = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background((configuration.isPressed || hover) ? Color.primary.opacity(0.08) : .clear,
+                        in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .onHover { hover = $0 }
     }
 }

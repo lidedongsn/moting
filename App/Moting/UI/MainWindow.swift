@@ -264,8 +264,7 @@ struct RecordButton: View {
             .buttonStyle(.borderedProminent)
             .tint(Theme.record)
             .disabled(recorder.isStarting)
-            .keyboardShortcut("r", modifiers: [.command, .option])
-            .help("开始录音（⌥⌘R）")
+            .help("开始录音（⌥⌘R，任何 app 里都能按）")
         }
     }
 }
