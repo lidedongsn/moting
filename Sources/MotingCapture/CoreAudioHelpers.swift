@@ -69,15 +69,19 @@ enum CA {
         return list.reduce(0) { $0 + Int($1.mNumberChannels) }
     }
 
-    /// 注册属性监听，返回用于注销的闭包
+    /// 所有属性监听都在这个专用队列上接收，再异步转发到调用方的队列。
+    /// 这样调用方在自己的队列上注销监听时，不会与 HAL 投递回调互相等待
+    private static let listenerQueue = DispatchQueue(label: "moting.coreaudio.listeners")
+
+    /// 注册属性监听，block 在 queue 上异步执行；返回用于注销的闭包
     static func listen(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector, queue: DispatchQueue,
                        _ block: @escaping () -> Void) -> () -> Void {
         var addr = address(selector)
-        let listener: AudioObjectPropertyListenerBlock = { _, _ in block() }
-        AudioObjectAddPropertyListenerBlock(object, &addr, queue, listener)
+        let listener: AudioObjectPropertyListenerBlock = { _, _ in queue.async(execute: block) }
+        AudioObjectAddPropertyListenerBlock(object, &addr, listenerQueue, listener)
         return {
             var addr = address(selector)
-            AudioObjectRemovePropertyListenerBlock(object, &addr, queue, listener)
+            AudioObjectRemovePropertyListenerBlock(object, &addr, listenerQueue, listener)
         }
     }
 }

@@ -15,12 +15,15 @@ func realSessionStopsCleanly() async throws {
     let m = try session.start()
     try await Task.sleep(for: .seconds(2))
     let flag = StopFlag()
+    let t0 = Date()
     Thread {
         try? session.stop()
         flag.set()
     }.start()
     for _ in 0..<50 where !flag.value { try await Task.sleep(for: .milliseconds(100)) }
     let finished = flag.value
+    print("stop() 耗时 \(String(format: "%.2f", Date().timeIntervalSince(t0))) 秒")
+    #expect(Date().timeIntervalSince(t0) < 1.5, "结束录音应在 1.5 秒内完成")
     #expect(finished, "stop() 5 秒内没有返回")
     if finished { #expect(try repo.meeting(m.id)?.status == .pendingProcessing) }
 }

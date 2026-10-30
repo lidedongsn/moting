@@ -11,6 +11,8 @@ public final class SystemAudioTapSource: AudioSource {
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
     private var reader: DeviceIOReader?
     private var unlisteners: [() -> Void] = []
+    /// 聚合设备的采样率监听，随 Tap 重建而重新注册
+    private var unlistenRate: (() -> Void)?
 
     public init() {}
 
@@ -21,6 +23,7 @@ public final class SystemAudioTapSource: AudioSource {
                 try pump.start(inputSampleRate: r.inputSampleRate, handler: handler)
                 try r.start()
                 reader = r
+                watchRate()
             } catch {
                 teardownTap()
                 throw Self.mapPermission(error)
@@ -70,7 +73,18 @@ public final class SystemAudioTapSource: AudioSource {
         return try DeviceIOReader(deviceID: agg, ring: pump.ring)
     }
 
+    /// 蓝牙耳机切到通话模式等情况会改变聚合设备采样率，需要换重采样器，否则录成变速音频
+    private func watchRate() {
+        let device = aggregateID
+        unlistenRate = CA.listen(device, kAudioDevicePropertyNominalSampleRate, queue: pump.queue) { [weak self] in
+            guard let self, self.aggregateID == device, let rate = try? CA.nominalSampleRate(device) else { return }
+            try? self.pump.reconfigure(inputSampleRate: rate)
+        }
+    }
+
     private func teardownTap() {
+        unlistenRate?()
+        unlistenRate = nil
         reader?.stop()
         reader = nil
         if aggregateID != kAudioObjectUnknown {
@@ -92,6 +106,7 @@ public final class SystemAudioTapSource: AudioSource {
             try pump.reconfigure(inputSampleRate: r.inputSampleRate)
             try r.start()
             reader = r
+            watchRate()
             pump.send(.resumed)
         } catch {
             teardownTap()
