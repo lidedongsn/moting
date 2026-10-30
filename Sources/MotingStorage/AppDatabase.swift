@@ -67,6 +67,29 @@ public final class AppDatabase: Sendable {
                 t.column("text", .text).notNull()
             }
         }
+        m.registerMigration("v3") { db in
+            try db.create(table: "job") { t in
+                t.primaryKey("id", .text)
+                t.belongsTo("meeting", onDelete: .cascade).notNull()
+                t.column("status", .text).notNull().indexed()
+                t.column("completedSteps", .text).notNull()
+                t.column("progress", .double).notNull()
+                t.column("error", .text)
+                t.column("modelId", .text).notNull()
+                t.column("versionId", .text)
+                t.column("filterOutcome", .text)
+                t.column("createdAt", .datetime).notNull()
+            }
+            try db.create(table: "speaker") { t in
+                t.belongsTo("meeting", onDelete: .cascade).notNull()
+                t.column("label", .text).notNull()
+                t.column("displayName", .text).notNull()
+                t.primaryKey(["meetingId", "label"])
+            }
+            try db.alter(table: "transcriptVersion") { t in
+                t.add(column: "completedAt", .datetime)
+            }
+        }
         return m
     }
 }
