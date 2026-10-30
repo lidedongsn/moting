@@ -13,6 +13,8 @@ struct MeetingDetailView: View {
 
     @StateObject private var player: MeetingPlayer
     @State private var title: String
+    @State private var editingTitle = false
+    @FocusState private var titleFocused: Bool
     @State private var segments: [TranscriptSegment] = []
     @State private var marks: [Mark] = []
     @State private var transcriptKind: TranscriptKind?
@@ -38,6 +40,10 @@ struct MeetingDetailView: View {
             transcript
         }
         .task(id: meeting.status) { load() }
+        // 从列表右键改名后同步过来
+        .onChange(of: meeting.title) { _, newTitle in
+            if !editingTitle { title = newTitle }
+        }
         .onDisappear { player.close() }
     }
 
@@ -45,10 +51,7 @@ struct MeetingDetailView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("会议标题", text: $title)
-                .textFieldStyle(.plain)
-                .font(.title2.weight(.semibold))
-                .onSubmit(rename)
+            titleRow
             HStack(spacing: 12) {
                 Label(meeting.startedAt.formatted(date: .long, time: .shortened), systemImage: "calendar")
                 if let end = meeting.endedAt {
@@ -74,6 +77,37 @@ struct MeetingDetailView: View {
         .padding(16)
     }
 
+    // 标题：点铅笔或双击进入编辑；回车或点别处保存，Esc 取消
+    @ViewBuilder
+    private var titleRow: some View {
+        if editingTitle {
+            TextField("会议标题", text: $title)
+                .textFieldStyle(.roundedBorder)
+                .font(.title2.weight(.semibold))
+                .focused($titleFocused)
+                .onSubmit(commitTitle)
+                .onExitCommand(perform: cancelTitle)
+                .onChange(of: titleFocused) { _, focused in
+                    if !focused { commitTitle() }
+                }
+                .onAppear { titleFocused = true }
+        } else {
+            HStack(spacing: 8) {
+                Text(title)
+                    .font(.title2.weight(.semibold))
+                    .lineLimit(1)
+                    .onTapGesture(count: 2) { editingTitle = true }
+                Button {
+                    editingTitle = true
+                } label: {
+                    Image(systemName: "pencil")
+                }
+                .buttonStyle(.borderless)
+                .help("重命名")
+            }
+        }
+    }
+
     // MARK: - 回放
 
     private var playerBar: some View {
@@ -84,7 +118,7 @@ struct MeetingDetailView: View {
                 Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                     .frame(width: 18)
             }
-            .keyboardShortcut(.space, modifiers: [])
+            .keyboardShortcut(editingTitle ? nil : KeyboardShortcut(.space, modifiers: []))
             .disabled(player.duration == 0)
             Text(player.currentTime.clockText).monospacedDigit().font(.callout)
             Slider(value: Binding(get: { player.currentTime }, set: { player.seek(to: $0) }),
@@ -190,12 +224,25 @@ struct MeetingDetailView: View {
         transcriptKind = nil
     }
 
-    private func rename() {
+    private func commitTitle() {
+        guard editingTitle else { return }
+        editingTitle = false
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            title = meeting.title
+            return
+        }
+        title = trimmed
         do {
-            try env.repository.rename(meeting.id, to: title)
+            try env.repository.rename(meeting.id, to: trimmed)
         } catch {
             recorder.lastError = "改名失败：\(error.localizedDescription)"
         }
+    }
+
+    private func cancelTitle() {
+        title = meeting.title
+        editingTitle = false
     }
 
     private func exportMarkdown() {

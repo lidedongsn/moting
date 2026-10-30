@@ -11,6 +11,8 @@ struct MeetingListView: View {
     @State private var usage: Int64 = 0
     @State private var modelsUsage: Int64 = 0
     @State private var pendingDelete: Meeting?
+    @State private var renaming: Meeting?
+    @State private var renameText = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,6 +65,10 @@ struct MeetingListView: View {
             .padding(.vertical, 2)
             .tag(m.id)
             .contextMenu {
+                Button("重命名…") {
+                    renameText = m.title
+                    renaming = m
+                }
                 Button("在 Finder 中显示") { reveal(env.paths.meetingDirectory(m.id)) }
                 Divider()
                 Button("删除会议…", role: .destructive) { pendingDelete = m }
@@ -77,6 +83,20 @@ struct MeetingListView: View {
             }
         } message: {
             Text("录音文件和会议记录会被永久删除，无法恢复。")
+        }
+        .alert("重命名会议", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("会议标题", text: $renameText)
+            Button("保存") {
+                if let m = renaming {
+                    do {
+                        try env.repository.rename(m.id, to: renameText)
+                    } catch {
+                        recorder.lastError = "改名失败：\(error.localizedDescription)"
+                    }
+                }
+                renaming = nil
+            }
+            Button("取消", role: .cancel) { renaming = nil }
         }
         .overlay {
             if meetings.isEmpty {
