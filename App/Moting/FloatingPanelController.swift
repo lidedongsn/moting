@@ -143,8 +143,9 @@ final class FloatingPanelController {
             let top = frame.maxY, right = frame.maxX
             frame.size = NSSize(width: max(frame.width, Self.expandedSize.width), height: max(frame.height, Self.expandedSize.height))
             frame.origin = NSPoint(x: right - frame.width, y: top - frame.height)
-        } else if frame.height < 120 {
-            // 展开状态却恢复出收起时的高度（保存的窗口位置是收起时记下的）：恢复默认展开高度，顶边不动
+        } else if frame.height < 120 || (isRecording && frame.height <= Self.processingHeight) {
+            // 展开状态却恢复出收起时的高度（保存的窗口位置是收起时记下的），
+            // 或录音中还是会后进度卡片的高度：恢复默认展开高度，顶边不动
             let top = frame.maxY
             frame.size.height = base.height
             frame.origin.y = top - base.height

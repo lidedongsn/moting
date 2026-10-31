@@ -40,3 +40,12 @@ private func finalEvent(_ text: String) -> TranscriptEvent {
     #expect(b.lines.count == 1500)
     #expect(b.lines.first?.text == "第0句")
 }
+
+@Test func retractRemovesLine() {
+    var b = SubtitleBuffer()
+    let id = UUID()
+    b.apply(.partial(line(id, "回声", final: false)))
+    b.apply(finalEvent("别的"))
+    b.apply(.retract(id))
+    #expect(b.lines.map(\.text) == ["别的"])
+}

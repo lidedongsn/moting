@@ -7,6 +7,8 @@ final class FakeRecognizer: StreamingRecognizing {
     struct Step { var text: String; var endpoint: Bool = false }
     private let scripts: [[Step]]
     private var made = 0
+    /// 已创建的流，按 makeStream 顺序（第一个是 mic）
+    private(set) var streams: [FakeStream] = []
 
     /// 每个流一份脚本，按 makeStream 的调用顺序分配
     init(_ scripts: [[Step]]) {
@@ -15,7 +17,9 @@ final class FakeRecognizer: StreamingRecognizing {
 
     func makeStream() -> RecognitionStream {
         defer { made += 1 }
-        return FakeStream(script: made < scripts.count ? scripts[made] : [])
+        let s = FakeStream(script: made < scripts.count ? scripts[made] : [])
+        streams.append(s)
+        return s
     }
 }
 
@@ -28,7 +32,10 @@ final class FakeStream: RecognitionStream {
         self.script = script
     }
 
-    func accept(_ samples: [Float]) {}
+    /// 送进识别器的全部音频
+    private(set) var accepted: [Float] = []
+
+    func accept(_ samples: [Float]) { accepted += samples }
 
     func decode() {
         index += 1

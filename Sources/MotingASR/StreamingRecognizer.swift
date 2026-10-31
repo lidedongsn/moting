@@ -109,7 +109,7 @@ private final class SherpaStream: RecognitionStream {
     var text: String {
         guard let r = SherpaOnnxGetOnlineStreamResult(recognizer.handle, handle) else { return "" }
         defer { SherpaOnnxDestroyOnlineRecognizerResult(r) }
-        return r.pointee.text.map { String(cString: $0) }?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return cleanRecognizedText(r.pointee.text.map { String(cString: $0) } ?? "")
     }
 
     var isEndpoint: Bool {
@@ -123,4 +123,10 @@ private final class SherpaStream: RecognitionStream {
     func inputFinished() {
         SherpaOnnxOnlineStreamInputFinished(handle)
     }
+}
+
+/// 去掉模型控制符（流式 Paraformer 句末会带出 </s>）和首尾空白
+func cleanRecognizedText(_ raw: String) -> String {
+    raw.replacingOccurrences(of: "</s>", with: "").replacingOccurrences(of: "<s>", with: "")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
 }

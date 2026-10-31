@@ -118,3 +118,82 @@ func liveTranscriberWithRealModel() throws {
     t.finishAndWait()
     #expect(log.finals.map(\.text) == ["你好吗"])
 }
+
+@Test func speakerEchoIsRemovedBeforeMicRecognition() {
+    // 外放：麦克风录进了扬声器里对方的声音（晚 30ms、减半）。送进"我"识别器的应大幅减弱
+    var g: UInt64 = 42
+    let n = 8 * 16_000
+    let far: [Float] = (0..<n).map { i in
+        g = g &* 6364136223846793005 &+ 1442695040888963407
+        let noise = Float(Int64(bitPattern: g >> 11) % 2000) / 1000 - 1
+        return noise * (max(0, sin(Float(i) / 16_000 * 2 * .pi * 2.3)) * 0.6 + 0.05) * 0.5
+    }
+    let mic: [Float] = (0..<n).map { $0 >= 480 ? far[$0 - 480] * 0.5 : 0 }
+    let rec = FakeRecognizer([[], []])
+    let t = LiveTranscriber(recognizer: rec, versionID: UUID()) { _ in }
+    for p in stride(from: 0, to: n, by: 1_600) {
+        t.feed(.system, Array(far[p..<p + 1_600]), startSample: p)
+        t.feed(.mic, Array(mic[p..<p + 1_600]), startSample: p)
+    }
+    t.waitUntilIdle()
+    let heard = rec.streams[0].accepted
+    let tail = { (x: [Float]) -> Double in
+        let s = x.suffix(2 * 16_000)
+        return s.reduce(0) { $0 + Double($1 * $1) } / Double(max(1, s.count))
+    }
+    let reductionDB = 10 * log10(tail(mic) / max(tail(heard), 1e-12))
+    #expect(heard.count > n - 16_000, "麦克风不应被卡住")
+    #expect(reductionDB > 15, "回声只压低了 \(reductionDB) dB")
+}
+
+/// 实测：把一场外放录音的两路文件按录音时的方式送进实时识别，打印两路识别出的文字。
+/// MOTING_AEC_DIR=会议目录 [MOTING_AEC_MODEL=模型 id] swift test --filter recordedMeetingLive
+@Test(.enabled(if: ProcessInfo.processInfo.environment["MOTING_AEC_DIR"] != nil))
+func recordedMeetingLiveTranscript() throws {
+    let env = ProcessInfo.processInfo.environment
+    let dir = URL(fileURLWithPath: env["MOTING_AEC_DIR"]!)
+    func load(_ name: String) throws -> [Float] {
+        try Data(contentsOf: dir.appendingPathComponent(name)).withUnsafeBytes { r in
+            r.bindMemory(to: Int16.self).map { Float(Int16(littleEndian: $0)) / 32_768 }
+        }
+    }
+    let mic = try load("mic.pcm"), sys = try load("system.pcm")
+    let m = ModelCatalog.all.first { $0.id == env["MOTING_AEC_MODEL"] } ?? ModelCatalog.default
+    let r = try SherpaRecognizer(model: m, directory: ModelStore(root: AppPaths.default.modelsRoot).directory(for: m))
+    let log = EventLog()
+    let t = LiveTranscriber(recognizer: r, versionID: UUID()) { log.add($0) }
+    let n = min(mic.count, sys.count)
+    for p in stride(from: 0, to: n - 320, by: 320) {
+        t.feed(.system, Array(sys[p..<p + 320]), startSample: p)
+        t.feed(.mic, Array(mic[p..<p + 320]), startSample: p)
+    }
+    t.finish()
+    t.waitUntilIdle()
+    for s in log.finals { print(String(format: "%@ %6.1f-%6.1f %@", s.channel == .mic ? "我  " : "对方", s.start, s.end, s.text)) }
+}
+
+@Test func micLineRepeatingSpeakerIsRetracted() {
+    // 外放回声被识别成"我"：与同时段"对方"文字大部分相同，不出最终句，已显示的草稿撤回
+    let (t, log) = make([.init(text: "第一件事"), .init(text: "第一件是接口文档"), .init(text: "第一件是接口文档在周三定稿", endpoint: true)],
+                        [.init(text: "第一件事"), .init(text: "第一件事接口文档"), .init(text: "第一件事接口文档需要在周三之前定稿", endpoint: true)])
+    for i in 0..<3 {
+        t.feed(.system, block, startSample: i * 1_600)
+        t.feed(.mic, block, startSample: i * 1_600)
+    }
+    t.finish()
+    t.waitUntilIdle()
+    #expect(log.finals.map(\.channel) == [.system])
+    #expect(!log.partialTexts.contains("第一件是接口文档"))
+}
+
+@Test func ownReplyDuringSpeakerIsKept() {
+    let (t, log) = make([.init(text: "好的我周二给"), .init(text: "好的我周二给你", endpoint: true)],
+                        [.init(text: "接口文档"), .init(text: "接口文档周三定稿", endpoint: true)])
+    for i in 0..<2 {
+        t.feed(.system, block, startSample: i * 1_600)
+        t.feed(.mic, block, startSample: i * 1_600)
+    }
+    t.finish()
+    t.waitUntilIdle()
+    #expect(log.finals.map(\.text).contains("好的我周二给你"))
+}

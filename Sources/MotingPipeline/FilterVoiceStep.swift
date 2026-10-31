@@ -52,7 +52,7 @@ public struct FilterVoiceStep {
     }
 }
 
-/// 收尾：把正式稿标记为完成，此后详情页才会显示它
+/// 收尾：去掉外放回声造成的重复句，再把正式稿标记为完成，此后详情页才会显示它
 public struct MergeStep {
     private let transcripts: TranscriptRepository
 
@@ -61,6 +61,21 @@ public struct MergeStep {
     }
 
     public func run(versionID: UUID) throws {
+        // 外放时"我"一路录进了对方的声音：删掉与"对方"同时同内容的句子
+        let echo = EchoDedup.echoSegmentIDs(try transcripts.segments(versionID: versionID))
+        if !echo.isEmpty { try transcripts.deleteSegments(ids: echo) }
         try transcripts.markCompleted(versionID, at: Date())
+    }
+}
+
+/// 外放回声去重：会后精准转写时"我"一路会多出和"对方"同时、同内容的句子，按 EchoText 的规则删掉
+public enum EchoDedup {
+    public static func echoSegmentIDs(_ segments: [TranscriptSegment]) -> [UUID] {
+        let system = segments.filter { $0.channel == .system }.sorted { $0.start < $1.start }
+        return segments.filter { $0.channel == .mic }.compactMap { m in
+            let theirs = system.filter { $0.start < m.end + EchoText.slack && $0.end > m.start - EchoText.slack }
+                .map(\.text).joined()
+            return EchoText.isEcho(m.text, of: theirs) ? m.id : nil
+        }
     }
 }

@@ -1,0 +1,4 @@
+module CSpeexDSP {
+    header "moting_speexdsp.h"
+    export *
+}

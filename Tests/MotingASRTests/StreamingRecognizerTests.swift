@@ -76,3 +76,10 @@ func downloadTestWav(repo: String, name: String) async throws -> URL {
     }
     throw lastError
 }
+
+@Test func modelControlTokensAreStrippedFromText() {
+    // 流式 Paraformer 句末会带出 </s>，不能显示到字幕里
+    #expect(cleanRecognizedText(" 发到群里 </s>") == "发到群里")
+    #expect(cleanRecognizedText("<s>你好</s>") == "你好")
+    #expect(cleanRecognizedText("hello world") == "hello world")
+}

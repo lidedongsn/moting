@@ -14,6 +14,9 @@ public struct SubtitleBuffer: Sendable, Equatable {
         switch e {
         case .partial(let l): line = l
         case .final(let l, _): line = l
+        case .retract(let id):
+            lines.removeAll { $0.id == id }
+            return
         }
         // 更新的总是最近几行，从后往前找
         if let i = lines.lastIndex(where: { $0.id == line.id }) {

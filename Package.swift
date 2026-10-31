@@ -5,7 +5,7 @@ let package = Package(
     name: "MotingKit",
     platforms: [.macOS("14.2")],
     products: [
-        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR", "MotingPlayback", "MotingPipeline"]),
+        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR", "MotingPlayback", "MotingPipeline", "MotingDSP"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.0.0"),
@@ -31,9 +31,15 @@ let package = Package(
         .target(name: "MotingPlayback", dependencies: ["MotingCapture", "MotingObjCSupport"]),
         // sherpa-onnx 静态库由 Scripts/fetch-sherpa-onnx.sh 生成，不入库
         .binaryTarget(name: "CSherpaOnnx", path: "Vendor/CSherpaOnnx.xcframework"),
+        // SpeexDSP 回声消除（BSD，源码入库，只编译用到的几个文件）
+        .target(
+            name: "CSpeexDSP",
+            cSettings: [.define("FLOATING_POINT"), .define("USE_SMALLFT"), .define("EXPORT", to: "")]
+        ),
+        .target(name: "MotingDSP", dependencies: ["CSpeexDSP"]),
         .target(
             name: "MotingASR",
-            dependencies: ["MotingCore", "MotingStorage", "CSherpaOnnx"],
+            dependencies: ["MotingCore", "MotingStorage", "MotingDSP", "CSherpaOnnx"],
             swiftSettings: [.swiftLanguageMode(.v5)],
             linkerSettings: [.linkedLibrary("c++")]
         ),
@@ -43,6 +49,7 @@ let package = Package(
         .testTarget(name: "MotingRecordingTests", dependencies: ["MotingRecording"]),
         .testTarget(name: "MotingPipelineTests", dependencies: ["MotingPipeline"]),
         .testTarget(name: "MotingPlaybackTests", dependencies: ["MotingPlayback", "MotingCapture", "MotingObjCSupport"]),
+        .testTarget(name: "MotingDSPTests", dependencies: ["MotingDSP"]),
         .testTarget(name: "MotingASRTests", dependencies: ["MotingASR", "MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
     ]
 )
