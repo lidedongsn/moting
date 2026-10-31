@@ -94,21 +94,42 @@ struct SettingsRoot: View {
 }
 
 /// 设置窗口外观：隐藏标题、标题栏透明、内容延伸到顶部
+/// SwiftUI 重新显示设置窗口时会把标题栏恢复，所以挂到窗口和窗口激活时都重新设置
 private struct WindowChrome: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let v = NSView()
-        DispatchQueue.main.async {
-            guard let w = v.window else { return }
-            w.titleVisibility = .hidden
-            w.titlebarAppearsTransparent = true
-            w.styleMask.insert(.fullSizeContentView)
-            w.isMovableByWindowBackground = true
-            w.toolbar = nil
-        }
-        return v
-    }
+    func makeNSView(context: Context) -> NSView { ChromeView() }
+    func updateNSView(_ nsView: NSView, context: Context) { (nsView as? ChromeView)?.apply() }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    final class ChromeView: NSView {
+        private static let toolbarID = "moting.settings.chrome"
+        private var observers: [NSObjectProtocol] = []
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            // 离开窗口时 window 为 nil，在这里一并注销
+            observers.forEach(NotificationCenter.default.removeObserver)
+            observers = []
+            guard let w = window else { return }
+            for name in [NSWindow.didBecomeKeyNotification, NSWindow.didUpdateNotification] {
+                observers.append(NotificationCenter.default.addObserver(forName: name, object: w, queue: .main) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.apply() }
+                })
+            }
+            apply()
+            DispatchQueue.main.async { [weak self] in self?.apply() }
+        }
+
+        func apply() {
+            guard let w = window else { return }
+            if w.titleVisibility != .hidden { w.titleVisibility = .hidden }
+            if !w.titlebarAppearsTransparent { w.titlebarAppearsTransparent = true }
+            if !w.styleMask.contains(.fullSizeContentView) { w.styleMask.insert(.fullSizeContentView) }
+            if w.titlebarSeparatorStyle != .none { w.titlebarSeparatorStyle = .none }
+            // 空的统一样式工具栏：标题栏加高，红绿灯下移内缩，落进侧栏卡片里
+            if w.toolbar == nil || w.toolbar?.identifier != Self.toolbarID { w.toolbar = NSToolbar(identifier: Self.toolbarID) }
+            if w.toolbarStyle != .unified { w.toolbarStyle = .unified }
+            w.isMovableByWindowBackground = true
+        }
+    }
 }
 
 /// 设置页的标题区

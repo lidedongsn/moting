@@ -9,28 +9,34 @@ struct GeneralPane: View {
         VStack(alignment: .leading, spacing: 0) {
             PaneHeader(title: "通用", subtitle: "录音结束后怎么处理。")
             PaneCard {
-                Toggle(isOn: $autoTranscribe) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("录音结束后自动精准转写")
-                        Text("用离线大模型重新识别整段录音，生成带说话人的正式稿。关闭后可在会议详情里手动开始。")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
+                // 左侧文字、右侧控件，两行左边对齐（系统 Toggle 会给标签加缩进）
+                row(title: "录音结束后自动精准转写",
+                    detail: "用离线大模型重新识别整段录音，生成带说话人的正式稿。关闭后可在会议详情里手动开始。") {
+                    Toggle("", isOn: $autoTranscribe).toggleStyle(.switch).labelsHidden()
                 }
-                .toggleStyle(.switch)
-                .padding(14)
                 Divider().padding(.leading, 14)
-                Picker(selection: $batteryPolicy) {
-                    Text("等接通电源再处理").tag("wait")
-                    Text("立即处理").tag("now")
-                } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("使用电池时")
-                        Text("精准转写会持续占用 CPU 几分钟，耗电较多。").font(.caption).foregroundStyle(.secondary)
+                row(title: "使用电池时", detail: "精准转写会持续占用 CPU 几分钟，耗电较多。") {
+                    Picker("", selection: $batteryPolicy) {
+                        Text("等接通电源再处理").tag("wait")
+                        Text("立即处理").tag("now")
                     }
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                .padding(14)
             }
         }
+    }
+
+    private func row<Control: View>(title: String, detail: String, @ViewBuilder control: () -> Control) -> some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            control()
+        }
+        .padding(14)
     }
 }
 
