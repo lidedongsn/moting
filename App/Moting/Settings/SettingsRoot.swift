@@ -179,3 +179,13 @@ struct PaneButtonStyle: ButtonStyle {
             .contentShape(Rectangle())
     }
 }
+
+/// 设置页输入框底：半透明圆角，暗色下不再是系统那条黑底
+extension View {
+    func paneInput() -> some View {
+        padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+    }
+}

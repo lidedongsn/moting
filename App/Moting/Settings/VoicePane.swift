@@ -23,6 +23,7 @@ struct VoicePane: View {
                         .font(.body)
                         .scrollContentBackground(.hidden)
                         .frame(height: 120)
+                        .paneInput()
                     HStack {
                         if let m = OfflineCatalog.model(id: offlineID), !m.supportsHotwords {
                             Label("当前精准转写模型「\(m.displayName)」不支持热词。", systemImage: "info.circle")
@@ -31,7 +32,7 @@ struct VoicePane: View {
                             Text("每行一个：人名、产品名、术语。").font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button("保存", action: save).disabled(hotwords == saved)
+                        Button("保存", action: save).buttonStyle(PaneButtonStyle(kind: .primary)).disabled(hotwords == saved)
                     }
                 }
                 .padding(14)
@@ -47,12 +48,13 @@ struct VoicePane: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button(hasVoiceprint ? "重新登记" : "登记声纹") { enrolling = true }
+                    Button(hasVoiceprint ? "重新登记" : "登记声纹") { enrolling = true }.buttonStyle(PaneButtonStyle())
                     if hasVoiceprint {
                         Button("删除", role: .destructive) {
                             try? FileManager.default.removeItem(at: env.paths.voiceprintURL)
                             refresh()
                         }
+                        .buttonStyle(PaneButtonStyle(kind: .danger))
                     }
                 }
                 .padding(14)
@@ -94,7 +96,8 @@ struct DownloadPane: View {
             PaneCard {
                 VStack(alignment: .leading, spacing: 8) {
                     TextField("代理地址", text: $proxy, prompt: Text("例如 127.0.0.1:7897，留空表示不用代理"))
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.plain)
+                        .paneInput()
                         .onChange(of: proxy) { _, v in env.setProxy(v) }
                     Text("平时通过 Clash 等代理上网、但没有打开系统代理时，下载可能很慢或失败，在这里填上本机代理地址。")
                         .font(.caption).foregroundStyle(.secondary)
