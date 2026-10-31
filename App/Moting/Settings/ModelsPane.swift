@@ -43,46 +43,59 @@ struct ModelsPane: View {
                      select: @escaping () -> Void, download: @escaping () -> Void, remove: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 12) {
-                Image(systemName: selected ? "largecircle.fill.circle" : "circle")
-                    .font(.system(size: 16))
-                    .foregroundStyle(selected ? Theme.me : .secondary)
+                Circle()
+                    .strokeBorder(selected ? Theme.me : Color.secondary.opacity(0.5), lineWidth: selected ? 5 : 1.5)
+                    .frame(width: 16, height: 16)
+                    .contentShape(Circle())
                     .onTapGesture(perform: select)
                     .help("选用这个模型")
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(name).fontWeight(.semibold)
+                    Text(name).fontWeight(.semibold).lineLimit(1).truncationMode(.tail).help(name)
                     Text([installed ? "已下载 · \(bytesText(usage))" : "约 \(bytesText(size))", hotwords ? "支持热词" : nil]
                         .compactMap { $0 }.joined(separator: " · "))
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                Spacer()
-                if let b = benchmark {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("准确率 \(String(format: "%.1f", 100 - b.cer))%").font(.caption).foregroundStyle(.secondary)
-                        GeometryReader { g in
-                            Capsule().fill(Color.secondary.opacity(0.15))
-                                .overlay(alignment: .leading) {
-                                    // 条长按 90%–100% 的区间拉开，差距更直观
-                                    Capsule().fill(Theme.me).frame(width: g.size.width * max(0.05, min(1, (100 - b.cer - 90) / 10)))
-                                }
+                Spacer(minLength: 8)
+                meter(benchmark).frame(width: 130, alignment: .leading)
+                Group {
+                    if let p = progress {
+                        HStack(spacing: 6) {
+                            ProgressView(value: p).frame(width: 60)
+                            Text("\(Int(p * 100))%").font(.caption).monospacedDigit()
                         }
-                        .frame(width: 120, height: 6)
-                    }
-                    if let m = b.minutesPerHour {
-                        Text("1 小时会议约 \(Int(m.rounded())) 分钟").font(.caption).foregroundStyle(.secondary).frame(width: 118, alignment: .trailing)
+                    } else if !installed {
+                        Button("下载", action: download).buttonStyle(PaneButtonStyle())
+                    } else if !selected {
+                        Button("删除", action: remove).buttonStyle(PaneButtonStyle(kind: .danger))
+                    } else if let m = benchmark?.minutesPerHour {
+                        Text("1 小时会议约 \(Int(m.rounded())) 分钟").font(.system(size: 12.5)).foregroundStyle(.secondary)
+                    } else {
+                        Text("在用").font(.system(size: 12.5)).foregroundStyle(.secondary)
                     }
                 }
-                if let p = progress {
-                    ProgressView(value: p).frame(width: 80)
-                    Text("\(Int(p * 100))%").font(.caption).monospacedDigit().frame(width: 34, alignment: .trailing)
-                } else if installed {
-                    Button("删除", role: .destructive, action: remove).disabled(selected)
-                } else {
-                    Button("下载", action: download)
-                }
+                .frame(width: 78, alignment: .trailing)
             }
             if let error { Text(error).font(.caption).foregroundStyle(.orange).padding(.leading, 28) }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 11)
+        .padding(.vertical, 12)
+    }
+
+    /// 准确率条：字错率换算成准确率，条长按 80%–100% 拉开；没实测过的只写"未实测"
+    @ViewBuilder
+    private func meter(_ b: Benchmark?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(b.map { "准确率 \(String(format: "%.1f", 100 - $0.cer))%" } ?? "准确率 未实测")
+                .font(.system(size: 11.5)).foregroundStyle(.secondary)
+            Capsule().fill(Color.primary.opacity(0.08))
+                .overlay(alignment: .leading) {
+                    if let b {
+                        GeometryReader { g in
+                            Capsule().fill(Theme.me).frame(width: g.size.width * max(0.04, min(1, (100 - b.cer - 80) / 20)))
+                        }
+                    }
+                }
+                .frame(height: 6)
+        }
     }
 }

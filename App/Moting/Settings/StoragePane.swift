@@ -11,6 +11,7 @@ struct StoragePane: View {
     @State private var report = StorageReport(items: [])
     @State private var confirmCleanup = false
     @State private var confirmDeleteAll = false
+    @Environment(\.openWindow) private var openWindow
 
     private var segments: [(String, Int64, Color)] {
         [("录音", report.bytes(.recordings), Theme.me),
@@ -54,11 +55,12 @@ struct StoragePane: View {
                     Text("可以释放 \(bytesText(report.reclaimable))").fontWeight(.semibold)
                     Text("\(report.items.filter { !$0.inUse }.count) 个模型当前没有使用").foregroundStyle(.secondary)
                     Spacer()
-                    Button("清理未使用的模型") { confirmCleanup = true }.buttonStyle(.borderedProminent).tint(Theme.me)
+                    Button("清理未使用的模型") { confirmCleanup = true }.buttonStyle(PaneButtonStyle(kind: .primary))
                 }
                 .font(.callout)
-                .padding(12)
+                .padding(.horizontal, 14).padding(.vertical, 12)
                 .background(Theme.me.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.me.opacity(0.25), lineWidth: 0.5))
                 .padding(.top, 16)
             }
 
@@ -70,19 +72,27 @@ struct StoragePane: View {
                             HStack(spacing: 6) {
                                 Text(item.name)
                                 if item.kind != .recordings && item.kind != .other {
-                                    StatusTag(text: item.inUse ? "在用" : "未使用", tint: item.inUse ? .green : .secondary)
+                                    StatusTag(text: usageText(item), tint: item.inUse ? .green : .secondary)
                                 }
                             }
                             Text(kindText(item.kind)).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
                         Text(bytesText(item.bytes)).monospacedDigit().foregroundStyle(.secondary)
-                        if item.kind == .recordings || item.kind == .other {
-                            Text("").frame(width: 52)
+                        if item.kind == .recordings {
+                            Button("查看") {
+                                openWindow(id: "main")
+                                NSApp.activate(ignoringOtherApps: true)
+                            }
+                            .buttonStyle(PaneButtonStyle())
+                            .frame(width: 56, alignment: .trailing)
+                        } else if item.kind == .other {
+                            Color.clear.frame(width: 56, height: 1)
                         } else {
-                            Button("删除", role: .destructive) { remove(item) }
+                            Button("删除") { remove(item) }
+                                .buttonStyle(PaneButtonStyle(kind: .danger))
                                 .disabled(item.inUse && item.kind != .auxModel)
-                                .frame(width: 52)
+                                .frame(width: 56, alignment: .trailing)
                         }
                     }
                     .padding(.horizontal, 14)
@@ -102,7 +112,7 @@ struct StoragePane: View {
             HStack {
                 Text("卸载 Moting 时，删除这个文件夹即可清理干净。").foregroundStyle(.secondary)
                 Spacer()
-                Button("删除 Moting 全部数据…", role: .destructive) { confirmDeleteAll = true }.buttonStyle(.link).foregroundStyle(.red)
+                Button("删除 Moting 全部数据…") { confirmDeleteAll = true }.buttonStyle(.plain).foregroundStyle(Color(light: 0xD70015, dark: 0xFF6961))
             }
             .font(.caption)
             .padding(.top, 4)
@@ -120,6 +130,15 @@ struct StoragePane: View {
             Button("删除全部录音、转写稿、模型和设置，然后退出", role: .destructive, action: deleteAll)
         } message: {
             Text("这会永久删除 \(bytesText(report.total)) 的数据，无法恢复。")
+        }
+    }
+
+    private func usageText(_ item: StorageItem) -> String {
+        guard item.inUse else { return "未使用" }
+        switch item.kind {
+        case .realtimeModel: return "实时字幕在用"
+        case .offlineModel: return "会后转写在用"
+        default: return "在用"
         }
     }
 

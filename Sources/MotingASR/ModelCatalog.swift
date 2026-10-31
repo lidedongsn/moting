@@ -121,7 +121,9 @@ public enum ModelCatalog {
             ModelFile(name: "decoder.int8.onnx", sha256: "f3cca9f77bb9d93c8fcbfb63ae617b6b1ee96818df3aa3b151c40658fe38594f", size: 71_664_561),
             ModelFile(name: "tokens.txt", sha256: "59aba8873a2ed1e122c25fee421e25f283b63290efbde85c1f01a853d83cb6e6", size: 75_756),
         ],
-        roles: ["encoder": "encoder.int8.onnx", "decoder": "decoder.int8.onnx", "tokens": "tokens.txt"]
+        roles: ["encoder": "encoder.int8.onnx", "decoder": "decoder.int8.onnx", "tokens": "tokens.txt"],
+        // 实测：WenetSpeech test_meeting 400 条（2026-10-30）
+        benchmark: Benchmark(cer: 14.02, minutesPerHour: nil)
     )
 
     public static let all: [StreamingModel] = [bilingualZipformer, chineseZipformer2025, bilingualParaformer]

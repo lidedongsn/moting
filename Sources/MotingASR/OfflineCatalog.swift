@@ -57,7 +57,9 @@ public enum OfflineCatalog {
             ModelFile(name: "tokens.txt", sha256: "59aba8873a2ed1e122c25fee421e25f283b63290efbde85c1f01a853d83cb6e6", size: 75_756),
         ],
         kind: .paraformer, roles: ["model": "model.int8.onnx", "tokens": "tokens.txt"],
-        hasPunctuation: false, supportsHotwords: false)
+        hasPunctuation: false, supportsHotwords: false,
+        // 实测：WenetSpeech test_meeting 400 条（2026-10-30），速度未测准，暂不填
+        benchmark: Benchmark(cer: 12.67, minutesPerHour: nil))
 
     public static let xasrTransducer = OfflineModel(
         id: "offline-x-asr-zh-en-punct-int8-2026-06-03", displayName: "X-ASR 中英（带标点，支持热词）",
@@ -72,7 +74,9 @@ public enum OfflineCatalog {
         kind: .transducer,
         roles: ["encoder": "encoder-epoch-99-avg-1.int8.onnx", "decoder": "decoder-epoch-99-avg-1.onnx",
                 "joiner": "joiner-epoch-99-avg-1.int8.onnx", "tokens": "tokens.txt", "bpe": "bpe.model"],
-        hasPunctuation: true, supportsHotwords: true)
+        hasPunctuation: true, supportsHotwords: true,
+        // 实测：WenetSpeech test_meeting 400 条（2026-10-30），速度未测准，暂不填
+        benchmark: Benchmark(cer: 7.44, minutesPerHour: nil))
 
     public static let qwen3ASR = OfflineModel(
         id: "offline-qwen3-asr-0.6b-int8-2026-03-25", displayName: "Qwen3-ASR 0.6B（支持热词）",
@@ -100,7 +104,9 @@ public enum OfflineCatalog {
         ],
         kind: .fireRedASR,
         roles: ["encoder": "encoder.int8.onnx", "decoder": "decoder.int8.onnx", "tokens": "tokens.txt"],
-        hasPunctuation: false, supportsHotwords: false)
+        hasPunctuation: false, supportsHotwords: false,
+        // 实测：WenetSpeech test_meeting 400 条（2026-10-30），速度未测准，暂不填
+        benchmark: Benchmark(cer: 5.18, minutesPerHour: nil))
 
     public static let all: [OfflineModel] = [senseVoice, paraformerZh, xasrTransducer, qwen3ASR, fireRedASR2]
 

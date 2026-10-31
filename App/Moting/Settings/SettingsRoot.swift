@@ -1,3 +1,4 @@
+import AppKit
 import MotingASR
 import SwiftUI
 
@@ -32,23 +33,8 @@ struct SettingsRoot: View {
     ]
 
     var body: some View {
-        NavigationSplitView {
-            List(items, selection: $pane) { item in
-                Label {
-                    Text(item.title)
-                } icon: {
-                    Image(systemName: item.symbol)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 22, height: 22)
-                        .background(item.color.gradient, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                }
-                .tag(item.id)
-            }
-            .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(200)
-            .toolbar(removing: .sidebarToggle)
-        } detail: {
+        HStack(spacing: 0) {
+            sidebar
             ScrollView {
                 Group {
                     switch pane {
@@ -61,12 +47,68 @@ struct SettingsRoot: View {
                     }
                 }
                 .padding(.horizontal, 30)
-                .padding(.vertical, 22)
+                .padding(.top, 26)
+                .padding(.bottom, 22)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .frame(width: 760, height: 560)
+        // 标题栏并入内容区后窗口会高出一截，高度随窗口撑满
+        .frame(width: 800)
+        .frame(minHeight: 620, maxHeight: .infinity)
+        .background(WindowChrome())
+        .ignoresSafeArea()
     }
+
+    /// 浮在窗口内的圆角玻璃侧栏（设计稿 .setside），红绿灯落在它的顶部
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(items) { item in
+                let on = pane == item.id
+                Button { pane = item.id } label: {
+                    HStack(spacing: 9) {
+                        Image(systemName: item.symbol)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 22, height: 22)
+                            .background(item.color.gradient, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        Text(item.title).font(.system(size: 13.5, weight: on ? .semibold : .regular))
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(on ? Theme.me.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 44)
+        .padding(.bottom, 8)
+        .frame(width: 212)
+        .frame(maxHeight: .infinity)
+        .glassCard(radius: 12, material: .thinMaterial)
+        .padding([.leading, .vertical], 8)
+    }
+}
+
+/// 设置窗口外观：隐藏标题、标题栏透明、内容延伸到顶部
+private struct WindowChrome: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let v = NSView()
+        DispatchQueue.main.async {
+            guard let w = v.window else { return }
+            w.titleVisibility = .hidden
+            w.titlebarAppearsTransparent = true
+            w.styleMask.insert(.fullSizeContentView)
+            w.isMovableByWindowBackground = true
+            w.toolbar = nil
+        }
+        return v
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 /// 设置页的标题区
@@ -95,4 +137,25 @@ struct PaneCard<Content: View>: View {
 
 func bytesText(_ n: Int64) -> String {
     ByteCountFormatter.string(fromByteCount: n, countStyle: .file)
+}
+
+/// 设置页里的小按钮（设计稿 .btn / .btn.danger / .btn.prim）
+struct PaneButtonStyle: ButtonStyle {
+    enum Kind { case normal, danger, primary }
+    var kind: Kind = .normal
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12.5, weight: kind == .primary ? .semibold : .regular))
+            .foregroundStyle(kind == .primary ? Color.white : kind == .danger ? Color(light: 0xD70015, dark: 0xFF6961) : Color.primary)
+            .padding(.horizontal, 11)
+            .frame(height: 26)
+            .background(kind == .primary ? AnyShapeStyle(Theme.me) : AnyShapeStyle(Color.primary.opacity(0.07)),
+                        in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .strokeBorder(kind == .primary ? Color.clear : Color.primary.opacity(0.12), lineWidth: 0.5))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.35)
+            .contentShape(Rectangle())
+    }
 }

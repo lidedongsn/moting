@@ -56,15 +56,17 @@ struct MenuBarContent: View {
             HStack {
                 if isRecording {
                     Button("★ 标记重点") { recorder.mark() }
+                    Spacer()
+                    Button("显示字幕窗") { NotificationCenter.default.post(name: FloatingPanelController.showRequest, object: nil) }
                 } else {
                     Button("打开 Moting", action: showMain)
+                    Spacer()
+                    Button("设置…") {
+                        openSettings()
+                        NSApp.activate(ignoringOtherApps: true)
+                    }
+                    Button("退出") { NSApp.terminate(nil) }
                 }
-                Spacer()
-                Button("设置…") {
-                    openSettings()
-                    NSApp.activate(ignoringOtherApps: true)
-                }
-                Button("退出") { NSApp.terminate(nil) }
             }
             .buttonStyle(.borderless)
             .font(.system(size: 12.5))
@@ -98,27 +100,38 @@ struct MenuBarContent: View {
         .disabled(recorder.isStarting)
     }
 
+    /// 录音中：深色计时卡片（设计稿），暂停 / 结束在右侧
     private var recordingCard: some View {
-        HStack(spacing: 12) {
-            Circle().fill(recorder.state == .paused ? Color.orange : Theme.record).frame(width: 10, height: 10)
-                .shadow(color: Theme.record.opacity(0.5), radius: 4)
+        let paused = recorder.state == .paused
+        return HStack(spacing: 12) {
+            Circle().fill(paused ? Color.orange : Theme.record).frame(width: 10, height: 10)
+                .background(Circle().fill((paused ? Color.orange : Theme.record).opacity(0.3)).frame(width: 18, height: 18))
             Text(clock(recorder.elapsed)).font(.system(size: 20, weight: .semibold)).monospacedDigit()
-            if recorder.state == .paused { Text("已暂停").font(.system(size: 12)).foregroundStyle(.secondary) }
+            if paused { Text("已暂停").font(.system(size: 12)).foregroundStyle(.white.opacity(0.6)) }
             Spacer()
             Button {
-                recorder.state == .paused ? recorder.resume() : recorder.pause()
+                paused ? recorder.resume() : recorder.pause()
             } label: {
-                Image(systemName: recorder.state == .paused ? "play.fill" : "pause.fill").frame(width: 28, height: 26)
+                Image(systemName: paused ? "play.fill" : "pause.fill").font(.system(size: 11, weight: .bold))
+                    .frame(width: 34, height: 26)
+                    .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
             }
-            .buttonStyle(.bordered)
-            Button(recorder.isStopping ? "正在结束…" : "结束") { recorder.stop() }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.record)
-                .disabled(recorder.isStopping)
+            .buttonStyle(.plain)
+            .help(paused ? "继续" : "暂停")
+            Button { recorder.stop() } label: {
+                Text(recorder.isStopping ? "正在结束…" : "结束").font(.system(size: 12.5, weight: .semibold))
+                    .padding(.horizontal, 11).frame(height: 26)
+                    .background(Theme.record, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(recorder.isStopping)
         }
+        .foregroundStyle(.white)
         .padding(.horizontal, 16)
         .frame(height: 56)
-        .glassCard(radius: 14, material: .regularMaterial)
+        .background(LinearGradient(colors: [Color(hex: 0x2C2C2E), Color(hex: 0x1C1C1E)], startPoint: .top, endPoint: .bottom),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: .black.opacity(0.25), radius: 9, y: 4)
     }
 
     private func section(_ title: String) -> some View {
