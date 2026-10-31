@@ -26,7 +26,8 @@ struct MainWindow: View {
             ZStack {
                 if let m = meetings.first(where: { $0.id == processing.selectedMeetingID }) {
                     DetailView(meeting: m, env: env, recorder: recorder, processing: processing) { pendingDelete = $0 }
-                        .id(m.id)
+                        // 录音结束时重建一次：播放器在录音中创建时文件还是空的，时长为 0
+                        .id("\(m.id)|\(m.endedAt?.timeIntervalSince1970 ?? 0)")
                 } else {
                     ContentUnavailableView {
                         Label(meetings.isEmpty ? "还没有会议记录" : "选择一场会议", systemImage: "waveform")
@@ -43,6 +44,8 @@ struct MainWindow: View {
             }
         }
         .frame(minWidth: 900, minHeight: 600)
+        // 设计稿里工具栏和内容连成一片，不要分隔线
+        .toolbarBackground(.hidden, for: .windowToolbar)
         // 标题留空而不是移除：移除后工具栏按钮会挤到左边
         .navigationTitle("")
         .task {
@@ -86,12 +89,23 @@ struct MainWindow: View {
     }
 
     private var sidebar: some View {
-        List(selection: $processing.selectedMeetingID) {
+        // 不用系统选中（实心蓝底会盖住声纹条），自己画浅色选中底（设计稿 .mrow.on）
+        List {
             ForEach(MeetingGrouping.group(filtered, now: Date(), calendar: .current), id: \.0) { group, items in
                 Section(group.rawValue) {
                     ForEach(items) { m in
+                        let on = processing.selectedMeetingID == m.id
                         MeetingRow(meeting: m, env: env, processing: processing)
-                            .tag(m.id)
+                            .padding(.horizontal, 4)
+                            .contentShape(Rectangle())
+                            .onTapGesture { processing.selectedMeetingID = m.id }
+                            .listRowBackground(
+                                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                    .fill(on ? Theme.me.opacity(0.16) : .clear)
+                                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                        .strokeBorder(on ? Theme.me.opacity(0.35) : .clear, lineWidth: 0.5))
+                                    .padding(.horizontal, 8)
+                            )
                             .contextMenu {
                                 Button("重命名…") { renameText = m.title; renaming = m }
                                 Button("在 Finder 中显示") {
@@ -106,6 +120,9 @@ struct MainWindow: View {
             }
         }
         .listStyle(.sidebar)
+        .focusable()
+        .focusEffectDisabled()
+        .onMoveCommand { dir in moveSelection(dir) }
         .searchable(text: $query, placement: .sidebar, prompt: "搜索会议和转写内容")
         .overlay {
             if !query.isEmpty && filtered.isEmpty {
@@ -144,6 +161,18 @@ struct MainWindow: View {
         .padding(12)
         .glassCard(radius: 10, material: .thinMaterial)
         .padding(10)
+    }
+
+    /// 上下方向键切换会议
+    private func moveSelection(_ dir: MoveCommandDirection) {
+        let ids = MeetingGrouping.group(filtered, now: Date(), calendar: .current).flatMap { $0.1.map(\.id) }
+        guard !ids.isEmpty else { return }
+        let i = ids.firstIndex(where: { $0 == processing.selectedMeetingID })
+        switch dir {
+        case .up: processing.selectedMeetingID = ids[max(0, (i ?? 0) - 1)]
+        case .down: processing.selectedMeetingID = ids[min(ids.count - 1, (i ?? -1) + 1)]
+        default: break
+        }
     }
 
     private var deleteTitle: String {

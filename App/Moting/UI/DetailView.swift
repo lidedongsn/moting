@@ -251,7 +251,7 @@ struct DetailView: View {
                 .keyboardShortcut(editingTitle ? nil : KeyboardShortcut(.space, modifiers: []))
                 .disabled(player.duration == 0)
                 Text(clock(player.currentTime)).font(.system(size: 13, weight: .semibold)).monospacedDigit()
-                Text("/ \(clock(player.duration))").font(.system(size: 13)).monospacedDigit().foregroundStyle(.tertiary)
+                Text("/ \(clock(player.duration))").font(.system(size: 13)).monospacedDigit().foregroundStyle(.secondary)
                 Spacer()
             }
             VoiceRibbon(mine: mine, theirs: theirs, theirColors: theirColors,
@@ -260,9 +260,9 @@ struct DetailView: View {
                 player.seek(to: f * player.duration)
             }
             HStack {
-                Text("我")
+                Text("我 · 上")
                 Spacer()
-                Text("对方（按说话人着色）")
+                Text("对方 · 下（按说话人着色）")
             }
             .font(.system(size: 11))
             .foregroundStyle(.tertiary)
