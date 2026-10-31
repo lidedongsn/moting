@@ -10,11 +10,13 @@ final class FloatingPanelController {
     private var panel: NSPanel?
     private var cancellables: Set<AnyCancellable> = []
 
-    static let expandedSize = NSSize(width: 330, height: 220)
-    static let collapsedSize = NSSize(width: 330, height: 44)
+    static let expandedSize = NSSize(width: 400, height: 320)
+    /// 旧版默认尺寸太小，升级后第一次显示时把保存下来的小窗口放大到新默认一次
+    private static let enlargedOnceKey = "floatingPanel.enlargedToV2"
+    static let collapsedSize = NSSize(width: 400, height: 44)
     /// 录音结束后显示精准转写进度时的高度（设计稿：紧凑卡片）
     static let processingHeight: CGFloat = 124
-    static let maxSize = NSSize(width: 520, height: 480)
+    static let maxSize = NSSize(width: 760, height: 900)
     /// 菜单栏面板的"显示字幕窗"：展开并带到最前
     static let showRequest = Notification.Name("moting.floatingPanel.show")
 
@@ -45,7 +47,7 @@ final class FloatingPanelController {
             .sink { [weak self] recording in
                 guard let self, !self.ui.collapsed, let panel = self.panel else { return }
                 // 用户自己拉大过的窗口，开始录音时保留其尺寸
-                if recording, panel.frame.height >= 120 { return }
+                if recording, panel.frame.height > Self.processingHeight { return }
                 // @Published 在赋值前发出，这里要用传进来的新值，不能读 recorder.state
                 self.resize(collapsed: false, recording: recording)
             }
@@ -65,6 +67,8 @@ final class FloatingPanelController {
         let panel = self.panel ?? makePanel()
         self.panel = panel
         constrainToScreen(panel)
+        // 由录音状态触发时 state 还没赋值（@Published 先发后改），下一轮再按新状态修正一次
+        DispatchQueue.main.async { [weak self] in self?.constrainToScreen(panel) }
         panel.orderFrontRegardless()
     }
 
@@ -134,6 +138,11 @@ final class FloatingPanelController {
         let base = ui.collapsed ? Self.collapsedSize : Self.expandedSize
         if ui.collapsed {
             frame.size.height = base.height
+        } else if isRecording, !UserDefaults.standard.bool(forKey: Self.enlargedOnceKey) {
+            UserDefaults.standard.set(true, forKey: Self.enlargedOnceKey)
+            let top = frame.maxY, right = frame.maxX
+            frame.size = NSSize(width: max(frame.width, Self.expandedSize.width), height: max(frame.height, Self.expandedSize.height))
+            frame.origin = NSPoint(x: right - frame.width, y: top - frame.height)
         } else if frame.height < 120 {
             // 展开状态却恢复出收起时的高度（保存的窗口位置是收起时记下的）：恢复默认展开高度，顶边不动
             let top = frame.maxY

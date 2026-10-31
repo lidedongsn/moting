@@ -18,6 +18,9 @@ struct FloatingPanelView: View {
     // 悬浮窗固定为深色玻璃，直接用图标原色
     static let micColor = Color(hex: 0x3CD3FE)
     static let systemColor = Color(hex: 0xFFD600)
+    private static let bottomID = "bottom"
+    /// 字幕区是否停在最新一行（往上翻看时为 false）
+    @State private var following = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -233,23 +236,50 @@ struct FloatingPanelView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollViewReader { proxy in
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 7) {
-                        ForEach(live.lines) { line in
-                            (Text(line.channel == .mic ? "我 " : "对方 ")
-                                .font(.system(size: 11.5, weight: .semibold))
-                                .foregroundColor(line.channel == .mic ? Self.micColor : Self.systemColor)
-                             + Text(line.text)
-                                .font(.system(size: 13.5))
-                                .foregroundColor(line.isFinal ? .white : .white.opacity(0.45)))
-                                .lineSpacing(3)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .id(line.id)
+                ZStack(alignment: .bottom) {
+                    ScrollView(.vertical) {
+                        LazyVStack(alignment: .leading, spacing: 7) {
+                            ForEach(live.lines) { line in
+                                (Text(line.channel == .mic ? "我 " : "对方 ")
+                                    .font(.system(size: 11.5, weight: .semibold))
+                                    .foregroundColor(line.channel == .mic ? Self.micColor : Self.systemColor)
+                                 + Text(line.text)
+                                    .font(.system(size: 13.5))
+                                    .foregroundColor(line.isFinal ? .white : .white.opacity(0.45)))
+                                    .lineSpacing(3)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .id(line.id)
+                            }
+                            // 底部哨兵：看得见说明停在最新处，新字幕来了就跟着滚；往上翻看时不打扰
+                            Color.clear.frame(height: 1).id(Self.bottomID)
+                                .onAppear { following = true }
+                                .onDisappear { following = false }
                         }
                     }
-                }
-                .onChange(of: live.lines) { _, lines in
-                    if let last = lines.last { withAnimation(.easeOut(duration: 0.15)) { proxy.scrollTo(last.id, anchor: .bottom) } }
+                    // 顶部淡出，翻到上面的字幕不会被标题栏生硬切断
+                    .mask(VStack(spacing: 0) {
+                        LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 14)
+                        Color.black
+                    })
+                    .onChange(of: live.lines) { _, _ in
+                        if following { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+                    }
+                    if !following {
+                        Button {
+                            following = true
+                            withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+                        } label: {
+                            Label("回到最新", systemImage: "arrow.down")
+                                .font(.system(size: 11.5, weight: .medium))
+                                .padding(.horizontal, 10).frame(height: 24)
+                                .background(Color(white: 0.18).opacity(0.92), in: Capsule())
+                                .overlay(Capsule().strokeBorder(.white.opacity(0.22), lineWidth: 0.5))
+                                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.bottom, 4)
+                        .transition(.opacity)
+                    }
                 }
             }
         }

@@ -33,3 +33,10 @@ private func finalEvent(_ text: String) -> TranscriptEvent {
     #expect(b.lines[0].isFinal)
     #expect(b.lines[0].text == "你好。")
 }
+
+@Test func defaultBufferKeepsWholeMeetingForScrollBack() {
+    var b = SubtitleBuffer()
+    for i in 0..<1500 { b.apply(finalEvent("第\(i)句")) }
+    #expect(b.lines.count == 1500)
+    #expect(b.lines.first?.text == "第0句")
+}
