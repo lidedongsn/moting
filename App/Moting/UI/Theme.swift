@@ -93,20 +93,42 @@ func durationText(_ t: TimeInterval) -> String {
 /// 工具栏胶囊按钮（设计稿 .tb）：系统工具栏在暗色下把文字画成次要灰，这里自绘
 struct ToolbarPillStyle: ButtonStyle {
     var iconOnly = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        ToolbarPill(configuration: configuration, iconOnly: iconOnly)
+    }
+}
+
+/// 胶囊本体：悬停提亮、按下压暗（ButtonStyle 本身不能存悬停状态）
+private struct ToolbarPill: View {
+    let configuration: ButtonStyleConfiguration
+    let iconOnly: Bool
+    @State private var hovering = false
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.colorScheme) private var scheme
 
-    func makeBody(configuration: Configuration) -> some View {
+    var body: some View {
         let dark = scheme == .dark
-        return configuration.label
+        let active = hovering && isEnabled
+        let fill: Color = dark
+            ? .white.opacity(configuration.isPressed ? 0.3 : active ? 0.22 : 0.1)
+            : configuration.isPressed ? .black.opacity(0.1) : active ? .black.opacity(0.05) : .white.opacity(0.65)
+        configuration.label
             .font(.system(size: 13))
             .labelStyle(.titleAndIcon)
             .foregroundStyle(Color(hex: dark ? 0xF5F5F7 : 0x1D1D1F))
             .padding(.horizontal, iconOnly ? 0 : 12)
             .frame(width: iconOnly ? 28 : nil, height: 28)
-            .background(.white.opacity(dark ? 0.1 : 0.65), in: Capsule())
-            .overlay(Capsule().strokeBorder(dark ? Color.white.opacity(0.14) : Color.black.opacity(0.12), lineWidth: 0.5))
-            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+            .background(fill, in: Capsule())
+            .overlay(Capsule().strokeBorder(dark ? Color.white.opacity(active ? 0.3 : 0.14)
+                                                 : Color.black.opacity(active ? 0.2 : 0.12), lineWidth: 0.5))
+            .opacity(isEnabled ? 1 : 0.4)
             .contentShape(Capsule())
+            // 工具栏里 onHover 收不到事件，用连续悬停
+            .onContinuousHover { phase in
+                if case .active = phase { hovering = true } else { hovering = false }
+            }
+            .animation(.easeOut(duration: 0.12), value: hovering)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
 }

@@ -247,6 +247,7 @@ struct MeetingRow: View {
 /// 工具栏的录音按钮：平时为红色胶囊"开始录音"，录音中为计时 + 结束
 struct RecordButton: View {
     @ObservedObject var recorder: RecordingController
+    @State private var hovering = false
 
     var body: some View {
         switch recorder.state {
@@ -273,11 +274,26 @@ struct RecordButton: View {
                 .frame(height: 28)
                 .background(LinearGradient(colors: [Color(hex: 0xFF4B4F), Color(hex: 0xE5262B)], startPoint: .top, endPoint: .bottom),
                             in: Capsule())
-                .shadow(color: Theme.record.opacity(0.35), radius: 5, y: 2)
+                .brightness(hovering && !recorder.isStarting ? 0.1 : 0)
+                .shadow(color: Theme.record.opacity(hovering ? 0.5 : 0.35), radius: hovering ? 7 : 5, y: 2)
+                .animation(.easeOut(duration: 0.12), value: hovering)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressDimStyle())
+            // 工具栏里 onHover 收不到事件，用连续悬停
+            .onContinuousHover { phase in
+                if case .active = phase { hovering = true } else { hovering = false }
+            }
             .disabled(recorder.isStarting)
             .help("开始录音（⌥⌘R，任何 app 里都能按）")
         }
+    }
+}
+
+/// 按下时压暗一点（自绘按钮用）
+struct PressDimStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .brightness(configuration.isPressed ? -0.08 : 0)
+            .contentShape(Capsule())
     }
 }
