@@ -94,8 +94,11 @@ struct DetailView: View {
                 case .notes: notesPlaceholder
                 }
             }
+            // 内容区撑满剩余高度：切换页签时头部和播放器位置不动
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.top, 8)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .toolbar { detailToolbar }
         .task(id: meeting.status) { load() }
         .task(id: meeting.id) {
