@@ -59,7 +59,7 @@ struct SettingsRoot: View {
         .ignoresSafeArea()
     }
 
-    /// 浮在窗口内的圆角玻璃侧栏（设计稿 .setside），红绿灯落在它的顶部
+    /// 左侧分栏：通高，右边一条竖线和内容隔开，红绿灯落在它的顶部
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 2) {
             ForEach(items) { item in
@@ -83,13 +83,12 @@ struct SettingsRoot: View {
             }
             Spacer()
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 44)
-        .padding(.bottom, 8)
-        .frame(width: 212)
+        .padding(.horizontal, 10)
+        .padding(.top, 52)
+        .padding(.bottom, 10)
+        .frame(width: 220)
         .frame(maxHeight: .infinity)
-        .glassCard(radius: 12, material: .thinMaterial)
-        .padding([.leading, .vertical], 8)
+        .overlay(alignment: .trailing) { Divider() }
     }
 }
 
@@ -124,7 +123,7 @@ private struct WindowChrome: NSViewRepresentable {
             if !w.titlebarAppearsTransparent { w.titlebarAppearsTransparent = true }
             if !w.styleMask.contains(.fullSizeContentView) { w.styleMask.insert(.fullSizeContentView) }
             if w.titlebarSeparatorStyle != .none { w.titlebarSeparatorStyle = .none }
-            // 空的统一样式工具栏：标题栏加高，红绿灯下移内缩，落进侧栏卡片里
+            // 空的统一样式工具栏：标题栏加高，红绿灯下移内缩，和侧栏留出呼吸感
             if w.toolbar == nil || w.toolbar?.identifier != Self.toolbarID { w.toolbar = NSToolbar(identifier: Self.toolbarID) }
             if w.toolbarStyle != .unified { w.toolbarStyle = .unified }
             w.isMovableByWindowBackground = true
