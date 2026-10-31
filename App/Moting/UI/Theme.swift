@@ -89,3 +89,24 @@ func durationText(_ t: TimeInterval) -> String {
     let m = Int((t / 60).rounded())
     return m >= 60 ? "\(m / 60) 小时 \(m % 60) 分" : "\(max(m, 1)) 分钟"
 }
+
+/// 工具栏胶囊按钮（设计稿 .tb）：系统工具栏在暗色下把文字画成次要灰，这里自绘
+struct ToolbarPillStyle: ButtonStyle {
+    var iconOnly = false
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.colorScheme) private var scheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        let dark = scheme == .dark
+        return configuration.label
+            .font(.system(size: 13))
+            .labelStyle(.titleAndIcon)
+            .foregroundStyle(Color(hex: dark ? 0xF5F5F7 : 0x1D1D1F))
+            .padding(.horizontal, iconOnly ? 0 : 12)
+            .frame(width: iconOnly ? 28 : nil, height: 28)
+            .background(.white.opacity(dark ? 0.1 : 0.65), in: Capsule())
+            .overlay(Capsule().strokeBorder(dark ? Color.white.opacity(0.14) : Color.black.opacity(0.12), lineWidth: 0.5))
+            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+            .contentShape(Capsule())
+    }
+}

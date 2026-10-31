@@ -76,6 +76,18 @@ final class ProcessingModel: ObservableObject {
         if meetingID == lastRecordedMeetingID { lastStatus = .queued }
     }
 
+    /// 暂停精准转写：当前步骤中断，已完成的步骤保留
+    func pause(_ meetingID: UUID) {
+        try? env?.pipeline.pause(meetingID: meetingID)
+        progress[meetingID] = nil
+        if meetingID == lastRecordedMeetingID { lastStatus = .paused }
+    }
+
+    func resume(_ meetingID: UUID) {
+        try? env?.pipeline.resume(meetingID: meetingID)
+        if meetingID == lastRecordedMeetingID { lastStatus = .queued }
+    }
+
     /// 录音状态变化时调用：录音结束要唤醒调度器
     func recordingChanged(_ isRecording: Bool) {
         env?.recordingFlag.isRecording = isRecording

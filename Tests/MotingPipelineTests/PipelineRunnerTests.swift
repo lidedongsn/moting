@@ -9,11 +9,17 @@ final class FakeSteps: PipelineStepRunner, @unchecked Sendable {
     private let lock = NSLock()
     private var _calls: [JobStep] = []
     var failAt: JobStep?
+    /// 在这一步一直跑，直到任务被取消（模拟耗时步骤）
+    var hangAt: JobStep?
     var calls: [JobStep] { lock.withLock { _calls } }
 
     func run(_ step: JobStep, job: Job, progress: @escaping @Sendable (Double) -> Void) async throws -> Job {
         lock.withLock { _calls.append(step) }
         progress(0.5)
+        if step == hangAt {
+            while !Task.isCancelled { await Task.yield() }
+            throw CancellationError()
+        }
         progress(1.0)
         if step == failAt { throw NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "\(step) 失败"]) }
         var j = job
@@ -157,4 +163,42 @@ private struct Fixture {
     try f.runner.recoverAfterLaunch()
     await f.runner.drain()
     #expect(f.steps.calls == [.filterVoice, .merge])
+}
+
+@Test func pauseStopsRunningJobAndResumeContinuesFromBreakpoint() async throws {
+    let f = try Fixture()
+    f.steps.hangAt = .diarize
+    _ = try f.runner.enqueue(meetingID: f.meeting.id, modelID: "m")
+    let drain = Task { await f.runner.drain() }
+    while f.steps.calls.count < 2 { await Task.yield() }
+    try f.runner.pause(meetingID: f.meeting.id)
+    await drain.value
+    var job = try #require(try f.jobs.job(for: f.meeting.id))
+    #expect(job.status == .paused)
+    #expect(job.completedSteps == [.transcribe])
+
+    f.steps.hangAt = nil
+    try f.runner.resume(meetingID: f.meeting.id)
+    await f.runner.drain()
+    job = try #require(try f.jobs.job(for: f.meeting.id))
+    #expect(job.status == .done)
+    #expect(f.steps.calls == [.transcribe, .diarize, .diarize, .filterVoice, .merge])
+}
+
+@Test func pausedQueuedJobIsSkipped() async throws {
+    let f = try Fixture()
+    _ = try f.runner.enqueue(meetingID: f.meeting.id, modelID: "m")
+    try f.runner.pause(meetingID: f.meeting.id)
+    await f.runner.drain()
+    #expect(f.steps.calls.isEmpty)
+    #expect(try f.jobs.job(for: f.meeting.id)?.status == .paused)
+}
+
+@Test func enqueueResumesPausedJob() async throws {
+    let f = try Fixture()
+    _ = try f.runner.enqueue(meetingID: f.meeting.id, modelID: "m")
+    try f.runner.pause(meetingID: f.meeting.id)
+    _ = try f.runner.enqueue(meetingID: f.meeting.id, modelID: "m")
+    await f.runner.drain()
+    #expect(try f.jobs.job(for: f.meeting.id)?.status == .done)
 }

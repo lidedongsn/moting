@@ -47,6 +47,7 @@ public struct TranscribeStep {
             let reader = try PCMMixReader(urls: [url])
             let base = before
             try segmenter.segment(reader: { try reader.read(at: $0, count: $1) }, total: total) { span in
+                try Task.checkCancellation()   // 用户暂停时在句与句之间停下
                 var text = try recognizer.recognize(span.samples)
                 if !text.isEmpty {
                     text = punctuator?.punctuate(text) ?? text

@@ -6,7 +6,7 @@ public enum JobStep: String, Codable, Sendable, CaseIterable {
 }
 
 public enum JobStatus: String, Codable, Sendable {
-    case queued, waitingForPower, running, done, failed
+    case queued, waitingForPower, running, paused, done, failed
 }
 
 /// 一场会议的会后处理任务（持久化，可断点续跑）

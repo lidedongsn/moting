@@ -140,10 +140,10 @@ struct DetailView: View {
     private var detailToolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
             Button("导出", systemImage: "square.and.arrow.down", action: exportMarkdown)
-                .labelStyle(.titleAndIcon)
+                .buttonStyle(ToolbarPillStyle())
                 .help("导出为 Markdown")
             Button(hasFinal ? "重新转写" : "精准转写", systemImage: "arrow.clockwise") { processing.enqueue(meeting.id) }
-                .labelStyle(.titleAndIcon)
+                .buttonStyle(ToolbarPillStyle())
                 .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
                 .help("用离线大模型对整段录音重新识别，生成正式稿（草稿保留）")
             Menu {
@@ -154,8 +154,12 @@ struct DetailView: View {
                 Button("删除会议…", role: .destructive) { onDelete(meeting) }
                     .disabled(meeting.status == .recording)
             } label: {
-                Label("更多", systemImage: "ellipsis")
+                Image(systemName: "ellipsis")
             }
+            .menuStyle(.button)
+            .menuIndicator(.hidden)
+            .buttonStyle(ToolbarPillStyle(iconOnly: true))
+            .help("更多")
             // 录音按钮排在最右（设计稿）
             RecordButton(recorder: recorder)
         }
@@ -299,6 +303,15 @@ struct DetailView: View {
                 Text("正在精准转写 \(Int(p * 100))%").fontWeight(.semibold)
                 Text("完成后会替换实时草稿，并通知你。").foregroundStyle(.secondary)
                 Spacer(minLength: 0)
+                Button("暂停", systemImage: "pause.fill") { processing.pause(meeting.id) }
+            })
+        case .paused:
+            return AnyView(Group {
+                Image(systemName: "pause.circle.fill").foregroundStyle(.secondary)
+                Text("精准转写已暂停 \(Int(job.progress * 100))%").fontWeight(.semibold)
+                Text("已完成的部分会保留，继续时接着处理。").foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Button("继续", systemImage: "play.fill") { processing.resume(meeting.id) }
             })
         case .waitingForPower:
             return AnyView(Group {

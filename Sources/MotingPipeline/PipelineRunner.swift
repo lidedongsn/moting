@@ -20,6 +20,11 @@ public final class PipelineRunner: @unchecked Sendable {
     private var wakeContinuation: AsyncStream<Void>.Continuation?
     private var loop: Task<Void, Never>?
     private var draining = false
+    /// 正在处理的会议，及其当前步骤的任务（暂停时取消它）
+    private var currentMeeting: UUID?
+    private var currentStep: Task<Job, Error>?
+    /// 用户要求暂停的会议
+    private var pauseRequested: Set<UUID> = []
 
     /// 任务结束（成功或失败）时回调，用于系统通知
     public var onJobFinished: (@Sendable (Job) -> Void)?
@@ -37,13 +42,39 @@ public final class PipelineRunner: @unchecked Sendable {
         self.sleep = sleep
     }
 
-    /// 入队：用电池时进入 waitingForPower
+    /// 入队：用电池时进入 waitingForPower；已暂停的任务直接继续
     @discardableResult
     public func enqueue(meetingID: UUID, modelID: String) throws -> Job {
-        let job = try jobs.enqueue(meetingID: meetingID, modelID: modelID,
+        var job = try jobs.enqueue(meetingID: meetingID, modelID: modelID,
                                    status: power.isOnAC ? .queued : .waitingForPower, at: Date())
+        if job.status == .paused {
+            job.status = .queued
+            try jobs.update(job)
+        }
         wake()
         return job
+    }
+
+    /// 暂停：正在跑的任务中断当前步骤（已完成的步骤保留），排队中的任务不再开始
+    public func pause(meetingID: UUID) throws {
+        let running = lock.withLock { () -> Bool in
+            guard currentMeeting == meetingID else { return false }
+            pauseRequested.insert(meetingID)
+            currentStep?.cancel()
+            return true
+        }
+        guard !running, var job = try jobs.job(for: meetingID),
+              job.status == .queued || job.status == .waitingForPower else { return }
+        job.status = .paused
+        try jobs.update(job)
+    }
+
+    /// 继续已暂停的任务，从断点接着跑
+    public func resume(meetingID: UUID) throws {
+        guard var job = try jobs.job(for: meetingID), job.status == .paused else { return }
+        job.status = .queued
+        try jobs.update(job)
+        wake()
     }
 
     /// 用户点"现在处理"
@@ -101,6 +132,8 @@ public final class PipelineRunner: @unchecked Sendable {
 
     private func run(_ initial: Job) async {
         var job = initial
+        lock.withLock { currentMeeting = job.meetingID }
+        defer { lock.withLock { currentMeeting = nil; currentStep = nil; pauseRequested.remove(initial.meetingID) } }
         job.status = .running
         job.error = nil
         try? jobs.update(job)
@@ -114,9 +147,18 @@ public final class PipelineRunner: @unchecked Sendable {
                 let done = Double(job.completedSteps.count)
                 let meetingID = job.meetingID
                 let total = Double(all.count)
-                job = try await steps.run(step, job: job) { [weak self] p in
-                    self?.onProgress?(meetingID, (done + min(max(p, 0), 1)) / total)
+                let steps = steps, current = job
+                let task = Task {
+                    try await steps.run(step, job: current) { [weak self] p in
+                        self?.onProgress?(meetingID, (done + min(max(p, 0), 1)) / total)
+                    }
                 }
+                let paused = lock.withLock { () -> Bool in
+                    currentStep = task
+                    return pauseRequested.contains(meetingID)
+                }
+                if paused { task.cancel() }
+                job = try await task.value
                 job.completedSteps.append(step)
                 job.progress = Double(job.completedSteps.count) / total
                 try jobs.update(job)
@@ -126,6 +168,12 @@ public final class PipelineRunner: @unchecked Sendable {
             job.progress = 1
             try jobs.update(job)
             try meetings.updateStatus(job.meetingID, .done)
+        } catch where lock.withLock({ pauseRequested.contains(job.meetingID) }) {
+            job.status = .paused
+            try? jobs.update(job)
+            try? meetings.updateStatus(job.meetingID, .pendingProcessing)
+            report(job, job.progress)
+            return
         } catch {
             job.status = .failed
             job.error = error.localizedDescription

@@ -32,6 +32,7 @@ public struct FilterVoiceStep {
         var drop: [UUID] = []
         var total = 0.0, kept = 0.0
         for (i, seg) in mic.enumerated() {
+            try Task.checkCancellation()
             let start = Int(seg.start * 16_000)
             let samples = try reader.read(at: start, count: Int((seg.end - seg.start) * 16_000))
             let e = try m.embedding(samples)

@@ -53,6 +53,9 @@ struct FloatingPanelView: View {
                 case .waitingForPower:
                     Image(systemName: "powerplug").foregroundStyle(.secondary)
                     Text("接通电源后自动精准转写").font(.system(size: 12, weight: .semibold))
+                case .paused:
+                    Image(systemName: "pause.circle.fill").foregroundStyle(.secondary)
+                    Text("精准转写已暂停").font(.system(size: 12, weight: .semibold))
                 default:
                     ProgressView().controlSize(.small)
                     Text("正在精准转写… \(Int((processing.lastRecordedMeetingID.flatMap { processing.progress[$0] } ?? 0) * 100))%")
@@ -63,6 +66,13 @@ struct FloatingPanelView: View {
             }
             if !ui.collapsed, processing.lastStatus == .waitingForPower, let id = processing.lastRecordedMeetingID {
                 pillButton("现在处理") { processing.processNow(id) }
+            }
+            if !ui.collapsed, let id = processing.lastRecordedMeetingID {
+                switch processing.lastStatus {
+                case .queued, .running: pillButton("暂停") { processing.pause(id) }
+                case .paused: pillButton("继续") { processing.resume(id) }
+                default: EmptyView()
+                }
             }
         }
         .padding(.horizontal, 12)
