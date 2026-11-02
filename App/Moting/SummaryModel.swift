@@ -3,17 +3,27 @@ import MotingCore
 import MotingStorage
 import MotingSummary
 
-/// AI 纪要：服务配置（Key 在钥匙串）、生成状态、自动生成开关
+/// AI 纪要：服务配置（Key 按服务分别存钥匙串）、生成状态、自动生成开关
 @MainActor
 final class SummaryModel: ObservableObject {
     static let serviceKey = "summary.service"
+    /// 各服务上次用的配置（模型、自定义地址），切换回来时恢复
+    static let savedServicesKey = "summary.savedServices"
     /// 精准转写完成后自动生成（默认关：不经用户点击不发送任何内容）
     static let autoKey = "summary.auto"
 
     @Published var service: SummaryService {
-        didSet { if let d = try? JSONEncoder().encode(service) { UserDefaults.standard.set(d, forKey: Self.serviceKey) } }
+        didSet {
+            if let d = try? JSONEncoder().encode(service) { UserDefaults.standard.set(d, forKey: Self.serviceKey) }
+            remember(service)
+            if oldValue.id != service.id { refreshKey(); availableModels = [] }
+        }
     }
     @Published private(set) var hasKey = false
+    /// 测试连接后服务实际可用的模型
+    @Published private(set) var availableModels: [String] = []
+    /// 能生成了：本机服务不要 Key，其他要有 Key
+    var isReady: Bool { !service.requiresKey || hasKey }
     @Published private(set) var generating: Set<UUID> = []
     @Published private(set) var errors: [UUID: String] = [:]
     /// 纪要有变化时加一，详情页据此重新读取
@@ -28,7 +38,28 @@ final class SummaryModel: ObservableObject {
         self.notifier = notifier
         service = UserDefaults.standard.data(forKey: Self.serviceKey)
             .flatMap { try? JSONDecoder().decode(SummaryService.self, from: $0) } ?? .deepSeek
+        refreshKey()
+    }
+
+    /// 切换服务：恢复这家上次的配置
+    func select(_ presetID: String) {
+        guard presetID != service.id, let preset = SummaryService.preset(presetID) else { return }
+        service = savedServices()[presetID] ?? preset
+    }
+
+    private func refreshKey() {
         hasKey = ((try? keys.read(account: service.name)) ?? nil) != nil
+    }
+
+    private func savedServices() -> [String: SummaryService] {
+        UserDefaults.standard.data(forKey: Self.savedServicesKey)
+            .flatMap { try? JSONDecoder().decode([String: SummaryService].self, from: $0) } ?? [:]
+    }
+
+    private func remember(_ s: SummaryService) {
+        var all = savedServices()
+        all[s.id] = s
+        if let d = try? JSONEncoder().encode(all) { UserDefaults.standard.set(d, forKey: Self.savedServicesKey) }
     }
 
     /// 空字符串 = 删除
@@ -40,7 +71,9 @@ final class SummaryModel: ObservableObject {
 
     /// 测试连接：返回可用模型
     func testConnection() async throws -> [String] {
-        try await client().availableModels()
+        let models = try await client().availableModels()
+        availableModels = models
+        return models
     }
 
     func stored(_ meetingID: UUID) -> StoredSummary? {
@@ -54,7 +87,7 @@ final class SummaryModel: ObservableObject {
 
     /// 精准转写完成后：开了自动生成且配置好了才发送
     func autoGenerateIfEnabled(_ meetingID: UUID) {
-        guard UserDefaults.standard.bool(forKey: Self.autoKey), hasKey else { return }
+        guard UserDefaults.standard.bool(forKey: Self.autoKey), isReady else { return }
         generate(meetingID)
     }
 
@@ -89,7 +122,10 @@ final class SummaryModel: ObservableObject {
     }
 
     private func client() throws -> OpenAICompatibleClient {
-        guard let key = try keys.read(account: service.name), !key.isEmpty else { throw SummaryError.notConfigured }
+        if let e = service.validationError { throw SummaryError.network(e) }
+        guard !service.model.trimmingCharacters(in: .whitespaces).isEmpty else { throw SummaryError.notConfigured }
+        let key = try keys.read(account: service.name) ?? ""
+        if service.requiresKey && key.isEmpty { throw SummaryError.notConfigured }
         return OpenAICompatibleClient(service: service, apiKey: key)
     }
 }

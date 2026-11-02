@@ -23,18 +23,13 @@ public struct OpenAICompatibleClient: ChatCompleting {
     }
 
     public func complete(system: String, user: String) async throws -> String {
-        var req = try request("chat/completions")
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONSerialization.data(withJSONObject: [
-            "model": service.model,
-            "messages": [["role": "system", "content": system], ["role": "user", "content": user]],
-            "response_format": ["type": "json_object"],
-            "temperature": 0.3,
-            "max_tokens": 8_192,
-            "stream": false,
-        ] as [String: Any])
-        let data = try await send(req)
+        let data: Data
+        do {
+            data = try await send(try chatRequest(system: system, user: user, jsonMode: true))
+        } catch SummaryError.http(status: 400, _) {
+            // 有的服务不支持 JSON 模式参数：去掉再试一次（提示词里已经要求只输出 JSON）
+            data = try await send(try chatRequest(system: system, user: user, jsonMode: false))
+        }
         struct Reply: Decodable {
             struct Choice: Decodable { struct Message: Decodable { let content: String? }; let message: Message }
             let choices: [Choice]
@@ -43,6 +38,22 @@ public struct OpenAICompatibleClient: ChatCompleting {
             throw SummaryError.unparseable(raw: String(decoding: data.prefix(2_000), as: UTF8.self))
         }
         return reply.choices.first?.message.content ?? ""
+    }
+
+    private func chatRequest(system: String, user: String, jsonMode: Bool) throws -> URLRequest {
+        var req = try request("chat/completions")
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        var body: [String: Any] = [
+            "model": service.model,
+            "messages": [["role": "system", "content": system], ["role": "user", "content": user]],
+            "temperature": 0.3,
+            "max_tokens": 8_192,
+            "stream": false,
+        ]
+        if jsonMode { body["response_format"] = ["type": "json_object"] }
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        return req
     }
 
     /// 测试连接：列出可用模型（不消耗额度）
@@ -57,7 +68,7 @@ public struct OpenAICompatibleClient: ChatCompleting {
         let base = service.baseURL.hasSuffix("/") ? service.baseURL : service.baseURL + "/"
         guard let url = URL(string: path, relativeTo: URL(string: base)) else { throw SummaryError.network("服务地址无效") }
         var req = URLRequest(url: url.absoluteURL)
-        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if !apiKey.isEmpty { req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
         return req
     }
 

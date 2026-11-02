@@ -17,7 +17,7 @@ struct SummaryView: View {
                 VStack(spacing: 10) {
                     ProgressView().controlSize(.small)
                     Text("正在生成纪要…").font(.system(size: 13, weight: .semibold))
-                    Text("已把转写文字发送给 \(model.service.name)，通常几十秒。").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(model.service.isLocal ? "正在用本机模型生成，可能需要几分钟。" : "已把转写文字发送给 \(model.service.name)，通常几十秒。").font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let s = stored?.summary {
@@ -147,9 +147,9 @@ struct SummaryView: View {
             // 与 app 图标同一组青→紫
             Image(systemName: "sparkles").font(.system(size: 30))
                 .foregroundStyle(LinearGradient(colors: [Color(hex: 0x2BB8F0), Color(hex: 0x6D3FE0)], startPoint: .topLeading, endPoint: .bottomTrailing))
-            if !model.hasKey {
+            if !model.isReady {
                 Text("先配置 AI 纪要服务").font(.system(size: 17, weight: .semibold))
-                Text("在设置里填写 DeepSeek 的 API Key 后，就能根据转写稿生成概要、决策和待办。")
+                Text("在设置里选择服务（DeepSeek、通义千问、Kimi 等）并填写 API Key 后，就能根据转写稿生成概要、决策和待办。")
                     .font(.system(size: 13)).foregroundStyle(.secondary)
                 Button {
                     UserDefaults.standard.set("summary", forKey: SettingsRoot.paneKey)
@@ -162,7 +162,9 @@ struct SummaryView: View {
                 Text("转写完成后可以生成纪要。").font(.system(size: 13)).foregroundStyle(.secondary)
             } else {
                 Text("生成会议纪要").font(.system(size: 17, weight: .semibold))
-                Text("会把这场会议的转写文字（不含录音）发送给 \(model.service.name)，生成概要、决策和待办。")
+                Text(model.service.isLocal
+                     ? "用本机的 \(model.service.model) 根据转写文字生成概要、决策和待办，数据不出这台 Mac。"
+                     : "会把这场会议的转写文字（不含录音）发送给 \(model.service.name)，生成概要、决策和待办。")
                     .font(.system(size: 13)).foregroundStyle(.secondary)
                 Button { model.generate(meetingID) } label: { Label("生成纪要", systemImage: "sparkles") }
                     .buttonStyle(AccentPillStyle())
