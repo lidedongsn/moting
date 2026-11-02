@@ -22,6 +22,10 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>
 	<false/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>开始录音时读取当前时段的日历事件，用它的标题给会议命名。日历内容只在这台 Mac 上读取，不会上传。</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>开始录音时读取当前时段的日历事件，用它的标题给会议命名。日历内容只在这台 Mac 上读取，不会上传。</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Moting 需要麦克风来录制你在会议中的发言。</string>
 	<key>NSAudioCaptureUsageDescription</key>

@@ -6,6 +6,8 @@ struct GeneralPane: View {
     @AppStorage(ProcessingModel.batteryPolicyKey) private var batteryPolicy = "wait"
     @AppStorage(AppAppearance.key) private var appearance = AppAppearance.system.rawValue
     @AppStorage(CallDetector.enabledKey) private var callDetection = true
+    @AppStorage(CalendarNaming.enabledKey) private var calendarNaming = false
+    @State private var calendarDenied = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -22,6 +24,14 @@ struct GeneralPane: View {
                 row(title: "发现会议时提醒录音",
                     detail: "腾讯会议、飞书、钉钉、Zoom 等开始用麦克风时，在屏幕右上角问要不要录；通话结束时提醒结束录音。只看哪个 app 在用麦克风，不会自动开始录音。") {
                     Toggle("", isOn: $callDetection).toggleStyle(.switch).labelsHidden()
+                }
+                Divider().padding(.leading, 14)
+                row(title: "用日历事件给会议命名",
+                    detail: calendarDenied
+                        ? "没有日历权限。请在系统设置 › 隐私与安全性 › 日历 里允许 Moting，再打开这里。"
+                        : "开始录音时，用日历里正在开的会议标题代替「会议 日期 时间」。日历只在这台 Mac 上读取，不上传。") {
+                    Toggle("", isOn: Binding(get: { calendarNaming && CalendarNaming.isAuthorized }, set: { setCalendarNaming($0) }))
+                        .toggleStyle(.switch).labelsHidden()
                 }
             }
             .padding(.bottom, 16)
@@ -41,6 +51,15 @@ struct GeneralPane: View {
                     .fixedSize()
                 }
             }
+        }
+    }
+
+    private func setCalendarNaming(_ on: Bool) {
+        guard on else { calendarNaming = false; return }
+        Task {
+            let granted = CalendarNaming.isAuthorized ? true : await CalendarNaming.requestAccess()
+            calendarDenied = !granted
+            calendarNaming = granted
         }
     }
 

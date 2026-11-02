@@ -86,7 +86,8 @@ final class RecordingController: ObservableObject {
         }
     }
 
-    /// source：从检测到的通话开始录音时传软件名，标题用"腾讯会议 2026-11-02 10:30"代替"会议 …"
+    /// 标题：日历里正在开的会议优先（设置里打开时）；否则从检测到的通话开始时用软件名，
+    /// 如"腾讯会议 2026-11-02 10:30"代替"会议 …"
     func start(source: String? = nil) {
         guard let env, session == nil || state == .stopped, !isStarting else { return }
         isStarting = true
@@ -100,7 +101,9 @@ final class RecordingController: ObservableObject {
             session.onTrackAudio = { ch, samples, start in feeder.value?.feed(ch, samples, startSample: start) }
             do {
                 let meeting = try session.start()
-                if let source, meeting.title.hasPrefix("会议 ") {
+                if let event = CalendarNaming.currentTitle() {
+                    try? repository.rename(meeting.id, to: event)
+                } else if let source, meeting.title.hasPrefix("会议 ") {
                     try? repository.rename(meeting.id, to: source + meeting.title.dropFirst(2))
                 }
                 await self.didStart(session, meetingID: meeting.id)
