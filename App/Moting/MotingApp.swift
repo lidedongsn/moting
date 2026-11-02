@@ -6,6 +6,7 @@ struct MotingApp: App {
     private let bootError: String?
     @StateObject private var recorder: RecordingController
     private let floatingPanel: FloatingPanelController
+    private let callDetector: CallDetector
     private let hotKey: GlobalHotKey
 
     init() {
@@ -24,6 +25,7 @@ struct MotingApp: App {
         // init 时 NSApp 可能还没就绪，放到下一轮再应用保存的外观
         DispatchQueue.main.async { AppAppearance.applySaved() }
         floatingPanel = FloatingPanelController(recorder: recorder)
+        callDetector = CallDetector(recorder: recorder)
         // ⌥⌘R：任何 app 里开始 / 结束录音
         hotKey = GlobalHotKey { [weak recorder] in
             MainActor.assumeIsolated {
