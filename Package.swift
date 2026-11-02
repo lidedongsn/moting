@@ -23,7 +23,7 @@ let package = Package(
         .target(name: "MotingRecording", dependencies: ["MotingCore", "MotingStorage", "MotingCapture"]),
         .target(
             name: "MotingPipeline",
-            dependencies: ["MotingCore", "MotingStorage", "MotingCapture", "MotingASR"],
+            dependencies: ["MotingCore", "MotingStorage", "MotingCapture", "MotingASR", "MotingDSP"],
             linkerSettings: [.linkedFramework("IOKit")]
         ),
         // 捕获 AVFoundation 抛出的 Objective-C 异常（Swift 无法捕获）

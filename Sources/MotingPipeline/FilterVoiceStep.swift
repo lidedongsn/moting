@@ -2,6 +2,7 @@ import Foundation
 import MotingASR
 import MotingCapture
 import MotingCore
+import MotingDSP
 import MotingStorage
 
 public enum FilterOutcome: String, Codable, Sendable {
@@ -52,7 +53,7 @@ public struct FilterVoiceStep {
     }
 }
 
-/// 收尾：去掉外放回声造成的重复句，再把正式稿标记为完成，此后详情页才会显示它
+/// 收尾：去掉外放回声造成的句子（按文字、再按两路能量），再把正式稿标记为完成，此后详情页才会显示它
 public struct MergeStep {
     private let transcripts: TranscriptRepository
 
@@ -60,10 +61,16 @@ public struct MergeStep {
         self.transcripts = transcripts
     }
 
-    public func run(versionID: UUID) throws {
+    public func run(versionID: UUID, micTrack: URL? = nil, systemTrack: URL? = nil) throws {
+        let segments = try transcripts.segments(versionID: versionID)
         // 外放时"我"一路录进了对方的声音：删掉与"对方"同时同内容的句子
-        let echo = EchoDedup.echoSegmentIDs(try transcripts.segments(versionID: versionID))
-        if !echo.isEmpty { try transcripts.deleteSegments(ids: echo) }
+        var echo = Set(EchoDedup.echoSegmentIDs(segments))
+        // 识别错得和对方那句对不上的回声：看两路能量，整句都能用对方声音解释的也删掉
+        if let micTrack, let systemTrack {
+            echo.formUnion(EchoDedup.energyEchoIDs(segments.filter { !echo.contains($0.id) },
+                                                   micTrack: micTrack, systemTrack: systemTrack))
+        }
+        if !echo.isEmpty { try transcripts.deleteSegments(ids: Array(echo)) }
         try transcripts.markCompleted(versionID, at: Date())
     }
 }
@@ -77,5 +84,15 @@ public enum EchoDedup {
                 .map(\.text).joined()
             return EchoText.isEcho(m.text, of: theirs) ? m.id : nil
         }
+    }
+
+    /// 按能量判断的回声句；读不到音轨或估不出外放模型（如戴耳机）时为空
+    public static func energyEchoIDs(_ segments: [TranscriptSegment], micTrack: URL, systemTrack: URL) -> [UUID] {
+        let mine = segments.filter { $0.channel == .mic }
+        guard !mine.isEmpty,
+              let mic = try? EnergyEcho.frameEnergies(pcmFile: micTrack),
+              let sys = try? EnergyEcho.frameEnergies(pcmFile: systemTrack),
+              let model = EnergyEcho.estimate(mic: mic, system: sys) else { return [] }
+        return mine.filter { EnergyEcho.isBleed(start: $0.start, end: $0.end, mic: mic, system: sys, model: model) }.map(\.id)
     }
 }

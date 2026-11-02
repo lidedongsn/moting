@@ -67,7 +67,8 @@ public struct DefaultStepRunner: PipelineStepRunner {
             job.filterOutcome = outcome.rawValue
         case .merge:
             guard let v = job.versionID else { throw PipelineError.missingVersion }
-            try MergeStep(transcripts: transcripts).run(versionID: v)
+            try MergeStep(transcripts: transcripts).run(versionID: v, micTrack: paths.trackURL(job.meetingID, .mic),
+                                                        systemTrack: paths.trackURL(job.meetingID, .system))
             progress(1)
         }
         return job
