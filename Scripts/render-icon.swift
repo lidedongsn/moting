@@ -1,121 +1,145 @@
 // 生成 Moting 的 app 图标与菜单栏图标（CoreGraphics 绘制，透明背景）。
 // 用法：swift Scripts/render-icon.swift App/Moting/Assets.xcassets
-// 设计：A 造型（声波 → 文字行）+ C 配色（石墨黑底），颜色取 macOS 26 深色系统色，带玻璃高光
+// 设计（2026-11-02）："一笔"——一条线从声波（听）渐平成直线（转写），末端聚成 ✦（总结）。
+// 青→紫渐变底：左上接 app 内的青色主色，右下的紫色呼应 AI 纪要；macOS 26 连续曲率外形 + 玻璃高光
 import AppKit
 import CoreGraphics
 
 let out = URL(fileURLWithPath: CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "Assets.xcassets")
+let space = CGColorSpace(name: CGColorSpace.sRGB)!
 
 func color(_ hex: UInt32, _ a: CGFloat = 1) -> CGColor {
     CGColor(srgbRed: CGFloat(hex >> 16 & 0xFF) / 255, green: CGFloat(hex >> 8 & 0xFF) / 255,
             blue: CGFloat(hex & 0xFF) / 255, alpha: a)
 }
 
-let cyan: UInt32 = 0x3CD3FE     // macOS 26 深色 cyan（"我"）
-let yellow: UInt32 = 0xFFD600   // macOS 26 深色 yellow（"对方"）
-
-/// 设计稿坐标 0–100（y 向下），映射到苹果模板：1024 画布中 824×824 的圆角方形，四周留 100
-struct Canvas {
-    let ctx: CGContext
-    let size: CGFloat
-    var s: CGFloat { size * 824 / 1024 / 100 }
-    var o: CGFloat { size * 100 / 1024 }
-    func rect(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> CGRect {
-        CGRect(x: o + x * s, y: size - (o + (y + h) * s), width: w * s, height: h * s)
-    }
+func linear(_ ctx: CGContext, _ colors: [CGColor], from: CGPoint, to: CGPoint, locations: [CGFloat]? = nil) {
+    let g = CGGradient(colorsSpace: space, colors: colors as CFArray, locations: locations)!
+    ctx.drawLinearGradient(g, start: from, end: to, options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
 }
 
-func linear(_ ctx: CGContext, _ colors: [CGColor], from: CGPoint, to: CGPoint) {
-    let g = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB), colors: colors as CFArray, locations: nil)!
-    ctx.drawLinearGradient(g, start: from, end: to, options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+func radial(_ ctx: CGContext, _ colors: [CGColor], center: CGPoint, radius: CGFloat) {
+    let g = CGGradient(colorsSpace: space, colors: colors as CFArray, locations: nil)!
+    ctx.drawRadialGradient(g, startCenter: center, startRadius: 0, endCenter: center, endRadius: radius, options: [.drawsAfterEndLocation])
+}
+
+/// 连续曲率圆角方形（超椭圆近似 macOS 图标外形）
+func squircle(_ r: CGRect, n: CGFloat = 4.2) -> CGPath {
+    let p = CGMutablePath()
+    for i in 0...720 {
+        let t = CGFloat(i) / 720 * 2 * .pi
+        let c = cos(t), s = sin(t)
+        let pt = CGPoint(x: r.midX + r.width / 2 * (c < 0 ? -1 : 1) * pow(abs(c), 2 / n),
+                         y: r.midY + r.height / 2 * (s < 0 ? -1 : 1) * pow(abs(s), 2 / n))
+        i == 0 ? p.move(to: pt) : p.addLine(to: pt)
+    }
+    p.closeSubpath()
+    return p
+}
+
+/// "一笔"的中心线，坐标 0–100（y 向上）：x 14–40 振荡且振幅衰减，40–53 为直线
+func strokeCenterline(_ map: (CGFloat, CGFloat) -> CGPoint) -> CGPath {
+    let p = CGMutablePath()
+    let x0: CGFloat = 14, x1: CGFloat = 40, x2: CGFloat = 53
+    for i in 0...500 {
+        let x = x0 + (x2 - x0) * CGFloat(i) / 500
+        let k = max(0, (x1 - x) / (x1 - x0))
+        let y = 50 + 22 * pow(k, 1.1) * sin((x - x0) * 0.5)
+        i == 0 ? p.move(to: map(x, y)) : p.addLine(to: map(x, y))
+    }
+    return p
+}
+
+/// 四角星 ✦
+func sparkle(center c: CGPoint, big: CGFloat, small: CGFloat) -> CGPath {
+    let p = CGMutablePath()
+    for j in 0..<8 {
+        let ang = CGFloat(j) * .pi / 4 + .pi / 2
+        let r = j % 2 == 0 ? big : small
+        let pt = CGPoint(x: c.x + r * cos(ang), y: c.y + r * sin(ang))
+        j == 0 ? p.move(to: pt) : p.addLine(to: pt)
+    }
+    p.closeSubpath()
+    return p
+}
+
+/// 白色玻璃件：落影 + 本体 + 上部高光
+func glass(_ ctx: CGContext, _ path: CGPath, size: CGFloat) {
+    let box = path.boundingBox
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.035, color: color(0x1A0B4A, 0.35))
+    ctx.addPath(path)
+    ctx.setFillColor(color(0xFFFFFF))
+    ctx.fillPath()
+    ctx.restoreGState()
+    ctx.saveGState()
+    ctx.addPath(path)
+    ctx.clip()
+    linear(ctx, [color(0xFFFFFF), color(0xE9ECFF)], from: CGPoint(x: 0, y: box.maxY), to: CGPoint(x: 0, y: box.minY))
+    ctx.restoreGState()
 }
 
 func drawIcon(size: CGFloat) -> CGImage {
     let ctx = CGContext(data: nil, width: Int(size), height: Int(size), bitsPerComponent: 8, bytesPerRow: 0,
-                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
-    let c = Canvas(ctx: ctx, size: size)
-    let tile = c.rect(0, 0, 100, 100)
-    let radius = 22.5 * c.s
-    let tilePath = CGPath(roundedRect: tile, cornerWidth: radius, cornerHeight: radius, transform: nil)
+                        space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    // 苹果模板：1024 画布中 824×824 的图标，四周留 100
+    let o = size * 100 / 1024, w = size * 824 / 1024, u = w / 100
+    let tile = CGRect(x: o, y: o, width: w, height: w)
+    let tilePath = squircle(tile)
+    func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: o + x * u, y: o + y * u) }
 
-    // 外投影（苹果模板的轻微落影）
+    // 外投影
     ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.010), blur: size * 0.022, color: color(0x000000, 0.35))
+    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.03, color: color(0x000000, 0.3))
     ctx.addPath(tilePath)
-    ctx.setFillColor(color(0x1A1A1D))
+    ctx.setFillColor(color(0x4A7BE8))
     ctx.fillPath()
     ctx.restoreGState()
 
-    // 石墨渐变底
     ctx.saveGState()
     ctx.addPath(tilePath)
     ctx.clip()
-    linear(ctx, [color(0x34343A), color(0x16161A), color(0x0E0E10)], from: CGPoint(x: 0, y: tile.maxY), to: CGPoint(x: 0, y: tile.minY))
-    // 顶部玻璃高光
-    linear(ctx, [color(0xFFFFFF, 0.14), color(0xFFFFFF, 0)], from: CGPoint(x: 0, y: tile.maxY), to: CGPoint(x: 0, y: tile.midY + tile.height * 0.05))
+    // 青→紫渐变底，左上一点亮
+    linear(ctx, [color(0x2BB8F0), color(0x6D3FE0)], from: CGPoint(x: tile.minX, y: tile.maxY), to: CGPoint(x: tile.maxX, y: tile.minY))
+    radial(ctx, [color(0xFFFFFF, 0.18), color(0xFFFFFF, 0)], center: pt(22, 86), radius: 70 * u)
 
-    // 声波柱：蓝黄交替，上亮下暗的光泽 + 柔和投影
-    let bars: [(CGFloat, CGFloat, CGFloat, UInt32)] = [
-        (15, 40, 20, cyan), (23.5, 29, 42, yellow), (32, 20, 60, cyan), (40.5, 33, 34, yellow), (49, 42.5, 15, cyan),
-    ]
-    for (x, y, h, hex) in bars {
-        let r = c.rect(x, y, 5.5, h)
-        let p = CGPath(roundedRect: r, cornerWidth: r.width / 2, cornerHeight: r.width / 2, transform: nil)
-        ctx.saveGState()
-        ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.006), blur: size * 0.018, color: color(hex, 0.45))
-        ctx.addPath(p)
-        ctx.setFillColor(color(hex))
-        ctx.fillPath()
-        ctx.restoreGState()
-        ctx.saveGState()
-        ctx.addPath(p)
-        ctx.clip()
-        linear(ctx, [color(0xFFFFFF, 0.45), color(0xFFFFFF, 0.0), color(0x000000, 0.12)],
-               from: CGPoint(x: 0, y: r.maxY), to: CGPoint(x: 0, y: r.minY))
-        ctx.restoreGState()
-    }
-
-    // 文字行：磨砂白，逐行变淡
-    for (y, w, a) in [(CGFloat(33), CGFloat(26), CGFloat(1)), (47.25, 20, 0.78), (61.5, 24, 0.56)] {
-        let r = c.rect(60, y, w, 5.5)
-        let p = CGPath(roundedRect: r, cornerWidth: r.height / 2, cornerHeight: r.height / 2, transform: nil)
-        ctx.saveGState()
-        ctx.addPath(p)
-        ctx.clip()
-        linear(ctx, [color(0xFFFFFF, a), color(0xE4E4EA, a)], from: CGPoint(x: 0, y: r.maxY), to: CGPoint(x: 0, y: r.minY))
-        ctx.restoreGState()
-    }
+    // 一笔：小尺寸加粗，免得线糊掉
+    let width = (size <= 64 ? 8.5 : 6.2) * u
+    let line = strokeCenterline(pt).copy(strokingWithWidth: width, lineCap: .round, lineJoin: .round, miterLimit: 1)
+    glass(ctx, line, size: size)
+    ctx.saveGState()
+    ctx.addPath(line)
+    ctx.clip()
+    ctx.setBlendMode(.screen)
+    linear(ctx, [color(0xFFFFFF, 0.5), color(0xFFFFFF, 0)], from: pt(0, 78), to: pt(0, 46))
+    ctx.restoreGState()
+    glass(ctx, sparkle(center: pt(73, 50), big: 18 * u, small: (size <= 64 ? 5.5 : 4.4) * u), size: size)
     ctx.restoreGState()
 
-    // 内沿亮边（Liquid Glass 的边缘反光），上亮下暗
+    // 外沿镜面亮边：左上亮、右下暗
     ctx.saveGState()
-    let rimWidth = max(1, size * 0.004)
-    let inset = tile.insetBy(dx: rimWidth / 2, dy: rimWidth / 2)
-    ctx.addPath(CGPath(roundedRect: inset, cornerWidth: radius - rimWidth / 2, cornerHeight: radius - rimWidth / 2, transform: nil))
-    ctx.setLineWidth(rimWidth)
+    ctx.addPath(tilePath)
+    ctx.setLineWidth(max(1, size * 0.005))
     ctx.replacePathWithStrokedPath()
     ctx.clip()
-    linear(ctx, [color(0xFFFFFF, 0.32), color(0xFFFFFF, 0.06), color(0xFFFFFF, 0.14)],
-           from: CGPoint(x: 0, y: tile.maxY), to: CGPoint(x: 0, y: tile.minY))
+    linear(ctx, [color(0xFFFFFF, 0.55), color(0xFFFFFF, 0.08), color(0xFFFFFF, 0.25)],
+           from: CGPoint(x: tile.minX, y: tile.maxY), to: CGPoint(x: tile.maxX, y: tile.minY), locations: [0, 0.6, 1])
     ctx.restoreGState()
     return ctx.makeImage()!
 }
 
-/// 菜单栏图标：18pt 单色。template 为 true 时画黑色（系统按明暗着色），否则画红色（录音中）
+/// 菜单栏图标：18pt 单色，同 app 图标的"一笔"。template 为 true 时画黑色（系统按明暗着色），否则画红色（录音中）
 func drawMenuIcon(scale: CGFloat, hex: UInt32) -> CGImage {
     let px = 18 * scale
     let ctx = CGContext(data: nil, width: Int(px), height: Int(px), bitsPerComponent: 8, bytesPerRow: 0,
-                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                        space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
     ctx.setFillColor(color(hex))
-    let shapes: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
-        (1, 7, 1.6, 4), (3.6, 5, 1.6, 8), (6.2, 3, 1.6, 12), (8.8, 6, 1.6, 6),
-        (11.5, 5.5, 5.5, 1.6), (11.5, 8.2, 4.2, 1.6), (11.5, 10.9, 5, 1.6),
-    ]
-    for (x, y, w, h) in shapes {
-        let r = CGRect(x: x * scale, y: px - (y + h) * scale, width: w * scale, height: h * scale)
-        let rad = min(w, h) / 2 * scale
-        ctx.addPath(CGPath(roundedRect: r, cornerWidth: rad, cornerHeight: rad, transform: nil))
-    }
+    // 中心线坐标 14–53 映射到 0.8–10.5pt，星在 14.3pt
+    let k = 9.7 / 39 * scale
+    let line = strokeCenterline { x, y in CGPoint(x: 0.8 * scale + (x - 14) * k, y: px / 2 + (y - 50) * k) }
+        .copy(strokingWithWidth: 1.6 * scale, lineCap: .round, lineJoin: .round, miterLimit: 1)
+    ctx.addPath(line)
+    ctx.addPath(sparkle(center: CGPoint(x: 14.3 * scale, y: px / 2), big: 3.5 * scale, small: 1 * scale))
     ctx.fillPath()
     return ctx.makeImage()!
 }
