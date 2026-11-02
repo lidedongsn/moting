@@ -213,11 +213,11 @@ enum AppAppearance: String, CaseIterable {
     }
 }
 
-/// 进度环（设计稿 .ring）：画在框内（描边不外溢），和 13pt 文字等高
+/// 进度环（设计稿 .ring）：20pt、描边 3.5pt，画在框内（描边不外溢）
 struct ProgressRing: View {
     let progress: Double
     var dimmed = false
-    private let width: CGFloat = 2.5
+    private let width: CGFloat = 3.5
 
     var body: some View {
         ZStack {
@@ -228,7 +228,7 @@ struct ProgressRing: View {
                 .rotationEffect(.degrees(-90))
                 .animation(.easeOut(duration: 0.3), value: progress)
         }
-        .frame(width: 16, height: 16)
+        .frame(width: 20, height: 20)
     }
 }
 
