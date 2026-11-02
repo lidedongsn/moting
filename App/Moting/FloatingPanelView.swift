@@ -18,6 +18,8 @@ struct FloatingPanelView: View {
     // 悬浮窗固定为深色玻璃，直接用图标原色
     static let micColor = Color(hex: 0x3CD3FE)
     static let systemColor = Color(hex: 0xFFD600)
+    /// 字幕区顶部淡出带高度
+    static let fadeHeight: CGFloat = 14
     private static let bottomID = "bottom"
     /// 字幕区是否停在最新一行（往上翻看时为 false）
     @State private var following = true
@@ -254,10 +256,12 @@ struct FloatingPanelView: View {
                                 .onAppear { following = true }
                                 .onDisappear { following = false }
                         }
+                        // 顶部留出淡出带的高度：翻到最上面时第一行不被遮
+                        .padding(.top, Self.fadeHeight)
                     }
                     // 顶部淡出，翻到上面的字幕不会被标题栏生硬切断
                     .mask(VStack(spacing: 0) {
-                        LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: 14)
+                        LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: Self.fadeHeight)
                         Color.black
                     })
                     .onChange(of: live.lines) { _, _ in
