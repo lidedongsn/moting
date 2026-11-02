@@ -15,7 +15,10 @@ struct MainWindow: View {
     @State private var query = ""
     @State private var matched: Set<UUID> = []
     @State private var usage: (recordings: Int64, models: Int64) = (0, 0)
-    @State private var pendingDelete: Meeting?
+    /// 待确认删除的会议（可多场）
+    @State private var pendingDelete: [Meeting] = []
+    /// 多选时选中的会议；为空表示只选中了当前这一场（processing.selectedMeetingID）
+    @State private var marked: Set<UUID> = []
     @State private var renaming: Meeting?
     @State private var renameText = ""
 
@@ -28,7 +31,7 @@ struct MainWindow: View {
         } detail: {
             ZStack {
                 if let m = meetings.first(where: { $0.id == processing.selectedMeetingID }) {
-                    DetailView(meeting: m, env: env, recorder: recorder, processing: processing) { pendingDelete = $0 }
+                    DetailView(meeting: m, env: env, recorder: recorder, processing: processing) { pendingDelete = [$0] }
                         // 录音结束时重建一次：播放器在录音中创建时文件还是空的，时长为 0
                         .id("\(m.id)|\(m.endedAt?.timeIntervalSince1970 ?? 0)")
                 } else {
@@ -57,6 +60,7 @@ struct MainWindow: View {
             do {
                 for try await list in env.repository.observeAll() {
                     meetings = list
+                    marked.formIntersection(list.map(\.id))
                     if processing.selectedMeetingID == nil { processing.selectedMeetingID = list.first?.id }
                     refreshUsage()
                 }
@@ -69,9 +73,9 @@ struct MainWindow: View {
             let q = query, transcripts = env.transcripts
             matched = await Task.detached { (try? transcripts.meetingIDs(matching: q)) ?? [] }.value
         }
-        .confirmationDialog(deleteTitle, isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+        .confirmationDialog(deleteTitle, isPresented: Binding(get: { !pendingDelete.isEmpty }, set: { if !$0 { pendingDelete = [] } }),
                             titleVisibility: .visible) {
-            Button("删除", role: .destructive) { if let m = pendingDelete { delete(m) } }
+            Button(pendingDelete.count > 1 ? "删除 \(pendingDelete.count) 场" : "删除", role: .destructive) { delete(pendingDelete) }
         } message: {
             Text("录音文件、转写稿和会议记录会被永久删除，无法恢复。")
         }
@@ -99,11 +103,11 @@ struct MainWindow: View {
             ForEach(MeetingGrouping.group(filtered, now: Date(), calendar: .current), id: \.0) { group, items in
                 Section(group.rawValue) {
                     ForEach(items) { m in
-                        let on = processing.selectedMeetingID == m.id
+                        let on = picked.contains(m.id)
                         MeetingRow(meeting: m, env: env, processing: processing)
                             .padding(.horizontal, 4)
                             .contentShape(Rectangle())
-                            .onTapGesture { processing.selectedMeetingID = m.id }
+                            .onTapGesture { click(m.id) }
                             .listRowBackground(
                                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                                     .fill(on ? Theme.me.opacity(0.16) : .clear)
@@ -111,13 +115,10 @@ struct MainWindow: View {
                                         .strokeBorder(on ? Theme.me.opacity(0.35) : .clear, lineWidth: 0.5))
                                     .padding(.horizontal, 8)
                             )
-                            .contextMenu {
-                                Button("重命名…") { renameText = m.title; renaming = m }
-                                Button("在 Finder 中显示") {
-                                    NSWorkspace.shared.activateFileViewerSelecting([env.paths.meetingDirectory(m.id)])
-                                }
-                                Divider()
-                                Button("删除会议…", role: .destructive) { pendingDelete = m }
+                            .contextMenu { rowMenu(m) }
+                            // 触控板左滑删除
+                            .swipeActions(edge: .trailing) {
+                                Button("删除", role: .destructive) { requestDelete([m]) }
                                     .disabled(m.status == .recording)
                             }
                     }
@@ -128,6 +129,16 @@ struct MainWindow: View {
         .focusable()
         .focusEffectDisabled()
         .onMoveCommand { dir in moveSelection(dir) }
+        // ⌫ 删除选中的会议；⌘A 全选；Esc 取消多选；回车重命名
+        .onDeleteCommand { requestDelete(pickedMeetings) }
+        .onCommand(#selector(NSResponder.selectAll(_:))) { marked = Set(orderedIDs) }
+        .onExitCommand { marked = [] }
+        .onKeyPress(.return) {
+            guard marked.count <= 1, let m = meetings.first(where: { $0.id == processing.selectedMeetingID }) else { return .ignored }
+            renameText = m.title
+            renaming = m
+            return .handled
+        }
         .searchable(text: $query, placement: .sidebar, prompt: "搜索会议和转写内容")
         .overlay {
             if !query.isEmpty && filtered.isEmpty {
@@ -168,9 +179,79 @@ struct MainWindow: View {
         .padding(10)
     }
 
-    /// 上下方向键切换会议
+    // MARK: - 选择与管理
+
+    /// 侧栏里从上到下的会议 id
+    private var orderedIDs: [UUID] {
+        MeetingGrouping.group(filtered, now: Date(), calendar: .current).flatMap { $0.1.map(\.id) }
+    }
+
+    /// 当前选中的全部会议：多选时是 marked，否则就是正在看的那一场
+    private var picked: Set<UUID> {
+        if !marked.isEmpty { return marked }
+        return processing.selectedMeetingID.map { [$0] } ?? []
+    }
+
+    private var pickedMeetings: [Meeting] {
+        meetings.filter { picked.contains($0.id) }
+    }
+
+    /// 单击切换会议；⌘ 单击加选 / 取消，⇧ 单击从当前会议连选到这里（同 Finder）
+    private func click(_ id: UUID) {
+        let flags = NSEvent.modifierFlags
+        if flags.contains(.command) {
+            var s = picked
+            if s.contains(id), s.count > 1 {
+                s.remove(id)
+                if processing.selectedMeetingID == id { processing.selectedMeetingID = orderedIDs.first(where: s.contains) }
+            } else {
+                s.insert(id)
+                processing.selectedMeetingID = id
+            }
+            marked = s.count > 1 ? s : []
+        } else if flags.contains(.shift), let anchor = processing.selectedMeetingID,
+                  let a = orderedIDs.firstIndex(of: anchor), let b = orderedIDs.firstIndex(of: id) {
+            let range = Set(orderedIDs[min(a, b)...max(a, b)])
+            marked = range.count > 1 ? range : []
+        } else {
+            marked = []
+            processing.selectedMeetingID = id
+        }
+    }
+
+    @ViewBuilder
+    private func rowMenu(_ m: Meeting) -> some View {
+        // 在多选范围内右键：对所有选中的会议操作
+        let group = picked.contains(m.id) && picked.count > 1 ? pickedMeetings : [m]
+        if group.count > 1 {
+            Button("在 Finder 中显示") {
+                NSWorkspace.shared.activateFileViewerSelecting(group.map { env.paths.meetingDirectory($0.id) })
+            }
+            Divider()
+            Button("删除 \(group.count) 场会议…", role: .destructive) { requestDelete(group) }
+        } else {
+            Button("重命名…") { renameText = m.title; renaming = m }
+            Button("精准转写") { processing.enqueue(m.id) }
+                .disabled(m.status == .recording || m.status == .processing)
+            Button("在 Finder 中显示") {
+                NSWorkspace.shared.activateFileViewerSelecting([env.paths.meetingDirectory(m.id)])
+            }
+            Divider()
+            Button("删除会议…", role: .destructive) { requestDelete([m]) }
+                .disabled(m.status == .recording)
+        }
+    }
+
+    /// 请求删除；正在录音的那场跳过
+    private func requestDelete(_ list: [Meeting]) {
+        let deletable = list.filter { $0.status != .recording }
+        if !deletable.isEmpty { pendingDelete = deletable }
+    }
+
+    /// 上下方向键切换会议（同时退出多选）
     private func moveSelection(_ dir: MoveCommandDirection) {
-        let ids = MeetingGrouping.group(filtered, now: Date(), calendar: .current).flatMap { $0.1.map(\.id) }
+        marked = []
+        let ids = orderedIDs
         guard !ids.isEmpty else { return }
         let i = ids.firstIndex(where: { $0 == processing.selectedMeetingID })
         switch dir {
@@ -181,8 +262,9 @@ struct MainWindow: View {
     }
 
     private var deleteTitle: String {
-        guard let m = pendingDelete else { return "" }
-        return "删除「\(m.title)」？将释放 \(bytes(env.paths.diskUsage(of: m.id)))"
+        let size = pendingDelete.reduce(Int64(0)) { $0 + env.paths.diskUsage(of: $1.id) }
+        if pendingDelete.count == 1 { return "删除「\(pendingDelete[0].title)」？将释放 \(bytes(size))" }
+        return "删除 \(pendingDelete.count) 场会议？将释放 \(bytes(size))"
     }
 
     private func refreshUsage() {
@@ -193,18 +275,29 @@ struct MainWindow: View {
         }
     }
 
-    private func delete(_ m: Meeting) {
-        do {
-            // 先删文件再删记录：文件删除失败时记录还在，可以再试
-            let dir = env.paths.meetingDirectory(m.id)
-            if FileManager.default.fileExists(atPath: dir.path) { try FileManager.default.removeItem(at: dir) }
-            if processing.selectedMeetingID == m.id { processing.selectedMeetingID = nil }
-            try env.repository.delete(m.id)
-            RibbonCache.shared.invalidate(m.id)
-        } catch {
-            recorder.lastError = "删除失败：\(error.localizedDescription)"
+    private func delete(_ list: [Meeting]) {
+        let ids = Set(list.map(\.id))
+        // 删完选中紧挨着的下一场（没有就上一场），不跳回列表顶部
+        if let current = processing.selectedMeetingID, ids.contains(current) {
+            let order = orderedIDs
+            let i = order.firstIndex(of: current) ?? 0
+            processing.selectedMeetingID = order[i...].first { !ids.contains($0) } ?? order[..<i].last { !ids.contains($0) }
         }
-        pendingDelete = nil
+        marked = []
+        var failed: [String] = []
+        for m in list {
+            do {
+                // 先删文件再删记录：文件删除失败时记录还在，可以再试
+                let dir = env.paths.meetingDirectory(m.id)
+                if FileManager.default.fileExists(atPath: dir.path) { try FileManager.default.removeItem(at: dir) }
+                try env.repository.delete(m.id)
+                RibbonCache.shared.invalidate(m.id)
+            } catch {
+                failed.append("「\(m.title)」：\(error.localizedDescription)")
+            }
+        }
+        if !failed.isEmpty { recorder.lastError = "删除失败\n" + failed.joined(separator: "\n") }
+        pendingDelete = []
     }
 
     private func bytes(_ n: Int64) -> String {
