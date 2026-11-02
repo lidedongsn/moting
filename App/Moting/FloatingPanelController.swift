@@ -16,6 +16,10 @@ final class FloatingPanelController {
     static let collapsedSize = NSSize(width: 400, height: 44)
     /// 录音结束后显示精准转写进度时的高度（设计稿：紧凑卡片）
     static let processingHeight: CGFloat = 124
+    /// 会后进度卡片的宽度：内容只有一行标题和一句说明，不跟字幕窗一样宽
+    static let processingWidth: CGFloat = 300
+    /// 切到进度卡片前字幕窗的宽度，下次录音时恢复
+    private static let recordingWidthKey = "floatingPanel.recordingWidth"
     static let maxSize = NSSize(width: 760, height: 900)
     /// 菜单栏面板的"显示字幕窗"：展开并带到最前
     static let showRequest = Notification.Name("moting.floatingPanel.show")
@@ -122,10 +126,25 @@ final class FloatingPanelController {
         guard let panel else { return }
         var frame = panel.frame
         let height = collapsed ? Self.collapsedSize.height : (isRecording ? Self.expandedSize.height : Self.processingHeight)
-        let top = frame.maxY
-        frame.size = NSSize(width: frame.width, height: height)
-        frame.origin.y = top - height
+        let top = frame.maxY, right = frame.maxX
+        var width = frame.width
+        if !collapsed {
+            if isRecording {
+                width = Self.savedRecordingWidth
+            } else if width > Self.processingWidth {
+                UserDefaults.standard.set(Double(width), forKey: Self.recordingWidthKey)
+                width = Self.processingWidth
+            }
+        }
+        // 窗口一般停在屏幕右侧，改宽度时右边缘不动
+        frame.size = NSSize(width: width, height: height)
+        frame.origin = NSPoint(x: right - width, y: top - height)
         panel.setFrame(Self.constrained(frame, to: panel.screen ?? NSScreen.main), display: true, animate: true)
+    }
+
+    private static var savedRecordingWidth: CGFloat {
+        let w = UserDefaults.standard.double(forKey: recordingWidthKey)
+        return w > processingWidth ? min(w, maxSize.width) : expandedSize.width
     }
 
     private var isRecording: Bool {
@@ -145,10 +164,11 @@ final class FloatingPanelController {
             frame.origin = NSPoint(x: right - frame.width, y: top - frame.height)
         } else if frame.height < 120 || (isRecording && frame.height <= Self.processingHeight) {
             // 展开状态却恢复出收起时的高度（保存的窗口位置是收起时记下的），
-            // 或录音中还是会后进度卡片的高度：恢复默认展开高度，顶边不动
-            let top = frame.maxY
+            // 或录音中还是会后进度卡片的大小：恢复展开尺寸，顶边和右边缘不动
+            let top = frame.maxY, right = frame.maxX
             frame.size.height = base.height
-            frame.origin.y = top - base.height
+            if isRecording, frame.width <= Self.processingWidth { frame.size.width = Self.savedRecordingWidth }
+            frame.origin = NSPoint(x: right - frame.width, y: top - frame.height)
         }
         if frame.height > Self.maxSize.height || frame.width > Self.maxSize.width {
             let top = frame.maxY

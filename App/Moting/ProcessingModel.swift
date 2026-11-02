@@ -26,16 +26,22 @@ final class ProcessingModel: ObservableObject {
     let summary: SummaryModel
     private var powerMonitor: PowerMonitor?
 
+    /// 请求打开主窗口；由常驻的菜单栏图标视图接收（悬浮窗、通知里拿不到 openWindow）
+    static let openMainRequest = Notification.Name("moting.openMain")
+
+    /// 在主窗口里打开某场会议的详情；主窗口关着也会重新打开
+    func openMeeting(_ id: UUID) {
+        selectedMeetingID = id
+        NotificationCenter.default.post(name: Self.openMainRequest, object: nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     init(env: AppEnvironment?) {
         self.env = env
         summary = SummaryModel(env: env, notifier: notifier)
         guard let env else { return }
         notifier.requestAuthorization()
-        notifier.onOpenMeeting = { [weak self] id in
-            self?.selectedMeetingID = id
-            NSApp.activate(ignoringOtherApps: true)
-            NSApp.windows.first { $0.identifier?.rawValue == "main" || $0.title == "Moting" }?.makeKeyAndOrderFront(nil)
-        }
+        notifier.onOpenMeeting = { [weak self] id in self?.openMeeting(id) }
         env.pipeline.onProgress = { [weak self] id, p in
             Task { @MainActor in
                 guard let self else { return }

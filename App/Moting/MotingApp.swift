@@ -63,6 +63,19 @@ struct MotingApp: App {
         MenuBarExtra {
             MenuBarContent(recorder: recorder, live: recorder.live, processing: recorder.processing, env: env)
         } label: {
+            MenuBarLabel(recorder: recorder)
+        }
+        .menuBarExtraStyle(.window)
+    }
+}
+
+/// 菜单栏图标；它一直在，顺便负责响应"打开主窗口"的请求
+private struct MenuBarLabel: View {
+    @ObservedObject var recorder: RecordingController
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Group {
             if recorder.state == .recording || recorder.state == .paused || recorder.state == .stopping {
                 // 录音中：菜单栏直接显示红点和计时
                 HStack(spacing: 4) {
@@ -73,6 +86,8 @@ struct MotingApp: App {
                 Image("MenuBarIcon")
             }
         }
-        .menuBarExtraStyle(.window)
+        .onReceive(NotificationCenter.default.publisher(for: ProcessingModel.openMainRequest)) { _ in
+            openWindow(id: "main")
+        }
     }
 }

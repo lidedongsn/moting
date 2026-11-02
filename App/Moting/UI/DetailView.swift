@@ -150,6 +150,8 @@ struct DetailView: View {
                 .buttonStyle(ToolbarPillStyle())
                 .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
                 .help("用离线大模型对整段录音重新识别，生成正式稿（草稿保留）")
+            // 录音按钮在「更多」左边，「更多」照 macOS 习惯放最右
+            RecordButton(recorder: recorder)
             Menu {
                 Button("在 Finder 中显示") {
                     NSWorkspace.shared.activateFileViewerSelecting([env.paths.meetingDirectory(meeting.id)])
@@ -164,8 +166,6 @@ struct DetailView: View {
             .menuIndicator(.hidden)
             .buttonStyle(ToolbarPillStyle(iconOnly: true))
             .help("更多")
-            // 录音按钮排在最右（设计稿）
-            RecordButton(recorder: recorder)
         }
     }
 

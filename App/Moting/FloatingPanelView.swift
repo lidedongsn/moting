@@ -79,7 +79,7 @@ struct FloatingPanelView: View {
             // 收起时整行居中，点一下展开
             .frame(maxHeight: ui.collapsed ? .infinity : nil)
             .contentShape(Rectangle())
-            .onTapGesture { if ui.collapsed { ui.collapsed = false } }
+            .onTapGesture { ui.collapsed ? (ui.collapsed = false) : openMeeting() }
             if !ui.collapsed {
                 if processing.lastStatus == .running || processing.lastStatus == .queued || processing.lastStatus == .paused {
                     Capsule().fill(.white.opacity(0.12))
@@ -110,12 +110,21 @@ struct FloatingPanelView: View {
             if !ui.collapsed { Spacer(minLength: 0) }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // 点卡片任意空白处：到主窗口看这场会议
+        .contentShape(Rectangle())
+        .onTapGesture { if !ui.collapsed { openMeeting() } }
+        .help(ui.collapsed ? "展开" : "在主窗口查看这场会议")
+    }
+
+    private func openMeeting() {
+        guard let id = processing.lastRecordedMeetingID else { return }
+        processing.openMeeting(id)
     }
 
     private var processingHint: String {
         switch processing.lastStatus {
-        case .done: "已替换实时草稿，可以在主窗口查看。"
-        case .failed: "可以在主窗口重试。"
+        case .done: "已替换实时草稿，点这里查看。"
+        case .failed: "点这里到主窗口重试。"
         case .waitingForPower: "正在使用电池，接通电源后自动开始。"
         case .paused: "已完成的部分会保留，继续时接着处理。"
         default: "可以关掉这个窗口，完成后会通知你。"
