@@ -1,10 +1,11 @@
 import Foundation
 
-/// 会议导出为 Markdown（spec 5.7）。AI 纪要部分在 P4 加入
+/// 会议导出为 Markdown（spec 5.7）：标题、时间、参会人、AI 纪要、重点标记、转写稿
 public enum MarkdownExporter {
     /// names：说话人标签 → 用户改过的名字
     public static func export(meeting m: Meeting, segments: [TranscriptSegment], marks: [Mark],
-                              names: [String: String] = [:], timeZone: TimeZone = .current) -> String {
+                              names: [String: String] = [:], summary: MeetingSummary? = nil,
+                              timeZone: TimeZone = .current) -> String {
         var out = "# \(m.title)\n\n"
         out += "- 时间：\(timeRange(m, timeZone))\n"
         var speakers = ["我"]
@@ -13,6 +14,7 @@ public enum MarkdownExporter {
             if !speakers.contains(name) { speakers.append(name) }
         }
         out += "- 参会：\(speakers.joined(separator: "、"))\n"
+        if let summary { out += summarySection(summary) }
 
         if !marks.isEmpty {
             out += "\n## 重点标记\n"
@@ -28,6 +30,25 @@ public enum MarkdownExporter {
             for s in segments.sorted(by: { $0.start < $1.start }) {
                 out += "**[\(clock(s.start))] \(speakerName(s, names))：** \(s.text)\n\n"
             }
+        }
+        return out
+    }
+
+    private static func summarySection(_ s: MeetingSummary) -> String {
+        var out = "\n## 纪要\n\n\(s.overview)\n"
+        if !s.decisions.isEmpty {
+            out += "\n### 决策\n" + s.decisions.map { "- \($0)\n" }.joined()
+        }
+        if !s.todos.isEmpty {
+            out += "\n### 待办\n" + s.todos.map { t in
+                let meta = [t.owner, t.due].compactMap { $0 }.filter { !$0.isEmpty }
+                return "- [\(t.done ? "x" : " ")] \(t.task)\(meta.isEmpty ? "" : "（\(meta.joined(separator: " · "))）")\n"
+            }.joined()
+        }
+        if !s.topics.isEmpty {
+            out += "\n### 主要内容\n" + s.topics.map { t in
+                "**\(t.title)**\n" + t.points.map { "- \($0)\n" }.joined()
+            }.joined(separator: "\n")
         }
         return out
     }

@@ -5,7 +5,7 @@ let package = Package(
     name: "MotingKit",
     platforms: [.macOS("14.2")],
     products: [
-        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR", "MotingPlayback", "MotingPipeline", "MotingDSP"]),
+        .library(name: "MotingKit", targets: ["MotingCore", "MotingStorage", "MotingCapture", "MotingRecording", "MotingASR", "MotingPlayback", "MotingPipeline", "MotingDSP", "MotingSummary"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.0.0"),
@@ -37,6 +37,9 @@ let package = Package(
             cSettings: [.define("FLOATING_POINT"), .define("USE_SMALLFT"), .define("EXPORT", to: "")]
         ),
         .target(name: "MotingDSP", dependencies: ["CSpeexDSP"]),
+        // AI 纪要：OpenAI 兼容接口（默认 DeepSeek），提示词模板放在资源文件里
+        .target(name: "MotingSummary", dependencies: ["MotingCore"], resources: [.process("Resources")],
+                linkerSettings: [.linkedFramework("Security")]),
         .target(
             name: "MotingASR",
             dependencies: ["MotingCore", "MotingStorage", "MotingDSP", "CSherpaOnnx"],
@@ -50,6 +53,7 @@ let package = Package(
         .testTarget(name: "MotingPipelineTests", dependencies: ["MotingPipeline"]),
         .testTarget(name: "MotingPlaybackTests", dependencies: ["MotingPlayback", "MotingCapture", "MotingObjCSupport"]),
         .testTarget(name: "MotingDSPTests", dependencies: ["MotingDSP"]),
+        .testTarget(name: "MotingSummaryTests", dependencies: ["MotingSummary"]),
         .testTarget(name: "MotingASRTests", dependencies: ["MotingASR", "MotingCapture"], swiftSettings: [.swiftLanguageMode(.v5)]),
     ]
 )

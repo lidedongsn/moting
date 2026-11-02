@@ -90,6 +90,18 @@ public final class AppDatabase: Sendable {
                 t.add(column: "completedAt", .datetime)
             }
         }
+        m.registerMigration("v4") { db in
+            // AI 纪要：每场会议一份，重新生成时覆盖；解析失败时保存模型原文
+            try db.create(table: "summary") { t in
+                t.primaryKey("meetingId", .text).references("meeting", onDelete: .cascade)
+                t.column("json", .text)
+                t.column("raw", .text)
+                t.column("error", .text)
+                t.column("provider", .text).notNull()
+                t.column("model", .text).notNull()
+                t.column("createdAt", .datetime).notNull()
+            }
+        }
         return m
     }
 }

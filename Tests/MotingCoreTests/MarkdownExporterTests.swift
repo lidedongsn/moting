@@ -45,3 +45,19 @@ private func seg(_ ch: AudioChannel, _ s: TimeInterval, _ text: String, speaker:
     #expect(md.contains("**[00:00:09] 说话人 2：** 嗯"))
     #expect(md.contains("- 参会：我、张三、说话人 2"))
 }
+
+@Test func exportsSummaryBeforeTranscript() {
+    let m = Meeting(id: UUID(), title: "周会", startedAt: start, endedAt: start + 600, status: .done)
+    let summary = MeetingSummary(
+        overview: "订单接口周三前定稿。",
+        topics: [.init(title: "订单接口", points: ["文档周三前定稿", "前端随后联调"])],
+        decisions: ["导出功能延后"],
+        todos: [.init(task: "定稿接口文档", owner: "李思远", due: "周三"), .init(task: "整理待办", done: true)])
+    let md = MarkdownExporter.export(meeting: m, segments: [seg(.mic, 1, "好")], marks: [], summary: summary,
+                                     timeZone: TimeZone(identifier: "Asia/Shanghai")!)
+    #expect(md.contains("## 纪要\n\n订单接口周三前定稿。\n"))
+    #expect(md.contains("### 决策\n- 导出功能延后\n"))
+    #expect(md.contains("### 待办\n- [ ] 定稿接口文档（李思远 · 周三）\n- [x] 整理待办\n"))
+    #expect(md.contains("### 主要内容\n**订单接口**\n- 文档周三前定稿\n- 前端随后联调\n"))
+    #expect(md.range(of: "## 纪要")!.lowerBound < md.range(of: "## 转写稿")!.lowerBound)
+}

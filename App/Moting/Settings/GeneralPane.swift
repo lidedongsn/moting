@@ -48,24 +48,3 @@ struct GeneralPane: View {
         .padding(14)
     }
 }
-
-/// 设置·AI 纪要（P4 接入前只放说明）
-struct SummaryPane: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            PaneHeader(title: "AI 纪要", subtitle: "根据转写稿生成概要、决策和待办。")
-            PaneCard {
-                HStack(spacing: 12) {
-                    Image(systemName: "sparkles").font(.title2).foregroundStyle(.purple)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("还没有接入").font(.headline)
-                        Text("接入后可以在这里配置大模型服务（例如 DeepSeek），转写稿只发送文字，不上传录音。")
-                            .font(.callout).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                }
-                .padding(16)
-            }
-        }
-    }
-}

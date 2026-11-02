@@ -39,7 +39,7 @@ struct SettingsRoot: View {
                 Group {
                     switch pane {
                     case "models": ModelsPane(live: live, env: env, downloads: downloads)
-                    case "summary": SummaryPane()
+                    case "summary": SummaryPane(model: processing.summary)
                     case "voice": VoicePane(env: env, downloads: downloads)
                     case "storage": StoragePane(env: env, live: live)
                     case "download": DownloadPane(env: env)

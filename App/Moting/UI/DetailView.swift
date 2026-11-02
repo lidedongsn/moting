@@ -93,7 +93,7 @@ struct DetailView: View {
                 switch tab {
                 case .transcript: transcript
                 case .marks: marksList
-                case .notes: notesPlaceholder
+                case .notes: SummaryView(meetingID: meeting.id, model: processing.summary, hasTranscript: !segments.isEmpty)
                 }
             }
             // 内容区撑满剩余高度：切换页签时头部和播放器位置不动
@@ -477,11 +477,6 @@ struct DetailView: View {
         segments.last { $0.start <= m.at + 1 }.map { "\(MarkdownExporter.speakerName($0, names))：\($0.text)" }
     }
 
-    private var notesPlaceholder: some View {
-        ContentUnavailableView("AI 纪要还没接入", systemImage: "sparkles",
-                               description: Text("接入后，这里会显示概要、决策和带负责人的待办。"))
-    }
-
     // MARK: - 数据与操作
 
     private func load() {
@@ -533,7 +528,8 @@ struct DetailView: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         var m = meeting
         m.title = title
-        let md = MarkdownExporter.export(meeting: m, segments: segments, marks: marks, names: names)
+        let md = MarkdownExporter.export(meeting: m, segments: segments, marks: marks, names: names,
+                                         summary: processing.summary.stored(meeting.id)?.summary)
         do { try md.write(to: url, atomically: true, encoding: .utf8) } catch { recorder.lastError = "导出失败：\(error.localizedDescription)" }
     }
 }

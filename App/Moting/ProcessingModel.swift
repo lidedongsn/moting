@@ -22,10 +22,13 @@ final class ProcessingModel: ObservableObject {
 
     private let env: AppEnvironment?
     private let notifier = Notifier()
+    /// AI 纪要（与会后处理共用通知）
+    let summary: SummaryModel
     private var powerMonitor: PowerMonitor?
 
     init(env: AppEnvironment?) {
         self.env = env
+        summary = SummaryModel(env: env, notifier: notifier)
         guard let env else { return }
         notifier.requestAuthorization()
         notifier.onOpenMeeting = { [weak self] id in
@@ -115,6 +118,7 @@ final class ProcessingModel: ObservableObject {
         guard let env, let meeting = try? env.repository.meeting(job.meetingID) else { return }
         if job.status == .done {
             notifier.post(title: "精准转写已完成", body: meeting.title, meetingID: job.meetingID)
+            summary.autoGenerateIfEnabled(job.meetingID)
         } else {
             notifier.post(title: "精准转写失败", body: "\(meeting.title)：\(job.error ?? "未知错误")", meetingID: job.meetingID)
         }

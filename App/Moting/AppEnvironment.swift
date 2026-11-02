@@ -21,6 +21,7 @@ final class AppEnvironment: ObservableObject {
     let transcripts: TranscriptRepository
     let jobs: JobRepository
     let speakers: SpeakerRepository
+    let summaries: SummaryRepository
     let modelStore: ModelStore
     let recordingFlag = RecordingFlag()
     let pipeline: PipelineRunner
@@ -34,6 +35,7 @@ final class AppEnvironment: ObservableObject {
         transcripts = TranscriptRepository(db: db)
         jobs = JobRepository(db: db)
         speakers = SpeakerRepository(db: db)
+        summaries = SummaryRepository(db: db)
         modelStore = ModelStore(root: paths.modelsRoot,
                                 proxy: UserDefaults.standard.string(forKey: Self.proxyKey).flatMap(Self.proxyURL))
         let flag = recordingFlag
