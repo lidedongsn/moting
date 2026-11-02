@@ -147,8 +147,8 @@ struct FloatingPanelView: View {
             if recorder.state == .paused {
                 Text("已暂停").font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.6))
             }
-            MiniLevel(level: recorder.levels[.mic] ?? 0, color: Self.micColor)
-            MiniLevel(level: recorder.levels[.system] ?? 0, color: Self.systemColor)
+            MiniLevel(level: recorder.levels[.mic] ?? 0, color: Self.micColor, symbol: "mic.fill", help: "我方声音（麦克风）")
+            MiniLevel(level: recorder.levels[.system] ?? 0, color: Self.systemColor, symbol: "speaker.wave.2.fill", help: "对方声音（系统音频）")
             if !recorder.warnings.isEmpty {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption).foregroundStyle(.orange)
@@ -345,20 +345,43 @@ struct FloatingPanelView: View {
     }
 }
 
+/// 一路声音的电平：图标说明是哪一路，后面几根居中的声波条随音量起伏，没声音时收成小圆点
 private struct MiniLevel: View {
     let level: Float
     let color: Color
+    let symbol: String
+    let help: String
+
+    /// 各条相对高度，中间高两边低，像一小段声波
+    private static let shape: [CGFloat] = [0.45, 0.8, 1, 0.65, 0.35]
 
     var body: some View {
-        // 3 根竖条，按电平点亮
-        let lit: Int = min(3, Int((level * 50).squareRoot() / 3 * 3.99))
-        HStack(alignment: .bottom, spacing: 2) {
-            ForEach(0..<3, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(i < lit ? color : Color.white.opacity(0.2))
-                    .frame(width: 3, height: 5 + CGFloat(i) * 3.5)
+        let v = Self.loudness(level)
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
+                .font(.system(size: 9.5, weight: .semibold))
+                .foregroundStyle(v > 0 ? color : Color.white.opacity(0.45))
+                .frame(width: 11)
+            HStack(spacing: 2) {
+                ForEach(Self.shape.indices, id: \.self) { i in
+                    Capsule()
+                        .fill(v > 0 ? color : Color.white.opacity(0.3))
+                        .frame(width: 2.5, height: 2.5 + 9.5 * Self.shape[i] * v)
+                }
             }
+            .frame(height: 12)
+            .animation(.easeOut(duration: 0.18), value: v)
         }
-        .frame(height: 12)
+        .padding(.horizontal, 7)
+        .frame(height: 20)
+        .background(Color.white.opacity(0.08), in: Capsule())
+        .help(help)
+    }
+
+    /// RMS 换算成 0…1：-55dB 以下算没声音，-10dB 到顶
+    private static func loudness(_ rms: Float) -> CGFloat {
+        guard rms > 0 else { return 0 }
+        let db = 20 * log10(rms)
+        return CGFloat(min(1, max(0, (db + 55) / 45)))
     }
 }
