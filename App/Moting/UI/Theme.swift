@@ -180,3 +180,32 @@ struct PillTabs<Value: Hashable>: View {
         .animation(.easeOut(duration: 0.15), value: selection)
     }
 }
+
+/// 外观：跟随系统 / 浅色 / 深色，记在 UserDefaults，启动时和切换时应用到整个 app
+enum AppAppearance: String, CaseIterable {
+    case system, light, dark
+
+    static let key = "appearance"
+
+    var title: String {
+        switch self {
+        case .system: "跟随系统"
+        case .light: "浅色"
+        case .dark: "深色"
+        }
+    }
+
+    @MainActor
+    func apply() {
+        switch self {
+        case .system: NSApp.appearance = nil
+        case .light: NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
+    }
+
+    @MainActor
+    static func applySaved() {
+        (AppAppearance(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system).apply()
+    }
+}

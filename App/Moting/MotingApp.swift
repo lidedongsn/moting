@@ -21,6 +21,8 @@ struct MotingApp: App {
             recorder = RecordingController(env: nil)
         }
         _recorder = StateObject(wrappedValue: recorder)
+        // init 时 NSApp 可能还没就绪，放到下一轮再应用保存的外观
+        DispatchQueue.main.async { AppAppearance.applySaved() }
         floatingPanel = FloatingPanelController(recorder: recorder)
         // ⌥⌘R：任何 app 里开始 / 结束录音
         hotKey = GlobalHotKey { [weak recorder] in
