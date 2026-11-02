@@ -44,9 +44,12 @@ extension Color {
 struct GlassCard: ViewModifier {
     var radius: CGFloat = 14
     var material: Material = .regularMaterial
+    @Environment(\.colorScheme) private var scheme
 
     func body(content: Content) -> some View {
         content
+            // 浅色下材质发灰，叠一层白（设计稿卡片约 75% 白）
+            .background(scheme == .light ? Color.white.opacity(0.6) : .clear, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .background(material, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
@@ -207,5 +210,50 @@ enum AppAppearance: String, CaseIterable {
     @MainActor
     static func applySaved() {
         (AppAppearance(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system).apply()
+    }
+}
+
+/// 进度环（设计稿 .ring）：22pt，青色弧 + 浅色底环
+struct ProgressRing: View {
+    let progress: Double
+    var dimmed = false
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(Theme.me.opacity(0.18), lineWidth: 4)
+            Circle()
+                .trim(from: 0, to: max(0.02, min(1, progress)))
+                .stroke(dimmed ? Color.secondary : Theme.me, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.3), value: progress)
+        }
+        .frame(width: 22, height: 22)
+        .padding(.leading, 1)
+    }
+}
+
+/// 圆形按钮的悬停 / 按下反馈：悬停略放大提亮，按下略缩小
+struct HoverGrowStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HoverGrow(configuration: configuration)
+    }
+
+    private struct HoverGrow: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hovering = false
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            let active = hovering && isEnabled
+            configuration.label
+                .scaleEffect(configuration.isPressed ? 0.94 : active ? 1.08 : 1)
+                .brightness(active && !configuration.isPressed ? 0.08 : 0)
+                .shadow(color: .black.opacity(active ? 0.22 : 0), radius: 6, y: 2)
+                .opacity(isEnabled ? 1 : 0.4)
+                .contentShape(Circle())
+                .onHover { hovering = $0 }
+                .animation(.easeOut(duration: 0.12), value: hovering)
+                .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+        }
     }
 }

@@ -249,7 +249,7 @@ struct DetailView: View {
                         .frame(width: 34, height: 34)
                         .background(.primary, in: Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(HoverGrowStyle())
                 .keyboardShortcut(editingTitle ? nil : KeyboardShortcut(.space, modifiers: []))
                 .disabled(player.duration == 0)
                 Text(clock(player.currentTime)).font(.system(size: 13, weight: .semibold)).monospacedDigit()
@@ -330,38 +330,39 @@ struct DetailView: View {
         switch job.status {
         case .queued, .running:
             return AnyView(Group {
-                ProgressView(value: p).progressViewStyle(.circular).controlSize(.small)
+                ProgressRing(progress: p)
                 Text("正在精准转写 \(Int(p * 100))%").fontWeight(.semibold)
                 Text("完成后会替换实时草稿，并通知你。").foregroundStyle(.secondary)
                 Spacer(minLength: 0)
-                Button("暂停", systemImage: "pause.fill") { processing.pause(meeting.id) }
+                Button("暂停") { processing.pause(meeting.id) }.buttonStyle(PaneButtonStyle())
             })
         case .paused:
             return AnyView(Group {
-                Image(systemName: "pause.circle.fill").foregroundStyle(.secondary)
+                ProgressRing(progress: job.progress, dimmed: true)
                 Text("精准转写已暂停 \(Int(job.progress * 100))%").fontWeight(.semibold)
                 Text("已完成的部分会保留，继续时接着处理。").foregroundStyle(.secondary)
                 Spacer(minLength: 0)
-                Button("继续", systemImage: "play.fill") { processing.resume(meeting.id) }
+                Button("继续") { processing.resume(meeting.id) }.buttonStyle(PaneButtonStyle(kind: .primary))
             })
         case .waitingForPower:
             return AnyView(Group {
-                Image(systemName: "powerplug")
-                Text("正在使用电池，接通电源后自动精准转写")
+                Image(systemName: "powerplug.fill").foregroundStyle(Theme.me).frame(width: 22)
+                Text("正在使用电池").fontWeight(.semibold)
+                Text("接通电源后自动精准转写。").foregroundStyle(.secondary)
                 Spacer(minLength: 0)
-                Button("现在处理") { processing.processNow(meeting.id) }
+                Button("现在处理") { processing.processNow(meeting.id) }.buttonStyle(PaneButtonStyle())
             })
         case .failed:
             return AnyView(Group {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange).frame(width: 22)
                 Text("精准转写失败：\(job.error ?? "未知错误")").lineLimit(2)
                 Spacer(minLength: 0)
-                Button("重试") { processing.enqueue(meeting.id) }
+                Button("重试") { processing.enqueue(meeting.id) }.buttonStyle(PaneButtonStyle())
             })
         case .done:
             if job.filterOutcome == "fellBack" {
                 return AnyView(Group {
-                    Image(systemName: "info.circle")
+                    Image(systemName: "info.circle").foregroundStyle(Theme.me).frame(width: 22)
                     Text("麦克风一路与你的声纹匹配度偏低，这次没有过滤旁人声音。可以在设置里重新登记声纹。")
                     Spacer(minLength: 0)
                 })
