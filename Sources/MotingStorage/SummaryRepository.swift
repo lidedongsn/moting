@@ -25,8 +25,14 @@ public final class SummaryRepository: Sendable {
         try upsert(meetingID, json: json, raw: nil, error: nil, provider: provider, model: model, at: at)
     }
 
+    /// 生成失败：已有纪要时保留它（含待办勾选），只记下错误和模型原文
     public func saveFailure(meetingID: UUID, raw: String?, error: String, provider: String, model: String, at: Date) throws {
-        try upsert(meetingID, json: nil, raw: raw, error: error, provider: provider, model: model, at: at)
+        try db.writer.write { db in
+            try db.execute(sql: """
+                INSERT INTO summary (meetingId, json, raw, error, provider, model, createdAt) VALUES (?, NULL, ?, ?, ?, ?, ?)
+                ON CONFLICT(meetingId) DO UPDATE SET raw = excluded.raw, error = excluded.error
+                """, arguments: [meetingID.uuidString, raw, error, provider, model, at])
+        }
     }
 
     public func load(meetingID: UUID) throws -> StoredSummary? {

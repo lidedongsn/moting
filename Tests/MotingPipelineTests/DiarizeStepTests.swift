@@ -14,6 +14,8 @@ struct FakeDiarizer: Diarizing {
 private final class DEnv {
     let root = FileManager.default.temporaryDirectory.appendingPathComponent("moting-diarize-\(UUID().uuidString)")
     let transcripts: TranscriptRepository
+    let speakers: SpeakerRepository
+    let meetingID: UUID
     let version: UUID
     let track: URL
 
@@ -22,6 +24,8 @@ private final class DEnv {
         let m = Meeting(id: UUID(), title: "t", startedAt: Date(), endedAt: nil, status: .processing)
         try MeetingRepository(db: db).insert(m, tracks: [])
         transcripts = TranscriptRepository(db: db)
+        speakers = SpeakerRepository(db: db)
+        meetingID = m.id
         version = try transcripts.createVersion(meetingID: m.id, kind: .final, engine: "e", model: "m", createdAt: Date())
         for (ch, s, e) in segments {
             try transcripts.append(TranscriptSegment(versionID: version, channel: ch, start: s, end: e, text: "\(s)"))
@@ -96,4 +100,14 @@ func realDiarizationOnFourSpeakerSample() async throws {
     let speakers = Set(turns.map(\.speaker)).count
     print("阈值 \(threshold)：分离出 \(speakers) 个说话人，\(turns.count) 段")
     #expect((3...5).contains(speakers))
+}
+
+@Test func rediarizingClearsOldSpeakerNames() throws {
+    // 回归：重新转写后"说话人 1"可能是另一个人，旧的改名不能套上去
+    let e = try DEnv(segments: [(.system, 0, 4)])
+    try e.speakers.setName(meetingID: e.meetingID, label: "说话人 1", name: "张三")
+    let d = FakeDiarizer(turns: [SpeakerTurn(start: 0, end: 4, speaker: 3)])
+    try DiarizeStep(transcripts: e.transcripts, speakers: e.speakers, diarizer: { d })
+        .run(versionID: e.version, systemTrack: e.track) { _ in }
+    #expect(try e.speakers.names(meetingID: e.meetingID).isEmpty)
 }

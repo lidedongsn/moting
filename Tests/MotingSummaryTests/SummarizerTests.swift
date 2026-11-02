@@ -95,3 +95,15 @@ private let segments = [seg(.mic, 5, "测试环境谁来搭？"), seg(.system, 9
     }
     #expect(chat.prompts.isEmpty)
 }
+
+@Test func mergingManyPartsStaysWithinContextLimit() async throws {
+    // 回归：分段很多时，汇总请求把所有分段纪要一次发出，超出小上下文模型（本机 Ollama）的上限
+    let many = (0..<600).map { seg(.mic, Double($0) * 10, String(repeating: "很长的发言内容", count: 5)) }
+    let chat = FakeChat(Array(repeating: validReply, count: 400))
+    let limit = 1_200
+    let s = try await Summarizer(chat: chat, contextChars: limit).summarize(meeting: meeting, segments: many, marks: [], names: [:])
+    #expect(s.overview == "订单接口周三前定稿。")
+    let overhead = 400   // 模板本身的字数
+    for p in chat.prompts { #expect(p.user.count <= limit + overhead, "有一次请求 \(p.user.count) 字，超过上限") }
+    #expect(chat.prompts.last!.user.contains("分段纪要"))
+}

@@ -115,3 +115,18 @@ private final class Env {
     // 长会议不整段载入：真实分段器每次最多读 30 秒
     #expect(VoiceSegmenter.readChunk <= 16_000 * 30)
 }
+
+@Test func rerunAfterInterruptionRemovesHalfFinishedVersions() throws {
+    // 回归：转写中途暂停 / 退出时，半成品版本没记进任务，重跑时删不掉，越积越多
+    let e = try Env()
+    try e.writeTrack(.mic, [true])
+    let orphan = try e.transcripts.createVersion(meetingID: e.meeting.id, kind: .final, engine: "e", model: "m", createdAt: Date())
+    try e.transcripts.append(TranscriptSegment(versionID: orphan, channel: .mic, start: 0, end: 1, text: "半截"))
+    let done = try e.transcripts.createVersion(meetingID: e.meeting.id, kind: .final, engine: "e", model: "m", createdAt: Date())
+    try e.transcripts.markCompleted(done, at: Date())
+    let v = try e.step().run(meetingID: e.meeting.id, modelID: "m", previousVersion: nil) { _ in }
+    #expect(try e.transcripts.segments(versionID: orphan).isEmpty, "半成品要清掉")
+    #expect(try e.transcripts.isCompleted(done), "已完成的正式稿不动")
+    #expect(try e.transcripts.segments(versionID: v).count == 1)
+    #expect(try e.transcripts.meetingIDs(matching: "半截").isEmpty)
+}

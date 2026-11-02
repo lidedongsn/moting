@@ -7,15 +7,22 @@ import MotingStorage
 /// "对方"一路说话人分离：给正式稿里的系统音频片段打上"说话人 N"
 public struct DiarizeStep {
     private let transcripts: TranscriptRepository
+    private let speakers: SpeakerRepository?
     private let diarizer: () throws -> Diarizing
 
-    public init(transcripts: TranscriptRepository, diarizer: @escaping () throws -> Diarizing) {
+    /// speakers：给了就在重新编号时清掉这场会议的旧改名
+    public init(transcripts: TranscriptRepository, speakers: SpeakerRepository? = nil, diarizer: @escaping () throws -> Diarizing) {
         self.transcripts = transcripts
+        self.speakers = speakers
         self.diarizer = diarizer
     }
 
     /// N 从 1 起，按首次出现的顺序编号；一段的标签取与它时间重叠最长的分离结果
     public func run(versionID: UUID, systemTrack: URL, progress: (Double) -> Void) throws {
+        // 每次分离都从"说话人 1"重新编号，上一轮的改名对不上人，清掉
+        if let speakers, let meetingID = try transcripts.meetingID(ofVersion: versionID) {
+            try speakers.removeAll(meetingID: meetingID)
+        }
         let system = try transcripts.segments(versionID: versionID).filter { $0.channel == .system }
         guard !system.isEmpty, FileManager.default.fileExists(atPath: systemTrack.path) else {
             progress(1)

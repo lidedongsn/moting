@@ -18,8 +18,10 @@ public struct DefaultStepRunner: PipelineStepRunner {
     private let paths: AppPaths
     private let transcripts: TranscriptRepository
     private let store: ModelStore
+    private let speakers: SpeakerRepository?
 
-    public init(paths: AppPaths, transcripts: TranscriptRepository, store: ModelStore) {
+    public init(paths: AppPaths, transcripts: TranscriptRepository, store: ModelStore, speakers: SpeakerRepository? = nil) {
+        self.speakers = speakers
         self.paths = paths
         self.transcripts = transcripts
         self.store = store
@@ -47,7 +49,7 @@ public struct DefaultStepRunner: PipelineStepRunner {
             guard let v = job.versionID else { throw PipelineError.missingVersion }
             try await ensureInstalled([OfflineCatalog.segmentation, OfflineCatalog.embedding])
             let store = store
-            try DiarizeStep(transcripts: transcripts) {
+            try DiarizeStep(transcripts: transcripts, speakers: speakers) {
                 try SherpaDiarizer(segmentation: OfflineCatalog.segmentation, embedding: OfflineCatalog.embedding,
                                    directory: { store.directory(for: $0) })
             }.run(versionID: v, systemTrack: paths.trackURL(job.meetingID, .system), progress: progress)

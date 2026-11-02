@@ -183,3 +183,18 @@ private func file(_ name: String, _ content: String) -> ModelFile {
         #expect(aux.files.allSatisfy { $0.sha256.count == 64 && $0.size > 0 })
     }
 }
+
+@Test func concurrentInstallsOfSameModelAllSucceed() async throws {
+    // 回归：会后处理自动下载和设置页 / 声纹登记同时装同一个模型，共用 .part 文件互相删
+    let s = Sandbox()
+    let big = String(repeating: "模型数据", count: 400_000)    // 约 4.8MB，拉长下载窗口
+    let files = [try s.publish(s.mirrorA, repo: "org/test", name: "a.onnx", content: big)]
+    let store = ModelStore(root: s.models, mirrors: [s.mirrorA])
+    let m = model(files)
+    let results = await withTaskGroup(of: Bool.self) { g in
+        for _ in 0..<8 { g.addTask { (try? await store.install(m) { _ in }) != nil } }
+        return await g.reduce(into: []) { $0.append($1) }
+    }
+    #expect(results.allSatisfy { $0 }, "有 \(results.filter { !$0 }.count) 次安装失败")
+    #expect(store.isInstalled(m))
+}

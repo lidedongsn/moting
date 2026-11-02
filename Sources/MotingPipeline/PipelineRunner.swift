@@ -172,7 +172,7 @@ public final class PipelineRunner: @unchecked Sendable {
             job.status = .paused
             try? jobs.update(job)
             try? meetings.updateStatus(job.meetingID, .pendingProcessing)
-            report(job, job.progress)
+            // 不再回报进度：界面已在 pause() 时切到"已暂停"，再回报会被当成"转写中"
             return
         } catch {
             job.status = .failed

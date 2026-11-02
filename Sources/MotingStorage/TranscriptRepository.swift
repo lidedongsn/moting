@@ -76,6 +76,21 @@ public final class TranscriptRepository: Sendable {
     }
 
     /// 删除版本，片段随外键级联删除
+    /// 删掉这场会议没完成的正式稿（转写中途暂停 / 退出留下的半成品），片段随外键删除
+    public func deleteIncompleteFinalVersions(meetingID: UUID) throws {
+        try db.writer.write { db in
+            try db.execute(sql: "DELETE FROM transcriptVersion WHERE meetingId = ? AND kind = ? AND completedAt IS NULL",
+                           arguments: [meetingID.uuidString, TranscriptKind.final.rawValue])
+        }
+    }
+
+    /// 版本属于哪场会议
+    public func meetingID(ofVersion versionID: UUID) throws -> UUID? {
+        try db.writer.read { db in
+            try TranscriptVersionRecord.fetchOne(db, key: versionID.uuidString).flatMap { UUID(uuidString: $0.meetingId) }
+        }
+    }
+
     public func deleteVersion(_ versionID: UUID) throws {
         try db.writer.write { db in
             _ = try TranscriptVersionRecord.deleteOne(db, key: versionID.uuidString)

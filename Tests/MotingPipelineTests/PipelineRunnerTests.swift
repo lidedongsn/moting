@@ -202,3 +202,20 @@ private struct Fixture {
     await f.runner.drain()
     #expect(try f.jobs.job(for: f.meeting.id)?.status == .done)
 }
+
+@Test func pausingDoesNotReportProgressAfterwards() async throws {
+    // 回归：暂停分支曾回报一次进度，界面据此把"已暂停"改回"转写中"，任务卡住
+    let f = try Fixture()
+    f.steps.hangAt = .diarize
+    let log = ProgressLog()
+    let paused = Flag(false)
+    f.runner.onProgress = { _, p in if paused.value { log.add(p) } }
+    _ = try f.runner.enqueue(meetingID: f.meeting.id, modelID: "m")
+    let drain = Task { await f.runner.drain() }
+    while f.steps.calls.count < 2 { await Task.yield() }
+    paused.value = true
+    try f.runner.pause(meetingID: f.meeting.id)
+    await drain.value
+    #expect(try f.jobs.job(for: f.meeting.id)?.status == .paused)
+    #expect(log.all.isEmpty, "暂停后不应再回报进度：\(log.all)")
+}

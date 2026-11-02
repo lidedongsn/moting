@@ -130,3 +130,13 @@ extension ClientTests {
         #expect(calls == [true, false])
     }
 }
+
+@Test func deleteAllRemovesEveryServiceKey() throws {
+    // "删除 Moting 全部数据"要连钥匙串里各家的 Key 一起删
+    let store = APIKeyStore(service: "com.lidedongsn.moting.test.\(UUID().uuidString)")
+    try store.save("a", account: "DeepSeek")
+    try store.save("b", account: "Kimi")
+    try store.deleteAll()
+    #expect(try store.read(account: "DeepSeek") == nil)
+    #expect(try store.read(account: "Kimi") == nil)
+}

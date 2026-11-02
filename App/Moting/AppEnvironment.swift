@@ -40,7 +40,7 @@ final class AppEnvironment: ObservableObject {
                                 proxy: UserDefaults.standard.string(forKey: Self.proxyKey).flatMap(Self.proxyURL))
         let flag = recordingFlag
         pipeline = PipelineRunner(jobs: jobs, meetings: repository,
-                                  steps: DefaultStepRunner(paths: paths, transcripts: transcripts, store: modelStore),
+                                  steps: DefaultStepRunner(paths: paths, transcripts: transcripts, store: modelStore, speakers: speakers),
                                   power: SystemPowerSource(), isRecording: { flag.isRecording })
     }
 

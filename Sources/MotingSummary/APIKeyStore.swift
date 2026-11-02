@@ -38,6 +38,17 @@ public struct APIKeyStore: Sendable {
         guard status == errSecSuccess || status == errSecItemNotFound else { throw KeychainError(status: status) }
     }
 
+    /// 删掉本 app 存的所有 Key（各家服务）
+    public func deleteAll() throws {
+        let query = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service] as CFDictionary
+        // macOS 上一次只删匹配到的第一条，删到没有为止
+        while true {
+            let status = SecItemDelete(query)
+            if status == errSecItemNotFound { return }
+            guard status == errSecSuccess else { throw KeychainError(status: status) }
+        }
+    }
+
     private func base(_ account: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
     }

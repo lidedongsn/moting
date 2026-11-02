@@ -1,6 +1,7 @@
 import AppKit
 import MotingASR
 import MotingPipeline
+import MotingSummary
 import SwiftUI
 
 /// 设置·存储：占用多少、放在哪、能不能删
@@ -127,7 +128,7 @@ struct StoragePane: View {
             Text("在用的模型不会被删除。之后需要时可以在「识别模型」里重新下载。")
         }
         .confirmationDialog("删除 Moting 全部数据？", isPresented: $confirmDeleteAll, titleVisibility: .visible) {
-            Button("删除全部录音、转写稿、模型和设置，然后退出", role: .destructive, action: deleteAll)
+            Button("删除全部录音、转写稿、模型、设置和 API Key，然后退出", role: .destructive, action: deleteAll)
         } message: {
             Text("这会永久删除 \(bytesText(report.total)) 的数据，无法恢复。")
         }
@@ -167,9 +168,10 @@ struct StoragePane: View {
         refresh()
     }
 
-    /// 删除数据目录与缓存目录、清空设置，然后退出
+    /// 删除数据目录与缓存目录、钥匙串里的 AI 纪要 Key、清空设置，然后退出
     private func deleteAll() {
         let fm = FileManager.default
+        try? APIKeyStore.default.deleteAll()
         try? fm.removeItem(at: env.paths.root)
         if let caches = fm.urls(for: .cachesDirectory, in: .userDomainMask).first {
             try? fm.removeItem(at: caches.appendingPathComponent(Bundle.main.bundleIdentifier ?? "com.lidedongsn.moting"))

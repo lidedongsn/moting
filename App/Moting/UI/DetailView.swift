@@ -6,20 +6,21 @@ import MotingStorage
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// 声纹带包络缓存：只放内存，不落盘（不在 app 目录之外产生文件）
+/// 声纹带包络缓存：只放内存，不落盘（不在 app 目录之外产生文件）。
+/// 按录音结束时间区分：录音中不缓存，录完（结束时间变了）自动重算
 @MainActor
 final class RibbonCache {
     static let shared = RibbonCache()
-    private var store: [UUID: (mine: [Float], theirs: [Float])] = [:]
+    private var store: [UUID: (endedAt: Date, mine: [Float], theirs: [Float])] = [:]
 
-    func envelopes(for id: UUID, paths: AppPaths) async -> (mine: [Float], theirs: [Float]) {
-        if let hit = store[id] { return hit }
+    func envelopes(for id: UUID, endedAt: Date?, paths: AppPaths) async -> (mine: [Float], theirs: [Float]) {
+        if let endedAt, let hit = store[id], hit.endedAt == endedAt { return (hit.mine, hit.theirs) }
         let mic = paths.trackURL(id, .mic), sys = paths.trackURL(id, .system), bins = DetailView.bins
         let value = await Task.detached(priority: .userInitiated) {
             ((try? WaveformEnvelope.compute(mic, bins: bins)) ?? [],
              (try? WaveformEnvelope.compute(sys, bins: bins)) ?? [])
         }.value
-        store[id] = value
+        if let endedAt { store[id] = (endedAt, value.0, value.1) }
         return value
     }
 
@@ -72,7 +73,9 @@ struct DetailView: View {
         _player = StateObject(wrappedValue: MeetingPlayer(urls: AudioChannel.allCases.map { env.paths.trackURL(meeting.id, $0) }))
     }
 
-    private var indices: [SpeakerKey: Int] { SpeakerPalette.indices(for: allSegmentsForColors) }
+    // 说话人编号与声纹带下半的颜色：只在转写稿变化时算一次（播放时每 0.1 秒刷新，不能每次重算）
+    @State private var indices: [SpeakerKey: Int] = [:]
+    @State private var theirColors: [Color] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -104,7 +107,7 @@ struct DetailView: View {
         .toolbar { detailToolbar }
         .task(id: meeting.status) { load() }
         .task(id: meeting.id) {
-            let e = await RibbonCache.shared.envelopes(for: meeting.id, paths: env.paths)
+            let e = await RibbonCache.shared.envelopes(for: meeting.id, endedAt: meeting.endedAt, paths: env.paths)
             mine = e.mine
             theirs = e.theirs
         }
@@ -119,10 +122,6 @@ struct DetailView: View {
         }
         .onChange(of: showDraft) { _, _ in load() }
         .onChange(of: meeting.title) { _, t in if !editingTitle { title = t } }
-        .onChange(of: meeting.status) { _, s in
-            // 录音刚结束：波形需要按完整录音重算
-            if s != .recording { RibbonCache.shared.invalidate(meeting.id) }
-        }
         .alert("说话人改名", isPresented: Binding(get: { renamingSpeaker != nil }, set: { if !$0 { renamingSpeaker = nil } })) {
             TextField("名字（留空恢复默认）", text: $speakerNameText)
             Button("保存") {
@@ -301,7 +300,7 @@ struct DetailView: View {
     }
 
     /// 下半每根柱子的颜色：该时刻在说话的对方说话人
-    private var theirColors: [Color] {
+    private func computeTheirColors() -> [Color] {
         let system = allSegmentsForColors.filter { $0.channel == .system }
         let idx = indices
         return SpeakingTimeline.bins(system, duration: player.duration, count: Self.bins).map { key in
@@ -411,11 +410,13 @@ struct DetailView: View {
                     .disabled(meeting.status == .recording)
             }
         } else {
+            // 当前句每次刷新只找一次，不在每一行里各找一遍
+            let current = player.currentTime > 0 ? currentSegmentID : nil
             ScrollViewReader { proxy in
                 List(segments) { s in
                     TranscriptLine(segment: s, name: MarkdownExporter.speakerName(s, names),
                                    color: Theme.speaker(s.speakerKey, in: indices),
-                                   isCurrent: player.currentTime > 0 && s.id == currentSegmentID,
+                                   isCurrent: s.id == current,
                                    hasMark: marks.contains { $0.at >= s.start && $0.at <= s.end + 1 },
                                    onRename: s.speakerLabel.map { label in { beginRename(label) } })
                         .id(s.id)
@@ -437,8 +438,15 @@ struct DetailView: View {
         }
     }
 
+    /// segments 按开始时间排好序：二分找最后一个开始时间不晚于当前播放位置的句子
     private var currentSegmentID: UUID? {
-        segments.last { $0.start <= player.currentTime }?.id
+        let t = player.currentTime
+        var lo = 0, hi = segments.count
+        while lo < hi {
+            let mid = (lo + hi) / 2
+            if segments[mid].start <= t { lo = mid + 1 } else { hi = mid }
+        }
+        return lo > 0 ? segments[lo - 1].id : nil
     }
 
     // MARK: - 标记
@@ -500,6 +508,8 @@ struct DetailView: View {
         }
         // 颜色以精准稿（有说话人分离）为准，保证各处一致
         allSegmentsForColors = final.flatMap { try? env.transcripts.segments(versionID: $0) } ?? segments
+        indices = SpeakerPalette.indices(for: allSegmentsForColors)
+        theirColors = computeTheirColors()
     }
 
     private func beginRename(_ label: String) {

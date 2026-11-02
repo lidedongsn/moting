@@ -12,6 +12,8 @@ public final class ModelStore: @unchecked Sendable {
     private let mirrors: [URL]
     private let lock = NSLock()
     private var _proxy: URL?
+    /// 正在安装的模型：同一模型同时只装一次，后来的等前一个的结果（共用 .part 文件会互相删）
+    private var inFlight: [String: Task<Void, Error>] = [:]
     /// 下载代理，可在运行中修改（设置页）
     public var proxy: URL? {
         get { lock.withLock { _proxy } }
@@ -41,6 +43,24 @@ public final class ModelStore: @unchecked Sendable {
     /// HuggingFace 每个文件依次尝试各镜像：<mirror>/<repo>/resolve/main/<name>。
     /// GitHub 压缩包：整包校验后只解出列出的文件
     public func install(_ m: some DownloadableModel, progress: @escaping @Sendable (Double) -> Void) async throws {
+        let id = m.id
+        let (task, isOwner): (Task<Void, Error>, Bool) = lock.withLock {
+            if let t = inFlight[id] { return (t, false) }
+            let t = Task { try await self.performInstall(m, progress: progress) }
+            inFlight[id] = t
+            return (t, true)
+        }
+        defer { if isOwner { lock.withLock { inFlight[id] = nil } } }
+        // 发起方被取消（如暂停精准转写）时取消下载，不必等下完
+        try await withTaskCancellationHandler {
+            try await task.value
+        } onCancel: {
+            if isOwner { task.cancel() }
+        }
+        if !isOwner { progress(1) }
+    }
+
+    private func performInstall(_ m: some DownloadableModel, progress: @escaping @Sendable (Double) -> Void) async throws {
         let dir = directory(for: m)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         if case .githubArchive(let url, let sha, let size, let prefix) = m.source {

@@ -65,13 +65,34 @@ public struct Summarizer: Sendable {
                 "title": meeting.title, "date": date, "part": "（这是会议的第 \(i + 1)/\(chunks.count) 段）\n",
                 "marks": marksText, "transcript": c])))
         }
+        return try await merge(parts, title: meeting.title, date: date, system: system)
+    }
+
+    /// 汇总分段纪要；放不进一次请求时先按批汇总，再汇总各批，直到一次放得下
+    private func merge(_ parts: [MeetingSummary], title: String, date: String, system: String) async throws -> MeetingSummary {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes]
-        let partsText = try parts.enumerated().map { i, p in
-            "第 \(i + 1) 段分段纪要：\n" + String(decoding: try encoder.encode(p), as: UTF8.self)
-        }.joined(separator: "\n\n")
-        return try await ask(system, Template.merge.fill(["title": meeting.title, "date": date,
-                                                          "count": "\(chunks.count)", "parts": partsText]))
+        let texts = try parts.map { String(decoding: try encoder.encode($0), as: UTF8.self) }
+        func prompt(_ batch: ArraySlice<String>) -> String {
+            let body = batch.enumerated().map { "第 \($0.offset + 1) 段分段纪要：\n\($0.element)" }.joined(separator: "\n\n")
+            return Template.merge.fill(["title": title, "date": date, "count": "\(batch.count)", "parts": body])
+        }
+        if texts.count == 1 { return parts[0] }
+        if prompt(texts[...]).count - Template.merge.count <= contextChars {
+            return try await ask(system, prompt(texts[...]))
+        }
+        // 按字数分批，每批至少两段，保证每轮都在收敛
+        var merged: [MeetingSummary] = []
+        var start = 0
+        while start < texts.count {
+            var end = start + 1
+            while end < texts.count, prompt(texts[start...end]).count - Template.merge.count <= contextChars { end += 1 }
+            end = max(end, min(start + 2, texts.count))
+            try Task.checkCancellation()
+            merged.append(end - start == 1 ? parts[start] : try await ask(system, prompt(texts[start..<end])))
+            start = end
+        }
+        return try await merge(merged, title: title, date: date, system: system)
     }
 
     /// 调一次，解析不了再调一次

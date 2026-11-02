@@ -27,6 +27,8 @@ public struct TranscribeStep {
     public func run(meetingID: UUID, modelID: String, previousVersion: UUID?,
                     progress: (Double) -> Void) throws -> UUID {
         if let previousVersion { try transcripts.deleteVersion(previousVersion) }
+        // 中途暂停 / 退出时新版本还没记进任务，按"未完成"清掉，不让半成品越积越多
+        try transcripts.deleteIncompleteFinalVersions(meetingID: meetingID)
         let versionID = try transcripts.createVersion(meetingID: meetingID, kind: .final,
                                                       engine: "sherpa-onnx \(sherpaOnnxVersion()) offline",
                                                       model: modelID, createdAt: Date())

@@ -25,6 +25,13 @@ public final class SpeakerRepository: Sendable {
         }
     }
 
+    /// 清空这场会议的改名（重新分离后编号会变，旧名字对不上人）
+    public func removeAll(meetingID: UUID) throws {
+        try db.writer.write { db in
+            try db.execute(sql: "DELETE FROM speaker WHERE meetingId = ?", arguments: [meetingID.uuidString])
+        }
+    }
+
     /// label → 显示名
     public func names(meetingID: UUID) throws -> [String: String] {
         try db.writer.read { db in

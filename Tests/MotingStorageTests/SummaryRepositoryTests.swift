@@ -55,3 +55,19 @@ private func setup() throws -> (SummaryRepository, MeetingRepository, UUID) {
     try meetings.delete(id)
     #expect(try repo.load(meetingID: id) == nil)
 }
+
+@Test func failedRegenerationKeepsPreviousSummary() throws {
+    // 回归：重新生成失败曾把好的纪要（含已勾选的待办）整个覆盖掉
+    let (repo, _, id) = try setup()
+    let todo = MeetingSummary.Todo(task: "写文档", done: true)
+    try repo.save(meetingID: id, summary: MeetingSummary(overview: "好的", todos: [todo]), provider: "p", model: "m", at: Date())
+    try repo.saveFailure(meetingID: id, raw: "乱码", error: "解析失败", provider: "p", model: "m", at: Date())
+    let got = try #require(try repo.load(meetingID: id))
+    #expect(got.summary?.overview == "好的")
+    #expect(got.summary?.todos.first?.done == true)
+    #expect(got.error == "解析失败")
+    #expect(got.raw == "乱码")
+    // 之后成功生成会清掉错误
+    try repo.save(meetingID: id, summary: MeetingSummary(overview: "新的"), provider: "p", model: "m", at: Date())
+    #expect(try repo.load(meetingID: id)?.error == nil)
+}
