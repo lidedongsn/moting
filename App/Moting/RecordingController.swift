@@ -132,16 +132,41 @@ final class RecordingController: ObservableObject {
         live.endAndWait()
     }
 
+    /// 不到这么长（不算暂停）的录音视为误触，结束后直接丢弃
+    static let minimumDuration: TimeInterval = 10
+
     private func didStop(_ error: Error?) {
         isStopping = false
-        live.end()
+        let duration = session?.elapsed() ?? 0
+        let id = session?.meeting?.id
+        if error == nil, let id, duration < Self.minimumDuration {
+            // 先等实时字幕最后一句落库，再连同录音文件一起删掉，避免删完又写进来
+            live.endAndWait()
+            discard(id)
+            processing.noteDiscarded(seconds: duration)
+        } else {
+            live.end()
+        }
         processing.recordingChanged(false)
         // 正常结束的录音进入会后精准转写
-        if error == nil, let id = session?.meeting?.id { processing.enqueueAfterRecording(id) }
+        if error == nil, let id, duration >= Self.minimumDuration { processing.enqueueAfterRecording(id) }
         if let error { lastError = Self.describe(error) }
         refresh()
         meter.update([:])
         statuses = [:]
+    }
+
+    /// 删除一场会议的文件和记录（太短的录音）
+    private func discard(_ id: UUID) {
+        guard let env else { return }
+        do {
+            let dir = env.paths.meetingDirectory(id)
+            if FileManager.default.fileExists(atPath: dir.path) { try FileManager.default.removeItem(at: dir) }
+            if processing.selectedMeetingID == id { processing.selectedMeetingID = nil }
+            try env.repository.delete(id)
+        } catch {
+            NSLog("丢弃过短录音失败：\(error)")
+        }
     }
 
     private func didStart(_ s: RecordingSession, meetingID: UUID) {

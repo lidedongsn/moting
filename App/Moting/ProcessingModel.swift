@@ -59,6 +59,11 @@ final class ProcessingModel: ObservableObject {
 
     /// 录音结束后调用：入队（用电池时等待插电）
     /// 录音结束后调用：按"通用"设置决定是否自动精准转写、用电池时是否立即处理
+    /// 太短的录音被丢弃时提示一下，免得以为没录上
+    func noteDiscarded(seconds: TimeInterval) {
+        notifier.post(title: "录音太短，已丢弃", body: "这次只录了 \(Int(seconds.rounded())) 秒，没有保存，也不会转写。", meetingID: nil)
+    }
+
     func enqueueAfterRecording(_ meetingID: UUID) {
         let defaults = UserDefaults.standard
         guard defaults.object(forKey: Self.autoTranscribeKey) as? Bool ?? true else { return }

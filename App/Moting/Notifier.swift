@@ -15,12 +15,14 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate, @unchecked Sen
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
-    func post(title: String, body: String, meetingID: UUID) {
+    /// meetingID 为空时只是提示，点击不打开会议
+    func post(title: String, body: String, meetingID: UUID?) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.userInfo = ["meetingID": meetingID.uuidString]
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: meetingID.uuidString, content: content, trigger: nil))
+        if let meetingID { content.userInfo = ["meetingID": meetingID.uuidString] }
+        let id = meetingID?.uuidString ?? UUID().uuidString
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: nil))
     }
 
     // 这些代理方法由系统在后台线程调用：标为 nonisolated，内部再切回主线程
