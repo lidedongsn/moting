@@ -47,7 +47,9 @@ public enum OfflineCatalog {
         ],
         kind: .senseVoice, roles: ["model": "model.int8.onnx", "tokens": "tokens.txt"],
         // 实测开了 use_itn 输出仍无标点，交给标点模型
-        hasPunctuation: false, supportsHotwords: false)
+        hasPunctuation: false, supportsHotwords: false,
+        // 实测：WenetSpeech test_meeting 400 条（43.8 分钟，2026-11-02，M2 低优先级）
+        benchmark: Benchmark(cer: 10.23, minutesPerHour: 2.5))
 
     public static let paraformerZh = OfflineModel(
         id: "offline-paraformer-zh-int8-2025-10-07", displayName: "Paraformer 中文大模型",
@@ -58,7 +60,7 @@ public enum OfflineCatalog {
         ],
         kind: .paraformer, roles: ["model": "model.int8.onnx", "tokens": "tokens.txt"],
         hasPunctuation: false, supportsHotwords: false,
-        // 实测：WenetSpeech test_meeting 400 条（2026-10-30），速度未测准，暂不填
+        // 实测：WenetSpeech test_meeting 400 条（43.8 分钟，2026-11-02，M2 低优先级）
         benchmark: Benchmark(cer: 12.67, minutesPerHour: nil))
 
     public static let xasrTransducer = OfflineModel(
@@ -75,8 +77,8 @@ public enum OfflineCatalog {
         roles: ["encoder": "encoder-epoch-99-avg-1.int8.onnx", "decoder": "decoder-epoch-99-avg-1.onnx",
                 "joiner": "joiner-epoch-99-avg-1.int8.onnx", "tokens": "tokens.txt", "bpe": "bpe.model"],
         hasPunctuation: true, supportsHotwords: true,
-        // 实测：WenetSpeech test_meeting 400 条（2026-10-30），速度未测准，暂不填
-        benchmark: Benchmark(cer: 7.44, minutesPerHour: nil))
+        // 实测：WenetSpeech test_meeting 400 条（43.8 分钟，2026-11-02，M2 低优先级）
+        benchmark: Benchmark(cer: 7.44, minutesPerHour: 1.6))
 
     public static let qwen3ASR = OfflineModel(
         id: "offline-qwen3-asr-0.6b-int8-2026-03-25", displayName: "Qwen3-ASR 0.6B（支持热词）",
@@ -92,7 +94,9 @@ public enum OfflineCatalog {
         kind: .qwen3ASR,
         roles: ["conv_frontend": "conv_frontend.onnx", "encoder": "encoder.int8.onnx",
                 "decoder": "decoder.int8.onnx", "tokenizer": "tokenizer/"],
-        hasPunctuation: true, supportsHotwords: true)
+        hasPunctuation: true, supportsHotwords: true,
+        // 实测：WenetSpeech test_meeting 400 条（43.8 分钟，2026-11-02，M2 低优先级）
+        benchmark: Benchmark(cer: 7.62, minutesPerHour: 14.5))
 
     public static let fireRedASR2 = OfflineModel(
         id: "offline-fire-red-asr2-zh-en-int8-2026-02-26", displayName: "FireRedASR2 中英",
@@ -105,8 +109,8 @@ public enum OfflineCatalog {
         kind: .fireRedASR,
         roles: ["encoder": "encoder.int8.onnx", "decoder": "decoder.int8.onnx", "tokens": "tokens.txt"],
         hasPunctuation: false, supportsHotwords: false,
-        // 实测：WenetSpeech test_meeting 400 条（2026-10-30），速度未测准，暂不填
-        benchmark: Benchmark(cer: 5.18, minutesPerHour: nil))
+        // 实测：WenetSpeech test_meeting 400 条（43.8 分钟，2026-11-02，M2 低优先级）
+        benchmark: Benchmark(cer: 5.18, minutesPerHour: 25.6))
 
     public static let all: [OfflineModel] = [senseVoice, paraformerZh, xasrTransducer, qwen3ASR, fireRedASR2]
 
