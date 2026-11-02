@@ -147,8 +147,7 @@ struct FloatingPanelView: View {
             if recorder.state == .paused {
                 Text("已暂停").font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.6))
             }
-            MiniLevel(level: recorder.levels[.mic] ?? 0, color: Self.micColor, symbol: "mic.fill", help: "我方声音（麦克风）")
-            MiniLevel(level: recorder.levels[.system] ?? 0, color: Self.systemColor, symbol: "speaker.wave.2.fill", help: "对方声音（系统音频）")
+            LevelPair(meter: recorder.meter, micColor: Self.micColor, systemColor: Self.systemColor)
             if !recorder.warnings.isEmpty {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption).foregroundStyle(.orange)
@@ -345,6 +344,20 @@ struct FloatingPanelView: View {
     }
 }
 
+/// 两路电平；单独观察 LevelMeter，每秒十几次的刷新只重绘这里
+private struct LevelPair: View {
+    @ObservedObject var meter: LevelMeter
+    let micColor: Color
+    let systemColor: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            MiniLevel(level: meter.levels[.mic] ?? 0, color: micColor, symbol: "mic.fill", help: "我方声音（麦克风）")
+            MiniLevel(level: meter.levels[.system] ?? 0, color: systemColor, symbol: "speaker.wave.2.fill", help: "对方声音（系统音频）")
+        }
+    }
+}
+
 /// 一路声音的电平：图标说明是哪一路，后面几根居中的声波条随音量起伏，没声音时收成小圆点
 private struct MiniLevel: View {
     let level: Float
@@ -352,8 +365,8 @@ private struct MiniLevel: View {
     let symbol: String
     let help: String
 
-    /// 各条相对高度，中间高两边低，像一小段声波
-    private static let shape: [CGFloat] = [0.45, 0.8, 1, 0.65, 0.35]
+    /// 各条的大致轮廓，中间高两边低
+    private static let shape: [CGFloat] = [0.5, 0.8, 1, 0.75, 0.45]
 
     var body: some View {
         let v = Self.loudness(level)
@@ -366,11 +379,11 @@ private struct MiniLevel: View {
                 ForEach(Self.shape.indices, id: \.self) { i in
                     Capsule()
                         .fill(v > 0 ? color : Color.white.opacity(0.3))
-                        .frame(width: 2.5, height: 2.5 + 9.5 * Self.shape[i] * v)
+                        .frame(width: 2.5, height: 2.5 + 10.5 * Self.shape[i] * v * Self.jitter(level, i))
                 }
             }
-            .frame(height: 12)
-            .animation(.easeOut(duration: 0.18), value: v)
+            .frame(height: 13)
+            .animation(.easeOut(duration: 0.08), value: level)
         }
         .padding(.horizontal, 7)
         .frame(height: 20)
@@ -378,10 +391,19 @@ private struct MiniLevel: View {
         .help(help)
     }
 
-    /// RMS 换算成 0…1：-55dB 以下算没声音，-10dB 到顶
+    /// RMS 换算成 0…1：-50dB 以下算没声音，-18dB 到顶；开方让小声也明显
     private static func loudness(_ rms: Float) -> CGFloat {
         guard rms > 0 else { return 0 }
-        let db = 20 * log10(rms)
-        return CGFloat(min(1, max(0, (db + 55) / 45)))
+        let x = min(1, max(0, (20 * log10(rms) + 50) / 32))
+        return CGFloat(x.squareRoot())
+    }
+
+    /// 每根条随每次电平变化的伪随机系数（0.45…1），让条各自起伏而不是整体缩放
+    private static func jitter(_ level: Float, _ i: Int) -> CGFloat {
+        var h = level.bitPattern &* 2_654_435_761 &+ UInt32(i) &* 40_503
+        h ^= h >> 15
+        h = h &* 2_246_822_519
+        h ^= h >> 13
+        return 0.45 + 0.55 * CGFloat(h % 1_000) / 1_000
     }
 }

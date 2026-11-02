@@ -10,11 +10,16 @@ private final class MonitorBox: @unchecked Sendable {
     private let lock = NSLock()
     private let startedAt = Date()
     private var levels: [AudioChannel: Float] = [:]
+    /// 上次取电平以来的峰值，刷新间隔里的短促音节也能显示出来
+    private var peaks: [AudioChannel: Float] = [:]
     private var health: [AudioChannel: ChannelHealth] = [:]
 
     func record(_ ch: AudioChannel, _ event: AudioSourceEvent) {
         lock.withLock {
-            if case .chunk(let c) = event { levels[ch] = c.level }
+            if case .chunk(let c) = event {
+                levels[ch] = c.level
+                peaks[ch] = max(peaks[ch] ?? 0, c.level)
+            }
             health[ch, default: ChannelHealth()].record(event, at: Date().timeIntervalSince(startedAt))
         }
     }
@@ -29,13 +34,33 @@ private final class MonitorBox: @unchecked Sendable {
             return (levels, statuses)
         }
     }
+
+    /// 取出并清零各路峰值；这段时间没来数据的那一路沿用最近一块的电平
+    func takePeaks() -> [AudioChannel: Float] {
+        lock.withLock {
+            var out = levels
+            for (ch, p) in peaks { out[ch] = p }
+            peaks = [:]
+            return out
+        }
+    }
+}
+
+/// 两路电平单独发布、刷新得快，只让电平小视图跟着重绘，不牵动整个悬浮窗
+@MainActor
+final class LevelMeter: ObservableObject {
+    @Published private(set) var levels: [AudioChannel: Float] = [:]
+
+    func update(_ levels: [AudioChannel: Float]) {
+        if levels != self.levels { self.levels = levels }
+    }
 }
 
 @MainActor
 final class RecordingController: ObservableObject {
     @Published private(set) var state: RecordingState = .idle
     @Published private(set) var elapsed: TimeInterval = 0
-    @Published private(set) var levels: [AudioChannel: Float] = [:]
+    let meter = LevelMeter()
     /// 每一路的健康状态；非 .ok 时界面显示警告
     @Published private(set) var statuses: [AudioChannel: ChannelStatus] = [:]
     @Published private(set) var isStarting = false
@@ -47,6 +72,7 @@ final class RecordingController: ObservableObject {
     let processing: ProcessingModel
     private var session: RecordingSession?
     private var ticker: Timer?
+    private var levelTicker: Timer?
     private var monitor = MonitorBox()
 
     init(env: AppEnvironment?) {
@@ -90,6 +116,8 @@ final class RecordingController: ObservableObject {
         isStopping = true
         ticker?.invalidate()
         ticker = nil
+        levelTicker?.invalidate()
+        levelTicker = nil
         Task.detached {
             let error: Error?
             do { try session.stop(); error = nil } catch let e { error = e }
@@ -112,7 +140,7 @@ final class RecordingController: ObservableObject {
         if error == nil, let id = session?.meeting?.id { processing.enqueueAfterRecording(id) }
         if let error { lastError = Self.describe(error) }
         refresh()
-        levels = [:]
+        meter.update([:])
         statuses = [:]
     }
 
@@ -124,6 +152,12 @@ final class RecordingController: ObservableObject {
         refresh()
         ticker = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
+        }
+        levelTicker = Timer.scheduledTimer(withTimeInterval: 1.0 / 15, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.state == .recording else { self?.meter.update([:]); return }
+                self.meter.update(self.monitor.takePeaks())
+            }
         }
     }
 
@@ -147,7 +181,7 @@ final class RecordingController: ObservableObject {
         state = session.state
         elapsed = session.elapsed()
         guard state == .recording || state == .paused else { return }
-        (levels, statuses) = monitor.snapshot()
+        statuses = monitor.snapshot().statuses
     }
 
     /// 当前需要提醒用户的问题，没有则为空
