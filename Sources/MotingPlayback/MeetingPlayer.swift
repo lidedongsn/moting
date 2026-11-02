@@ -12,6 +12,18 @@ public final class MeetingPlayer: ObservableObject {
     /// 无法播放的原因（例如输出设备正在切换、引擎没有运行），界面显示给用户；下次成功播放时清空
     @Published public private(set) var lastError: String?
     public let duration: TimeInterval
+    /// 播放速度（变速不变调）
+    public var rate: Float = 1 {
+        didSet { timePitch.rate = rate }
+    }
+    /// 跳过静音：长于半秒的静音只留半秒停顿
+    public var skipSilence = false {
+        didSet {
+            guard oldValue != skipSilence else { return }
+            // 已排的缓冲按旧设置排的：从当前位置重排
+            seek(to: currentTime)
+        }
+    }
 
     private static let rate = 16_000.0
     private static let chunk = 8_000            // 每个缓冲 0.5 秒
@@ -20,8 +32,11 @@ public final class MeetingPlayer: ObservableObject {
     private let reader: PCMMixReader?
     private let engine = AVAudioEngine()
     private let node = AVAudioPlayerNode()
+    private let timePitch = AVAudioUnitTimePitch()
+    /// 已排缓冲：播放器走过的采样 → 录音里的位置（跳过静音后两者不再一一对应）
+    private var map = PlaybackMap()
+    private var lastChunkSilent = false
     private let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16_000, channels: 1, interleaved: false)!
-    private var startFrame = 0                  // 本轮播放的起点
     private var nextFrame = 0                   // 下一个要排进去的采样
     private var queued = 0
     private var generation = 0                  // seek / 停止后作废旧回调
@@ -34,7 +49,9 @@ public final class MeetingPlayer: ObservableObject {
         reader = try? PCMMixReader(urls: urls)
         duration = Double(reader?.frameCount ?? 0) / Self.rate
         engine.attach(node)
-        engine.connect(node, to: engine.mainMixerNode, format: format)
+        engine.attach(timePitch)
+        engine.connect(node, to: timePitch, format: format)
+        engine.connect(timePitch, to: engine.mainMixerNode, format: format)
         node.volume = volume
         // 输出设备切换（插拔耳机、蓝牙等）会让引擎停下：同步暂停，下次播放时重新排缓冲
         configObserver = NotificationCenter.default.addObserver(
@@ -127,8 +144,9 @@ public final class MeetingPlayer: ObservableObject {
         generation += 1
         node.stop()
         queued = 0
-        startFrame = frame
         nextFrame = frame
+        map = PlaybackMap()
+        lastChunkSilent = false
         fill()
     }
 
@@ -137,6 +155,14 @@ public final class MeetingPlayer: ObservableObject {
         while queued < Self.ahead, nextFrame < reader.frameCount {
             guard let samples = try? reader.read(at: nextFrame, count: Self.chunk), !samples.isEmpty,
                   let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)) else { return }
+            // 跳过静音：连续静音块只保留第一块（半秒停顿），其余不排
+            let silent = skipSilence && Self.isSilent(samples)
+            defer { lastChunkSilent = silent }
+            if silent && lastChunkSilent {
+                nextFrame += samples.count
+                continue
+            }
+            map.scheduled(source: nextFrame, count: samples.count)
             buf.frameLength = AVAudioFrameCount(samples.count)
             samples.withUnsafeBufferPointer { buf.floatChannelData![0].update(from: $0.baseAddress!, count: samples.count) }
             nextFrame += samples.count
@@ -169,6 +195,29 @@ public final class MeetingPlayer: ObservableObject {
         var sample: AVAudioFramePosition?
         _ = MOTryCatch { sample = node.playerTime(forNodeTime: t)?.sampleTime }
         guard let sample else { return }
-        currentTime = min(duration, Double(startFrame + Int(sample)) / Self.rate)
+        currentTime = min(duration, Double(map.source(forPlayed: Int(sample))) / Self.rate)
+    }
+
+    /// 半秒块的均方根低于约 -42dBFS 视为静音
+    nonisolated static func isSilent(_ samples: [Float]) -> Bool {
+        guard !samples.isEmpty else { return true }
+        let ms = samples.reduce(Float(0)) { $0 + $1 * $1 } / Float(samples.count)
+        return ms < 0.008 * 0.008
+    }
+}
+
+/// 播放器已走过的采样数 → 录音里的采样位置
+struct PlaybackMap {
+    private var entries: [(played: Int, source: Int, count: Int)] = []
+    private var total = 0
+
+    mutating func scheduled(source: Int, count: Int) {
+        entries.append((total, source, count))
+        total += count
+    }
+
+    func source(forPlayed p: Int) -> Int {
+        guard let e = entries.last(where: { $0.played <= p }) else { return entries.first?.source ?? 0 }
+        return e.source + min(p - e.played, e.count)
     }
 }

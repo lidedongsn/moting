@@ -132,3 +132,51 @@ private struct ToolbarPill: View {
             .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
 }
+
+/// 胶囊分段切换（设计稿 .tabs / .seg）：页签用 regular，版本切换用 small
+struct PillTabs<Value: Hashable>: View {
+    struct Item {
+        let value: Value
+        let title: String
+        var badge: String? = nil
+    }
+
+    enum Size { case regular, small }
+
+    @Binding var selection: Value
+    let items: [Item]
+    var size: Size = .regular
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        let small = size == .small
+        let dark = scheme == .dark
+        HStack(spacing: 2) {
+            ForEach(items, id: \.value) { item in
+                let on = item.value == selection
+                Button { selection = item.value } label: {
+                    HStack(spacing: 5) {
+                        Text(item.title).fontWeight(on ? .semibold : .regular)
+                        if let badge = item.badge { Text(badge).foregroundStyle(.secondary) }
+                    }
+                    .font(.system(size: small ? 11.5 : 13.5))
+                    .foregroundStyle(on ? Color.primary : Color.secondary)
+                    .padding(.horizontal, small ? 9 : 15)
+                    .frame(height: small ? 22 : 30)
+                    .background {
+                        if on {
+                            RoundedRectangle(cornerRadius: small ? 6 : 8, style: .continuous)
+                                .fill(dark ? Color.white.opacity(0.16) : Color.white)
+                                .shadow(color: .black.opacity(dark ? 0.3 : 0.08), radius: 2, y: 1)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(small ? 2 : 3)
+        .background(Color.primary.opacity(dark ? 0.07 : 0.05), in: RoundedRectangle(cornerRadius: small ? 8 : 11, style: .continuous))
+        .animation(.easeOut(duration: 0.15), value: selection)
+    }
+}

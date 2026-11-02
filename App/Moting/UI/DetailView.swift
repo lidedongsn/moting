@@ -52,6 +52,8 @@ struct DetailView: View {
     @State private var hasFinal = false
     @State private var hasDraft = false
     @State private var showDraft = false
+    @AppStorage("player.rate") private var playbackRate = 1.0
+    @AppStorage("player.skipSilence") private var skipSilence = false
     @State private var job: Job?
     @State private var names: [String: String] = [:]
     @State private var renamingSpeaker: String?
@@ -253,6 +255,7 @@ struct DetailView: View {
                 Text(clock(player.currentTime)).font(.system(size: 13, weight: .semibold)).monospacedDigit()
                 Text("/ \(clock(player.duration))").font(.system(size: 13)).monospacedDigit().foregroundStyle(.secondary)
                 Spacer()
+                playbackOptions
             }
             VoiceRibbon(mine: mine, theirs: theirs, theirColors: theirColors,
                         marks: player.duration > 0 ? marks.map { $0.at / player.duration } : [],
@@ -270,6 +273,31 @@ struct DetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .glassCard(radius: 14, material: .thinMaterial)
+    }
+
+    /// 倍速（点一下换一档）与跳过静音，记住上次的选择
+    private var playbackOptions: some View {
+        HStack(spacing: 6) {
+            Button {
+                let rates: [Double] = [1, 1.25, 1.5, 2]
+                playbackRate = rates[((rates.firstIndex(of: playbackRate) ?? 0) + 1) % rates.count]
+            } label: {
+                Text(playbackRate == 1 ? "1×" : "\(playbackRate.formatted(.number.precision(.fractionLength(0...2))))×")
+                    .monospacedDigit()
+                    .foregroundStyle(playbackRate == 1 ? Color.secondary : Theme.me)
+            }
+            .help("播放速度（点击切换 1× / 1.25× / 1.5× / 2×）")
+            Text("·").foregroundStyle(.tertiary)
+            Button { skipSilence.toggle() } label: {
+                Text("跳过静音").foregroundStyle(skipSilence ? Theme.me : Color.secondary)
+            }
+            .help(skipSilence ? "已开启：长于半秒的静音只停半秒" : "开启后跳过长时间没人说话的部分")
+        }
+        .buttonStyle(.plain)
+        .font(.system(size: 12, weight: .medium))
+        .onAppear { player.rate = Float(playbackRate); player.skipSilence = skipSilence }
+        .onChange(of: playbackRate) { _, v in player.rate = Float(v) }
+        .onChange(of: skipSilence) { _, v in player.skipSilence = v }
     }
 
     /// 下半每根柱子的颜色：该时刻在说话的对方说话人
@@ -346,29 +374,21 @@ struct DetailView: View {
 
     private var tabBar: some View {
         HStack {
-            Picker("", selection: $tab) {
-                Text("纪要").tag(Tab.notes)
-                Text("转写稿").tag(Tab.transcript)
-                Text(marks.isEmpty ? "标记" : "标记 \(marks.count)").tag(Tab.marks)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
+            PillTabs(selection: $tab, items: [
+                .init(value: .notes, title: "纪要"),
+                .init(value: .transcript, title: "转写稿"),
+                .init(value: .marks, title: "标记", badge: marks.isEmpty ? nil : "\(marks.count)"),
+            ])
             Spacer()
             if tab == .transcript {
                 if hasFinal && hasDraft {
-                    HStack(spacing: 6) {
-                        Text("版本").foregroundStyle(.tertiary)
-                        Picker("", selection: $showDraft) {
-                            Text("精准").tag(false)
-                            Text("实时草稿").tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                        .fixedSize()
-                        .controlSize(.small)
+                    HStack(spacing: 8) {
+                        Text("版本").font(.system(size: 12)).foregroundStyle(.tertiary)
+                        PillTabs(selection: $showDraft, items: [
+                            .init(value: false, title: "精准"),
+                            .init(value: true, title: "实时草稿"),
+                        ], size: .small)
                     }
-                    .font(.system(size: 12))
                 } else if let kind = transcriptKind {
                     Text(kind == .draft ? "实时字幕草稿" : "精准转写").font(.system(size: 12)).foregroundStyle(.tertiary)
                 }
@@ -535,11 +555,11 @@ struct TranscriptLine: View {
                 RoundedRectangle(cornerRadius: 1.5).fill(color).frame(width: 3, height: 14)
                 Text(name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
             }
-            .frame(minWidth: 40, maxWidth: 84, alignment: .leading)
-            .fixedSize(horizontal: true, vertical: false)
+            // 固定宽度：各行正文左边对齐
+            .frame(width: 92, alignment: .leading)
             .contentShape(Rectangle())
             .onTapGesture { onRename?() }
-            .help(onRename == nil ? "" : "点击改名")
+            .help(onRename == nil ? name : "\(name)（点击改名）")
             (Text(segment.text) + (hasMark ? Text("  ★").foregroundColor(Theme.mark) : Text("")))
                 .font(.system(size: 14.5))
                 .lineSpacing(3)
