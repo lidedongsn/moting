@@ -257,3 +257,35 @@ struct HoverGrowStyle: ButtonStyle {
         }
     }
 }
+
+/// 主操作胶囊（与工具栏胶囊同一家族）：青色实底白字，悬停提亮、按下压暗
+struct AccentPillStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        AccentPill(configuration: configuration)
+    }
+
+    private struct AccentPill: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hovering = false
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            let active = hovering && isEnabled
+            configuration.label
+                .font(.system(size: 13, weight: .semibold))
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .frame(height: 32)
+                .background(LinearGradient(colors: [Color(hex: 0x3CC8F5), Color(hex: 0x1499D6)], startPoint: .top, endPoint: .bottom),
+                            in: Capsule())
+                .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
+                .brightness(configuration.isPressed ? -0.08 : active ? 0.08 : 0)
+                .shadow(color: Color(hex: 0x1499D6).opacity(active ? 0.45 : 0.3), radius: active ? 7 : 5, y: 2)
+                .opacity(isEnabled ? 1 : 0.45)
+                .contentShape(Capsule())
+                .onHover { hovering = $0 }
+                .animation(.easeOut(duration: 0.12), value: hovering)
+        }
+    }
+}
