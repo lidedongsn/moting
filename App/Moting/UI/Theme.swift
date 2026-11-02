@@ -213,22 +213,22 @@ enum AppAppearance: String, CaseIterable {
     }
 }
 
-/// 进度环（设计稿 .ring）：22pt，青色弧 + 浅色底环
+/// 进度环（设计稿 .ring）：画在框内（描边不外溢），和 13pt 文字等高
 struct ProgressRing: View {
     let progress: Double
     var dimmed = false
+    private let width: CGFloat = 2.5
 
     var body: some View {
         ZStack {
-            Circle().stroke(Theme.me.opacity(0.18), lineWidth: 4)
-            Circle()
+            Circle().inset(by: width / 2).stroke(Theme.me.opacity(0.2), lineWidth: width)
+            Circle().inset(by: width / 2)
                 .trim(from: 0, to: max(0.02, min(1, progress)))
-                .stroke(dimmed ? Color.secondary : Theme.me, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .stroke(dimmed ? Color.secondary : Theme.me, style: StrokeStyle(lineWidth: width, lineCap: .butt))
                 .rotationEffect(.degrees(-90))
                 .animation(.easeOut(duration: 0.3), value: progress)
         }
-        .frame(width: 22, height: 22)
-        .padding(.leading, 1)
+        .frame(width: 16, height: 16)
     }
 }
 

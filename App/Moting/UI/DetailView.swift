@@ -346,7 +346,7 @@ struct DetailView: View {
             })
         case .waitingForPower:
             return AnyView(Group {
-                Image(systemName: "powerplug.fill").foregroundStyle(Theme.me).frame(width: 22)
+                Image(systemName: "powerplug.fill").foregroundStyle(Theme.me).frame(width: 16)
                 Text("正在使用电池").fontWeight(.semibold)
                 Text("接通电源后自动精准转写。").foregroundStyle(.secondary)
                 Spacer(minLength: 0)
@@ -354,7 +354,7 @@ struct DetailView: View {
             })
         case .failed:
             return AnyView(Group {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange).frame(width: 22)
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange).frame(width: 16)
                 Text("精准转写失败：\(job.error ?? "未知错误")").lineLimit(2)
                 Spacer(minLength: 0)
                 Button("重试") { processing.enqueue(meeting.id) }.buttonStyle(PaneButtonStyle())
@@ -362,7 +362,7 @@ struct DetailView: View {
         case .done:
             if job.filterOutcome == "fellBack" {
                 return AnyView(Group {
-                    Image(systemName: "info.circle").foregroundStyle(Theme.me).frame(width: 22)
+                    Image(systemName: "info.circle").foregroundStyle(Theme.me).frame(width: 16)
                     Text("麦克风一路与你的声纹匹配度偏低，这次没有过滤旁人声音。可以在设置里重新登记声纹。")
                     Spacer(minLength: 0)
                 })
