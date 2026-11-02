@@ -34,7 +34,8 @@ ditto "$APP" "$DEST"
 # 让启动台 / Spotlight 立即看到新版本；构建目录里的副本从系统注销，
 # 否则 Dock 可能指向调试版、显示旧图标
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
-for copy in "$ROOT/.build/xcode/Build/Products/Release/Moting.app" "$ROOT/.build-ui/xcode/Build/Products/Debug/Moting.app"; do
+# （包括通知中心：它按登记的副本取图标，可能取到旧版）
+for copy in "$ROOT"/.build*/xcode/Build/Products/*/Moting.app; do
   [ -d "$copy" ] && "$LSREGISTER" -u "$copy" > /dev/null 2>&1 || true
 done
 "$LSREGISTER" -f "$DEST" > /dev/null 2>&1 || true
