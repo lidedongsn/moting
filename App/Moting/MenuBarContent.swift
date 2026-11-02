@@ -2,10 +2,9 @@ import AppKit
 import MotingCore
 import SwiftUI
 
-/// 菜单栏面板：平时是大号"开始录音"和最近会议；录音中是计时、暂停 / 结束和最新两句字幕
+/// 菜单栏面板：平时是大号"开始录音"和最近会议；录音中只有计时、暂停 / 结束（字幕看悬浮窗，不在这里重复）
 struct MenuBarContent: View {
     @ObservedObject var recorder: RecordingController
-    @ObservedObject var live: LiveTranscriptModel
     @ObservedObject var processing: ProcessingModel
     let env: AppEnvironment?
     @Environment(\.openWindow) private var openWindow
@@ -19,21 +18,7 @@ struct MenuBarContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if isRecording { recordingCard } else { startButton }
-            if isRecording {
-                section("正在录音")
-                ForEach(live.lines.suffix(2)) { line in
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(line.channel == .mic ? "我" : "对方").fontWeight(.semibold)
-                            .foregroundStyle(line.channel == .mic ? Theme.me : Theme.them)
-                        Text(line.text).foregroundStyle(line.isFinal ? .primary : .secondary).lineLimit(2)
-                    }
-                    .font(.system(size: 13))
-                    .padding(.horizontal, 8).padding(.vertical, 5)
-                }
-                if live.lines.isEmpty {
-                    Text("等待说话…").font(.system(size: 13)).foregroundStyle(.tertiary).padding(.horizontal, 8).padding(.vertical, 5)
-                }
-            } else if !recent.isEmpty {
+            if !isRecording && !recent.isEmpty {
                 section("最近")
                 ForEach(recent) { m in
                     Button {
@@ -57,7 +42,10 @@ struct MenuBarContent: View {
                 if isRecording {
                     Button("★ 标记重点") { recorder.mark() }
                     Spacer()
-                    Button("显示字幕窗") { NotificationCenter.default.post(name: FloatingPanelController.showRequest, object: nil) }
+                    Button("显示字幕窗") {
+                        NotificationCenter.default.post(name: FloatingPanelController.showRequest, object: nil)
+                        closePanel()
+                    }
                 } else {
                     Button("打开 Moting", action: showMain)
                     Spacer()
@@ -79,7 +67,11 @@ struct MenuBarContent: View {
     }
 
     private var startButton: some View {
-        Button { recorder.start() } label: {
+        Button {
+            recorder.start()
+            // 字幕会出现在悬浮窗里，面板收起，不挡着
+            closePanel()
+        } label: {
             HStack(spacing: 12) {
                 ZStack {
                     Circle().strokeBorder(.white, lineWidth: 3).frame(width: 22, height: 22)
@@ -162,6 +154,11 @@ struct MenuBarContent: View {
             let list = Array((all + others).sorted { $0.startedAt > $1.startedAt }.prefix(3))
             await MainActor.run { recent = list }
         }
+    }
+
+    /// 收起菜单栏面板（面板本身是当前的 key 窗口）
+    private func closePanel() {
+        NSApp.keyWindow?.close()
     }
 
     private func showMain() {

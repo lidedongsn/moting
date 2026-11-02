@@ -61,7 +61,7 @@ struct MotingApp: App {
             }
         }
         MenuBarExtra {
-            MenuBarContent(recorder: recorder, live: recorder.live, processing: recorder.processing, env: env)
+            MenuBarContent(recorder: recorder, processing: recorder.processing, env: env)
         } label: {
             MenuBarLabel(recorder: recorder)
         }
