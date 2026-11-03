@@ -70,13 +70,13 @@ struct SettingsRoot: View {
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 22, height: 22)
-                            .background(item.color.gradient, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            .background(item.color.gradient, in: RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
                         Text(item.title).font(.system(size: 13.5, weight: on ? .semibold : .regular))
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(on ? Theme.me.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(on ? Theme.me.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -151,7 +151,7 @@ struct PaneCard<Content: View>: View {
 
     var body: some View {
         VStack(spacing: 0) { content }
-            .glassCard(radius: 12, material: .regularMaterial)
+            .glassCard(material: .regularMaterial)
     }
 }
 
@@ -172,8 +172,8 @@ struct PaneButtonStyle: ButtonStyle {
             .padding(.horizontal, 11)
             .frame(height: 26)
             .background(kind == .primary ? AnyShapeStyle(Theme.me) : AnyShapeStyle(Color.primary.opacity(0.07)),
-                        in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
                 .strokeBorder(kind == .primary ? Color.clear : Color.primary.opacity(0.12), lineWidth: 0.5))
             .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.35)
             .contentShape(Rectangle())
@@ -185,7 +185,7 @@ extension View {
     func paneInput() -> some View {
         padding(.horizontal, 9)
             .padding(.vertical, 6)
-            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
     }
 }

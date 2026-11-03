@@ -271,7 +271,7 @@ struct DetailView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .glassCard(radius: 14, material: .thinMaterial)
+        .glassCard(material: .thinMaterial)
     }
 
     /// 倍速（点一下换一档）与跳过静音，记住上次的选择
@@ -318,8 +318,8 @@ struct DetailView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Theme.me.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.me.opacity(0.25), lineWidth: 0.5))
+                .background(Theme.me.opacity(0.08), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.me.opacity(0.25), lineWidth: 0.5))
                 .padding(.top, 14)
         }
     }
@@ -575,7 +575,7 @@ struct TranscriptLine: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(isCurrent ? Theme.me.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(isCurrent ? Theme.me.opacity(0.3) : .clear, lineWidth: 0.5))
+        .background(isCurrent ? Theme.me.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous).strokeBorder(isCurrent ? Theme.me.opacity(0.3) : .clear, lineWidth: 0.5))
     }
 }

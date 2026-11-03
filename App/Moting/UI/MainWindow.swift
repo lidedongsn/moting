@@ -109,9 +109,9 @@ struct MainWindow: View {
                             .contentShape(Rectangle())
                             .onTapGesture { click(m.id) }
                             .listRowBackground(
-                                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
                                     .fill(on ? Theme.me.opacity(0.16) : .clear)
-                                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
                                         .strokeBorder(on ? Theme.me.opacity(0.35) : .clear, lineWidth: 0.5))
                                     .padding(.horizontal, 8)
                             )
@@ -175,7 +175,7 @@ struct MainWindow: View {
         }
         .font(.system(size: 12))
         .padding(12)
-        .glassCard(radius: 10, material: .thinMaterial)
+        .glassCard(material: .thinMaterial)
         .padding(10)
     }
 

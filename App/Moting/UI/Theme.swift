@@ -22,6 +22,20 @@ enum Theme {
     static func speaker(_ key: SpeakerKey, in indices: [SpeakerKey: Int]) -> Color {
         speaker(indices[key] ?? (key == .me ? 0 : 1))
     }
+
+    /// 圆角：按 macOS 15 的尺度（窗口约 10，系统设置分组约 10，控件约 6）。以后换 macOS 26 的大圆角只改这里
+    enum Radius {
+        /// 内容卡片、横幅
+        static let card: CGFloat = 10
+        /// 按钮、输入框、列表选中行、分段控件
+        static let control: CGFloat = 6
+        /// 小号分段控件里的滑块、设置侧栏图标
+        static let small: CGFloat = 5
+        /// 悬浮字幕窗、会议提醒这类浮在桌面上的小窗
+        static let panel: CGFloat = 12
+        /// 悬浮窗收起成一条时
+        static let panelCollapsed: CGFloat = 14
+    }
 }
 
 extension Color {
@@ -40,9 +54,9 @@ extension Color {
     }
 }
 
-/// 玻璃卡片：材质 + 细描边 + 顶部内高光（macOS 26 之前对 Liquid Glass 的近似）
+/// 卡片：材质 + 一条细描边，平铺不加阴影（同 macOS 15 系统设置的分组）
 struct GlassCard: ViewModifier {
-    var radius: CGFloat = 14
+    var radius: CGFloat = Theme.Radius.card
     var material: Material = .regularMaterial
     @Environment(\.colorScheme) private var scheme
 
@@ -53,15 +67,13 @@ struct GlassCard: ViewModifier {
             .background(material, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(LinearGradient(colors: [.white.opacity(0.45), .white.opacity(0.08)],
-                                                 startPoint: .top, endPoint: .bottom), lineWidth: 0.6)
+                    .strokeBorder(Color.primary.opacity(scheme == .dark ? 0.12 : 0.08), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
     }
 }
 
 extension View {
-    func glassCard(radius: CGFloat = 14, material: Material = .regularMaterial) -> some View {
+    func glassCard(radius: CGFloat = Theme.Radius.card, material: Material = .regularMaterial) -> some View {
         modifier(GlassCard(radius: radius, material: material))
     }
 }
@@ -168,7 +180,7 @@ struct PillTabs<Value: Hashable>: View {
                     .frame(height: small ? 22 : 30)
                     .background {
                         if on {
-                            RoundedRectangle(cornerRadius: small ? 6 : 8, style: .continuous)
+                            RoundedRectangle(cornerRadius: small ? Theme.Radius.small : Theme.Radius.control, style: .continuous)
                                 .fill(dark ? Color.white.opacity(0.16) : Color.white)
                                 .shadow(color: .black.opacity(dark ? 0.3 : 0.08), radius: 2, y: 1)
                         }
@@ -179,7 +191,7 @@ struct PillTabs<Value: Hashable>: View {
             }
         }
         .padding(small ? 2 : 3)
-        .background(Color.primary.opacity(dark ? 0.07 : 0.05), in: RoundedRectangle(cornerRadius: small ? 8 : 11, style: .continuous))
+        .background(Color.primary.opacity(dark ? 0.07 : 0.05), in: RoundedRectangle(cornerRadius: small ? Theme.Radius.small + 2 : Theme.Radius.control + 3, style: .continuous))
         .animation(.easeOut(duration: 0.15), value: selection)
     }
 }

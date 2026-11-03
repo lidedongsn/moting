@@ -29,7 +29,7 @@ struct VoiceprintEnrollView: View {
                 .font(.title3)
                 .lineSpacing(6)
                 .padding(14)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
             switch phase {
             case .ready:
                 EmptyView()

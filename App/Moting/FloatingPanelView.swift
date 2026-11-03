@@ -36,8 +36,8 @@ struct FloatingPanelView: View {
         // 玻璃：材质 + 深色底 + 上亮下暗的细描边（macOS 26 Liquid Glass 的近似）
         .background(.ultraThinMaterial)
         .background(Color(white: 0.1).opacity(0.55))
-        .clipShape(RoundedRectangle(cornerRadius: ui.collapsed ? 22 : 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: ui.collapsed ? 22 : 18, style: .continuous)
+        .clipShape(RoundedRectangle(cornerRadius: ui.collapsed ? Theme.Radius.panelCollapsed : Theme.Radius.panel, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: ui.collapsed ? Theme.Radius.panelCollapsed : Theme.Radius.panel, style: .continuous)
             .strokeBorder(LinearGradient(colors: [.white.opacity(0.3), .white.opacity(0.12)], startPoint: .top, endPoint: .bottom),
                           lineWidth: 0.5))
         .environment(\.colorScheme, .dark)
@@ -339,7 +339,7 @@ struct FloatingPanelView: View {
                 .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(tint == .white ? Color.white.opacity(0.8) : tint)
                 .frame(width: 24, height: 24)
-                .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
         .help(help)

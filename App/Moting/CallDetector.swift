@@ -144,8 +144,8 @@ private struct CallPromptView: View {
         .foregroundStyle(.white)
         .background(.ultraThinMaterial)
         .background(Color(white: 0.1).opacity(0.55))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous)
             .strokeBorder(LinearGradient(colors: [.white.opacity(0.3), .white.opacity(0.12)], startPoint: .top, endPoint: .bottom),
                           lineWidth: 0.5))
         .environment(\.colorScheme, .dark)

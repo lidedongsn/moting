@@ -85,8 +85,7 @@ struct MenuBarContent: View {
             .padding(.horizontal, 16)
             .frame(height: 56)
             .background(LinearGradient(colors: [Color(hex: 0xFF4B4F), Color(hex: 0xE5262B)], startPoint: .top, endPoint: .bottom),
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: Theme.record.opacity(0.35), radius: 9, y: 4)
+                        in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(recorder.isStarting)
@@ -106,14 +105,14 @@ struct MenuBarContent: View {
             } label: {
                 Image(systemName: paused ? "play.fill" : "pause.fill").font(.system(size: 11, weight: .bold))
                     .frame(width: 34, height: 26)
-                    .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             }
             .buttonStyle(.plain)
             .help(paused ? "继续" : "暂停")
             Button { recorder.stop() } label: {
                 Text(recorder.isStopping ? "正在结束…" : "结束").font(.system(size: 12.5, weight: .semibold))
                     .padding(.horizontal, 11).frame(height: 26)
-                    .background(Theme.record, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             }
             .buttonStyle(.plain)
             .disabled(recorder.isStopping)
@@ -122,8 +121,7 @@ struct MenuBarContent: View {
         .padding(.horizontal, 16)
         .frame(height: 56)
         .background(LinearGradient(colors: [Color(hex: 0x2C2C2E), Color(hex: 0x1C1C1E)], startPoint: .top, endPoint: .bottom),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .shadow(color: .black.opacity(0.25), radius: 9, y: 4)
+                    in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
     }
 
     private func section(_ title: String) -> some View {
@@ -174,7 +172,7 @@ private struct MenuRowStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background((configuration.isPressed || hover) ? Color.primary.opacity(0.08) : .clear,
-                        in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             .onHover { hover = $0 }
     }
 }
