@@ -27,6 +27,9 @@ struct MotingApp: App {
         DispatchQueue.main.async { AppAppearance.applySaved() }
         floatingPanel = FloatingPanelController(recorder: recorder)
         callDetector = CallDetector(recorder: recorder)
+        #if DEBUG
+        DemoScene.present(recorder: recorder, detector: callDetector, env: env)
+        #endif
         // ⌥⌘R：任何 app 里开始 / 结束录音
         hotKey = GlobalHotKey { [weak recorder] in
             MainActor.assumeIsolated {

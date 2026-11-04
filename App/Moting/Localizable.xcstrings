@@ -411,62 +411,12 @@
         }
       }
     },
-    "■ 结束": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "■ Stop"
-          }
-        }
-      }
-    },
-    "▶ 继续": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "▶ Resume"
-          }
-        }
-      }
-    },
     "★": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "★"
-          }
-        }
-      }
-    },
-    "★ 标记": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "★ Mark"
-          }
-        }
-      }
-    },
-    "★ 标记重点": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "★ Mark highlight"
-          }
-        }
-      }
-    },
-    "❚❚ 暂停": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "❚❚ Pause"
           }
         }
       }
@@ -1391,16 +1341,6 @@
         }
       }
     },
-    "对方 ": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Others "
-          }
-        }
-      }
-    },
     "对方一直没有声音。如果会议里有人在说话，请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting": {
       "localizations": {
         "en": {
@@ -1767,16 +1707,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Me"
-          }
-        }
-      }
-    },
-    "我 ": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Me "
           }
         }
       }
@@ -3381,12 +3311,12 @@
         }
       }
     },
-    "退出": {
+    "退出 Moting": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quit"
+            "value": "Quit Moting"
           }
         }
       }

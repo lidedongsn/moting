@@ -67,6 +67,17 @@ final class RecordingController: ObservableObject {
     @Published private(set) var isStopping = false
     @Published var lastError: String?
 
+    #if DEBUG
+    /// 演示录音状态：界面和录音时一样，但不碰麦克风
+    func showDemoRecording(paused: Bool) {
+        state = paused ? .paused : .recording
+        elapsed = 754
+        meter.update([.mic: 0.08, .system: 0.03])
+    }
+
+    func showDemoStopped() { state = .stopped }
+    #endif
+
     private let env: AppEnvironment?
     let live: LiveTranscriptModel
     let processing: ProcessingModel

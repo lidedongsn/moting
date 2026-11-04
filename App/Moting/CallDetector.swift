@@ -26,8 +26,10 @@ final class CallDetector: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.poll() }
         }
+        // @Published 在赋值之前发通知：等赋值完成再显示，否则弹窗第一次读到的还是空值，一片空白
         $prompt
             .removeDuplicates()
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] p in self?.showPanel(p) }
             .store(in: &cancellables)
     }
@@ -37,6 +39,9 @@ final class CallDetector: ObservableObject {
     }
 
     private func poll() {
+        #if DEBUG
+        if DemoScene.isActive { return }
+        #endif
         guard UserDefaults.standard.bool(forKey: Self.enabledKey) else {
             if prompt != nil { watch = CallWatch(); prompt = nil }
             return
@@ -52,6 +57,10 @@ final class CallDetector: ObservableObject {
             }
         }
     }
+
+    #if DEBUG
+    func showDemoPrompt(_ p: CallWatch.Prompt) { prompt = p }
+    #endif
 
     // MARK: - 用户操作
 
@@ -105,6 +114,9 @@ final class CallPromptPanel: NSPanel {
         backgroundColor = .clear
         hasShadow = true
         sharingType = .none
+        #if DEBUG
+        if DemoScene.isActive { sharingType = .readOnly }
+        #endif
         let host = NSHostingView(rootView: CallPromptView(detector: detector))
         host.sizingOptions = []
         contentView = host
@@ -141,33 +153,22 @@ private struct CallPromptView: View {
                 Color.clear
             }
         }
-        .foregroundStyle(.white)
-        .background(.ultraThinMaterial)
-        .background(Color(white: 0.1).opacity(0.55))
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous)
-            .strokeBorder(LinearGradient(colors: [.white.opacity(0.3), .white.opacity(0.12)], startPoint: .top, endPoint: .bottom),
-                          lineWidth: 0.5))
-        .environment(\.colorScheme, .dark)
+        .hudPanel()
         .ignoresSafeArea()
     }
 
     private func content(icon: String, title: String, detail: String,
                          secondary: (String, () -> Void), primary: (String, () -> Void)) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                Image(systemName: icon).font(.system(size: 13, weight: .semibold))
-                    .frame(width: 30, height: 30)
-                    .background(Theme.record.opacity(0.9), in: Circle())
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                    Text(detail).font(.system(size: 12)).foregroundStyle(.white.opacity(0.65))
+            VStack(alignment: .leading, spacing: 2) {
+                Label { Text(title).font(.system(size: 13, weight: .semibold)).lineLimit(1) } icon: {
+                    Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.7))
                 }
-                Spacer(minLength: 0)
+                Text(detail).font(.system(size: 12)).foregroundStyle(.white.opacity(0.65))
             }
             HStack(spacing: 8) {
                 Spacer()
-                Button(secondary.0, action: secondary.1).buttonStyle(AppButtonStyle(kind: .secondary))
+                Button(secondary.0, action: secondary.1).buttonStyle(AppButtonStyle())
                 Button(primary.0, action: primary.1).buttonStyle(AppButtonStyle(kind: .record))
             }
         }

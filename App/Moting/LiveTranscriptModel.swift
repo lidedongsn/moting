@@ -35,6 +35,12 @@ final class LiveTranscriptModel: ObservableObject {
     }
 
     @Published private(set) var lines: [SubtitleLine] = []
+    #if DEBUG
+    func showDemoLines(_ demo: [SubtitleLine]) {
+        lines = demo
+        modelState = .ready
+    }
+    #endif
     @Published private(set) var modelState: ModelState = .missing
     @Published private(set) var downloads: [String: Double] = [:]   // 设置页：各模型下载进度
     @Published var selectedModelID: String {

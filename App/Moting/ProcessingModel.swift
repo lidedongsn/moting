@@ -13,6 +13,13 @@ final class ProcessingModel: ObservableObject {
     @Published private(set) var lastRecordedMeetingID: UUID?
     /// 上面这场会议的处理状态
     @Published private(set) var lastStatus: JobStatus?
+    #if DEBUG
+    func showDemoProcessing(_ id: UUID, status: JobStatus, progress p: Double) {
+        lastRecordedMeetingID = id
+        lastStatus = status
+        progress[id] = p
+    }
+    #endif
     /// 主窗口选中的会议（通知点击后跳转）
     @Published var selectedMeetingID: UUID?
 

@@ -1,3 +1,4 @@
+import MotingASR
 import MotingCore
 import SwiftUI
 
@@ -14,8 +15,6 @@ struct FloatingPanelView: View {
             && processing.lastRecordedMeetingID != nil
     }
 
-    // macOS 26 深色系统色，与 app 图标一致
-    // 悬浮窗固定为深色玻璃，直接用图标原色
     static let micColor = Theme.me
     static let systemColor = Theme.them
     /// 字幕区顶部淡出带高度
@@ -32,15 +31,7 @@ struct FloatingPanelView: View {
                 recordingView
             }
         }
-        .foregroundStyle(.white)
-        // 玻璃：材质 + 深色底 + 上亮下暗的细描边（macOS 26 Liquid Glass 的近似）
-        .background(.ultraThinMaterial)
-        .background(Color(white: 0.1).opacity(0.55))
-        .clipShape(RoundedRectangle(cornerRadius: ui.collapsed ? Theme.Radius.panelCollapsed : Theme.Radius.panel, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: ui.collapsed ? Theme.Radius.panelCollapsed : Theme.Radius.panel, style: .continuous)
-            .strokeBorder(LinearGradient(colors: [.white.opacity(0.3), .white.opacity(0.12)], startPoint: .top, endPoint: .bottom),
-                          lineWidth: 0.5))
-        .environment(\.colorScheme, .dark)
+        .hudPanel(radius: ui.collapsed ? Theme.Radius.panelCollapsed : Theme.Radius.panel)
         .contextMenu { opacityMenu }
         // 面板带隐藏的标题栏，不忽略安全区内容会被往下挤、底部被裁掉
         .ignoresSafeArea()
@@ -65,42 +56,37 @@ struct FloatingPanelView: View {
                     Image(systemName: "pause.circle.fill").foregroundStyle(.secondary)
                     Text("精准转写已暂停").fontWeight(.semibold)
                 default:
-                    Image(systemName: "circle.lefthalf.filled").foregroundStyle(Theme.me)
+                    ProgressRing(progress: p).scaleEffect(0.8).frame(width: 16, height: 16)
                     Text("正在精准转写").fontWeight(.semibold)
                 }
                 Spacer()
                 if processing.lastStatus == .running || processing.lastStatus == .queued || processing.lastStatus == .paused {
                     Text("\(Int(p * 100))%").monospacedDigit().foregroundStyle(.white.opacity(0.75))
                 }
-                iconButton("xmark", help: L("关闭（转写在后台继续）")) { processing.dismissLastRecorded() }
+                HUDIconButton(symbol: "xmark", help: L("关闭（转写在后台继续）")) { processing.dismissLastRecorded() }
             }
-            .font(.system(size: 12.5))
-            .padding(.leading, 14).padding(.trailing, ui.collapsed ? 9 : 12).padding(.top, ui.collapsed ? 0 : 11)
+            .font(.system(size: 13))
+            .padding(.leading, 14).padding(.trailing, ui.collapsed ? 9 : 10).padding(.top, ui.collapsed ? 0 : 10)
             // 收起时整行居中，点一下展开
             .frame(maxHeight: ui.collapsed ? .infinity : nil)
             .contentShape(Rectangle())
             .onTapGesture { ui.collapsed ? (ui.collapsed = false) : openMeeting() }
             if !ui.collapsed {
                 if processing.lastStatus == .running || processing.lastStatus == .queued || processing.lastStatus == .paused {
-                    Capsule().fill(.white.opacity(0.12))
-                        .overlay(alignment: .leading) {
-                            GeometryReader { g in
-                                Capsule().fill(LinearGradient(colors: [Self.micColor, Theme.me], startPoint: .leading, endPoint: .trailing))
-                                    .frame(width: g.size.width * min(1, max(0.02, p)))
-                            }
-                        }
-                        .frame(height: 4)
-                        .padding(.horizontal, 14).padding(.top, 10)
+                    ProgressView(value: min(1, max(0.02, p)))
+                        .progressViewStyle(.linear)
+                        .tint(.accentColor)
+                        .padding(.horizontal, 14).padding(.top, 8)
                 }
                 Text(processingHint)
-                    .font(.system(size: 12.5)).foregroundStyle(.white.opacity(0.7))
-                    .padding(.horizontal, 14).padding(.top, 10)
+                    .font(.system(size: 12)).foregroundStyle(.white.opacity(0.65))
+                    .padding(.horizontal, 14).padding(.top, 8)
                 HStack(spacing: 6) {
                     if let id = processing.lastRecordedMeetingID {
                         switch processing.lastStatus {
-                        case .waitingForPower: pillButton(L("现在处理")) { processing.processNow(id) }
-                        case .queued, .running: pillButton(L("❚❚ 暂停")) { processing.pause(id) }
-                        case .paused: pillButton(L("▶ 继续")) { processing.resume(id) }
+                        case .waitingForPower: Button("现在处理") { processing.processNow(id) }.buttonStyle(AppButtonStyle())
+                        case .queued, .running: actionButton(L("暂停"), "pause.fill") { processing.pause(id) }
+                        case .paused: actionButton(L("继续"), "play.fill") { processing.resume(id) }
                         default: EmptyView()
                         }
                     }
@@ -145,38 +131,35 @@ struct FloatingPanelView: View {
     }
 
     private var recDot: some View {
-        let c = recorder.state == .paused ? Color.orange : Theme.record
-        return Circle().fill(c).frame(width: 8, height: 8)
-            .background(Circle().fill(c.opacity(0.25)).frame(width: 14, height: 14))
+        Circle().fill(recorder.state == .paused ? Color(nsColor: .systemOrange) : Theme.record).frame(width: 8, height: 8)
     }
 
-    /// 展开态头部：红点、计时、两路电平、★、收起
+    /// 展开态头部：红点、计时、两路电平、收起
     private var header: some View {
         HStack(spacing: 9) {
             recDot
-            Text(recorder.elapsed.clockText).font(.system(size: 12.5, weight: .semibold)).monospacedDigit()
+            Text(recorder.elapsed.clockText).font(.system(size: 13, weight: .semibold)).monospacedDigit()
             if recorder.state == .paused {
-                Text("已暂停").font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.6))
+                Text("已暂停").font(.system(size: 12)).foregroundStyle(.white.opacity(0.6))
             }
             LevelPair(meter: recorder.meter, micColor: Self.micColor, systemColor: Self.systemColor)
             if !recorder.warnings.isEmpty {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.caption).foregroundStyle(.orange)
+                    .font(.caption).foregroundStyle(Color(nsColor: .systemOrange))
                     .help(recorder.warnings.joined(separator: "\n"))
             }
             Spacer(minLength: 4)
-            iconButton("star.fill", help: L("标记重点")) { recorder.mark() }
-            iconButton("minus", help: L("收起")) { ui.collapsed = true }
+            HUDIconButton(symbol: "minus", help: L("收起")) { ui.collapsed = true }
         }
-        .padding(.leading, 14).padding(.trailing, 12)
-        .padding(.top, 11).padding(.bottom, 8)
+        .padding(.leading, 14).padding(.trailing, 10)
+        .padding(.top, 10).padding(.bottom, 6)
     }
 
     /// 收起后的胶囊：红点、计时、最新一句、停止；点文字展开
     private var capsule: some View {
         HStack(spacing: 10) {
             recDot
-            Text(recorder.elapsed.clockText).font(.system(size: 12.5, weight: .semibold)).monospacedDigit()
+            Text(recorder.elapsed.clockText).font(.system(size: 13, weight: .semibold)).monospacedDigit()
             HStack(spacing: 6) {
                 if let line = live.lines.last {
                     Text(line.channel == .mic ? L("我") : L("对方"))
@@ -193,12 +176,8 @@ struct FloatingPanelView: View {
             .contentShape(Rectangle())
             .onTapGesture { ui.collapsed = false }
             .help("展开")
-            Button { recorder.stop() } label: {
-                Image(systemName: "stop.fill").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
-                    .frame(width: 26, height: 26)
-                    .background(Theme.record.opacity(0.9), in: Circle())
-            }
-            .buttonStyle(.plain)
+            Button { recorder.stop() } label: { Image(systemName: "stop.fill").font(.system(size: 10, weight: .bold)) }
+                .buttonStyle(AppButtonStyle(kind: .record, iconOnly: true))
             .disabled(recorder.isStopping)
             .help("结束录音")
         }
@@ -210,8 +189,8 @@ struct FloatingPanelView: View {
         VStack(alignment: .leading, spacing: 4) {
             ForEach(recorder.warnings, id: \.self) { w in
                 Label(w, systemImage: "exclamationmark.triangle.fill")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.orange)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(nsColor: .systemOrange))
                     .fixedSize(horizontal: false, vertical: true)
             }
             switch live.modelState {
@@ -222,9 +201,9 @@ struct FloatingPanelView: View {
                             action: (L("下载"), { live.installSelected() }))
             case .downloading(let p):
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("正在下载识别模型… \(Int(p * 100))%").font(.system(size: 11)).foregroundStyle(.secondary)
-                    ProgressView(value: p).progressViewStyle(.linear).tint(.white.opacity(0.7))
-                    Text("下载完成后，本场录音会自动开始显示字幕").font(.system(size: 10)).foregroundStyle(.tertiary)
+                    Text("正在下载识别模型… \(Int(p * 100))%").font(.system(size: 12)).foregroundStyle(.secondary)
+                    ProgressView(value: p).progressViewStyle(.linear).tint(.accentColor)
+                    Text("下载完成后，本场录音会自动开始显示字幕").font(.system(size: 11)).foregroundStyle(.tertiary)
                 }
                 .frame(maxHeight: .infinity)
             case .loading:
@@ -248,31 +227,27 @@ struct FloatingPanelView: View {
             ScrollViewReader { proxy in
                 ZStack(alignment: .bottom) {
                     ScrollView(.vertical) {
-                        LazyVStack(alignment: .leading, spacing: 7) {
-                            ForEach(live.lines) { line in
-                                (Text(line.channel == .mic ? L("我 ") : L("对方 "))
-                                    .font(.system(size: 11.5, weight: .semibold))
-                                    .foregroundColor(line.channel == .mic ? Self.micColor : Self.systemColor)
-                                 + Text(line.text)
-                                    .font(.system(size: 13.5))
-                                    .foregroundColor(line.isFinal ? .white : .white.opacity(0.45)))
-                                    .lineSpacing(3)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(live.lines.enumerated()), id: \.element.id) { i, line in
+                                CaptionLine(line: line, showsSpeaker: i == 0 || live.lines[i - 1].channel != line.channel, isFirst: i == 0)
                                     .id(line.id)
                             }
                             // 底部哨兵：看得见说明停在最新处，新字幕来了就跟着滚；往上翻看时不打扰
-                            Color.clear.frame(height: 1).id(Self.bottomID)
+                            Color.clear.frame(height: 6).id(Self.bottomID)
                                 .onAppear { following = true }
                                 .onDisappear { following = false }
                         }
                         // 顶部留出淡出带的高度：翻到最上面时第一行不被遮
                         .padding(.top, Self.fadeHeight)
                     }
-                    // 顶部淡出，翻到上面的字幕不会被标题栏生硬切断
+                    // 上下都淡出，字幕不会被标题栏和按钮生硬切断
                     .mask(VStack(spacing: 0) {
                         LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom).frame(height: Self.fadeHeight)
                         Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 6)
                     })
+                    // 打开窗口时（比如录音中途展开）也停在最新一行
+                    .onAppear { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
                     .onChange(of: live.lines) { _, _ in
                         if following { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
                     }
@@ -283,10 +258,8 @@ struct FloatingPanelView: View {
                         } label: {
                             Label("回到最新", systemImage: "arrow.down")
                                 .font(.system(size: 11.5, weight: .medium))
-                                .padding(.horizontal, 10).frame(height: 24)
-                                .background(Color(white: 0.18).opacity(0.92), in: Capsule())
-                                .overlay(Capsule().strokeBorder(.white.opacity(0.22), lineWidth: 0.5))
-                                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+                                .padding(.horizontal, 10).frame(height: 26)
+                                .background(Color(white: 0.2), in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
                         }
                         .buttonStyle(.plain)
                         .padding(.bottom, 4)
@@ -300,9 +273,9 @@ struct FloatingPanelView: View {
     private func modelPrompt(_ text: String, action: (String, () -> Void)?) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Spacer(minLength: 0)
-            Text(text).font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(text).font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if let action {
-                pillButton(action.0, action: action.1)
+                Button(action.0, action: action.1).buttonStyle(AppButtonStyle())
             }
             Spacer(minLength: 0)
         }
@@ -310,15 +283,18 @@ struct FloatingPanelView: View {
 
     private var actions: some View {
         HStack(spacing: 6) {
-            pillButton(L("★ 标记")) { recorder.mark() }
+            actionButton(L("标记重点"), "star.fill") { recorder.mark() }
             if recorder.state == .paused {
-                pillButton(L("▶ 继续")) { recorder.resume() }
+                actionButton(L("继续"), "play.fill") { recorder.resume() }
             } else {
-                pillButton(L("❚❚ 暂停")) { recorder.pause() }
+                actionButton(L("暂停"), "pause.fill") { recorder.pause() }
             }
             Spacer()
-            pillButton(recorder.isStopping ? L("正在结束…") : L("■ 结束"), tint: Theme.record) { recorder.stop() }
-                .disabled(recorder.isStopping)
+            Button(action: recorder.stop) {
+                if recorder.isStopping { Text("正在结束…") } else { Label("结束", systemImage: "stop.fill") }
+            }
+            .buttonStyle(AppButtonStyle(kind: .record))
+            .disabled(recorder.isStopping)
         }
         .padding(.horizontal, 12)
         .padding(.top, 8).padding(.bottom, 12)
@@ -332,21 +308,31 @@ struct FloatingPanelView: View {
         }
     }
 
-    private func iconButton(_ name: String, help: String, tint: Color = .white,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: name)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(tint == .white ? Color.white.opacity(0.8) : tint)
-                .frame(width: 24, height: 24)
-                .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .help(help)
+    private func actionButton(_ title: String, _ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) { Label(title, systemImage: symbol) }.buttonStyle(AppButtonStyle())
     }
+}
 
-    private func pillButton(_ title: String, tint: Color? = nil, action: @escaping () -> Void) -> some View {
-        Button(title, action: action).buttonStyle(AppButtonStyle(kind: tint == nil ? .secondary : .record))
+/// 一行字幕：说话人变了才显示名字，同一个人连着说就只是接着的段落；还没定稿的字偏暗
+private struct CaptionLine: View {
+    let line: SubtitleLine
+    let showsSpeaker: Bool
+    let isFirst: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if showsSpeaker {
+                Text(line.channel == .mic ? L("我") : L("对方"))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(line.channel == .mic ? FloatingPanelView.micColor : FloatingPanelView.systemColor)
+            }
+            Text(line.text)
+                .font(.system(size: 15))
+                .lineSpacing(3)
+                .foregroundStyle(line.isFinal ? Color.white.opacity(0.95) : Color.white.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, isFirst ? 0 : showsSpeaker ? 10 : 3)
     }
 }
 
@@ -357,7 +343,7 @@ private struct LevelPair: View {
     let systemColor: Color
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 10) {
             MiniLevel(level: meter.levels[.mic] ?? 0, color: micColor, symbol: "mic.fill", help: L("我方声音（麦克风）"))
             MiniLevel(level: meter.levels[.system] ?? 0, color: systemColor, symbol: "speaker.wave.2.fill", help: L("对方声音（系统音频）"))
         }
@@ -391,9 +377,7 @@ private struct MiniLevel: View {
             .frame(height: 13)
             .animation(.easeOut(duration: 0.08), value: level)
         }
-        .padding(.horizontal, 7)
         .frame(height: 20)
-        .background(Color.white.opacity(0.08), in: Capsule())
         .help(help)
     }
 

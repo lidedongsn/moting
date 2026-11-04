@@ -32,38 +32,30 @@ struct MenuBarContent: View {
                             Text(status(m)).font(.system(size: 12)).foregroundStyle(.secondary)
                         }
                         .font(.system(size: 13))
-                        .padding(.horizontal, 8).padding(.vertical, 6)
+                        .padding(.horizontal, 8).padding(.vertical, 5)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(MenuRowStyle())
                 }
             }
-            Divider().padding(.top, 10)
-            HStack {
-                if isRecording {
-                    Button("★ 标记重点") { recorder.mark() }
-                    Spacer()
-                    Button("显示字幕窗") {
-                        NotificationCenter.default.post(name: FloatingPanelController.showRequest, object: nil)
-                        closePanel()
-                    }
-                } else {
-                    Button("打开 Moting", action: showMain)
-                    Spacer()
-                    Button("设置…") {
-                        openSettings()
-                        NSApp.activate(ignoringOtherApps: true)
-                    }
-                    Button("退出") { NSApp.terminate(nil) }
+            Divider().padding(.vertical, 6).padding(.horizontal, 6)
+            if isRecording {
+                menuRow(L("标记重点")) { recorder.mark() }
+                menuRow(L("显示字幕窗")) {
+                    NotificationCenter.default.post(name: FloatingPanelController.showRequest, object: nil)
+                    closePanel()
                 }
+            } else {
+                menuRow(L("打开 Moting"), action: showMain)
+                menuRow(L("设置…")) {
+                    openSettings()
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+                menuRow(L("退出 Moting")) { NSApp.terminate(nil) }
             }
-            .buttonStyle(.borderless)
-            .font(.system(size: 12.5))
-            .foregroundStyle(.secondary)
-            .padding(.top, 10)
         }
-        .padding(14)
-        .frame(width: 320)
+        .padding(10)
+        .frame(width: 280)
         .background(scheme == .dark ? Theme.chrome : .clear)
         .task(id: recorder.state) { loadRecent() }
     }
@@ -74,59 +66,58 @@ struct MenuBarContent: View {
             // 字幕会出现在悬浮窗里，面板收起，不挡着
             closePanel()
         } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle().strokeBorder(.white, lineWidth: 3).frame(width: 22, height: 22)
-                    Circle().fill(.white).frame(width: 9, height: 9)
-                }
-                Text(recorder.isStarting ? L("正在启动…") : L("开始录音")).font(.system(size: 15, weight: .semibold))
+            HStack(spacing: 8) {
+                Circle().fill(.white).frame(width: 9, height: 9)
+                Text(recorder.isStarting ? L("正在启动…") : L("开始录音")).font(.system(size: 13, weight: .semibold))
                 Spacer()
-                Text("⌥⌘R").font(.system(size: 12)).opacity(0.85)
+                Text("⌥⌘R").font(.system(size: 12)).opacity(0.8)
             }
             .foregroundStyle(.white)
-            .padding(.horizontal, 16)
-            .frame(height: 56)
-            .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .padding(.horizontal, 12)
+            .frame(height: 36)
+            .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.button + 1, style: .continuous))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(recorder.isStarting)
     }
 
-    /// 录音中：深色计时卡片（设计稿），暂停 / 结束在右侧
+    /// 录音中：计时，暂停 / 结束在右侧
     private var recordingCard: some View {
         let paused = recorder.state == .paused
-        return HStack(spacing: 12) {
-            Circle().fill(paused ? Color.orange : Theme.record).frame(width: 10, height: 10)
-                .background(Circle().fill((paused ? Color.orange : Theme.record).opacity(0.3)).frame(width: 18, height: 18))
-            Text(clock(recorder.elapsed)).font(.system(size: 20, weight: .semibold)).monospacedDigit()
-            if paused { Text("已暂停").font(.system(size: 12)).foregroundStyle(.white.opacity(0.6)) }
+        return HStack(spacing: 8) {
+            Circle().fill(paused ? Color(nsColor: .systemOrange) : Theme.record).frame(width: 9, height: 9)
+            Text(clock(recorder.elapsed)).font(.system(size: 17, weight: .semibold)).monospacedDigit()
+            if paused { Text("已暂停").font(.system(size: 12)).foregroundStyle(.secondary) }
             Spacer()
-            Button {
-                paused ? recorder.resume() : recorder.pause()
-            } label: {
+            Button { paused ? recorder.resume() : recorder.pause() } label: {
                 Image(systemName: paused ? "play.fill" : "pause.fill").font(.system(size: 11, weight: .bold))
-                    .frame(width: 34, height: 26)
-                    .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(AppButtonStyle(iconOnly: true))
             .help(paused ? L("继续") : L("暂停"))
-            Button { recorder.stop() } label: {
-                Text(recorder.isStopping ? L("正在结束…") : L("结束")).font(.system(size: 12.5, weight: .semibold))
-                    .padding(.horizontal, 11).frame(height: 26)
-                    .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .disabled(recorder.isStopping)
+            Button(recorder.isStopping ? L("正在结束…") : L("结束")) { recorder.stop() }
+                .buttonStyle(AppButtonStyle(kind: .record))
+                .disabled(recorder.isStopping)
         }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16)
-        .frame(height: 56)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .padding(.leading, 12).padding(.trailing, 8)
+        .frame(height: 44)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.button + 1, style: .continuous))
+    }
+
+    private func menuRow(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(MenuRowStyle())
     }
 
     private func section(_ title: String) -> some View {
-        Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(.tertiary)
-            .padding(.top, 14).padding(.bottom, 4).padding(.horizontal, 2)
+        Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+            .padding(.top, 10).padding(.bottom, 2).padding(.horizontal, 8)
     }
 
     private func status(_ m: Meeting) -> String {

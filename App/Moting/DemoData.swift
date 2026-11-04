@@ -114,3 +114,56 @@ enum DemoData {
     }
 }
 #endif
+
+#if DEBUG
+import AppKit
+import MotingASR
+import SwiftUI
+
+/// 调试用：启动参数 -demoScene <名字> 直接显示录音相关的界面，不碰麦克风，用来检查设计。
+/// recording / paused / processing / prompt / menu / menuRecording
+@MainActor
+enum DemoScene {
+    nonisolated static var name: String? { UserDefaults.standard.string(forKey: "demoScene") }
+    nonisolated static var isActive: Bool { name != nil }
+    private static var keep: NSWindow?
+
+    static func present(recorder: RecordingController, detector: CallDetector, env: AppEnvironment?) {
+        guard let name else { return }
+        DispatchQueue.main.async {
+            switch name {
+            case "recording", "paused":
+                recorder.showDemoRecording(paused: name == "paused")
+                recorder.live.showDemoLines(demoLines)
+            case "processing":
+                // 走真实流程：录音结束后悬浮窗才缩成进度卡片
+                recorder.showDemoRecording(paused: false)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    recorder.showDemoStopped()
+                    recorder.processing.showDemoProcessing(UUID(), status: .running, progress: 0.42)
+                }
+            case "prompt":
+                if let app = CallCatalog.app(forBundleID: "com.electron.lark") { detector.showDemoPrompt(.offer(app)) }
+            case "menu", "menuRecording":
+                if name == "menuRecording" { recorder.showDemoRecording(paused: false) }
+                let host = NSHostingView(rootView: MenuBarContent(recorder: recorder, processing: recorder.processing, env: env))
+                let w = NSWindow(contentRect: NSRect(x: 200, y: 300, width: 280, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+                w.contentView = host
+                w.setContentSize(host.fittingSize)
+                w.orderFrontRegardless()
+                keep = w
+            default: break
+            }
+        }
+    }
+
+    private static let demoLines: [SubtitleLine] = [
+        ("我们今天主要定一下支付改版的范围。", AudioChannel.mic, true),
+        ("上周灰度的数据大家都看了，转化涨了，但是退款咨询也跟着涨了。", .mic, true),
+        ("对，我先说数据。新收银台的支付成功率从 91% 涨到了 94%。", .system, true),
+        ("但是退款相关的工单多了差不多三成，主要集中在分期这个入口。", .system, true),
+        ("所以问题不在流程长，是默认值和文案不清楚？", .mic, true),
+        ("我倾向这么判断，确认页的金额字号也太", .system, false),
+    ].map { SubtitleLine(id: UUID(), channel: $0.1, text: $0.0, isFinal: $0.2) }
+}
+#endif

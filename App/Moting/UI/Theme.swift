@@ -87,7 +87,47 @@ struct GlassCard: ViewModifier {
     }
 }
 
+/// 浮在桌面和会议画面上的小窗：深色实底（透明度由用户在悬浮窗右键菜单里调）加一条细边
+struct HUDPanel: ViewModifier {
+    var radius: CGFloat = Theme.Radius.panel
+
+    func body(content: Content) -> some View {
+        content
+            .foregroundStyle(.white)
+            .background(Color(white: 0.11))
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(.white.opacity(0.14), lineWidth: 0.5))
+            .environment(\.colorScheme, .dark)
+    }
+}
+
+/// 只有图标的小按钮：平时没有底，悬停才出现，不抢字幕的注意力
+struct HUDIconButton: View {
+    let symbol: String
+    let help: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(hovering ? 1 : 0.7))
+                .frame(width: 24, height: 24)
+                .background(.white.opacity(hovering ? 0.14 : 0), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(help)
+    }
+}
+
 extension View {
+    func hudPanel(radius: CGFloat = Theme.Radius.panel) -> some View {
+        modifier(HUDPanel(radius: radius))
+    }
+
     func glassCard(radius: CGFloat = Theme.Radius.card) -> some View {
         modifier(GlassCard(radius: radius))
     }

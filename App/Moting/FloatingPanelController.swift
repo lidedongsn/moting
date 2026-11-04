@@ -15,7 +15,7 @@ final class FloatingPanelController {
     private static let enlargedOnceKey = "floatingPanel.enlargedToV2"
     static let collapsedSize = NSSize(width: 400, height: 44)
     /// 录音结束后显示精准转写进度时的高度（设计稿：紧凑卡片）
-    static let processingHeight: CGFloat = 124
+    static let processingHeight: CGFloat = 136
     /// 会后进度卡片的宽度：内容只有一行标题和一句说明，不跟字幕窗一样宽
     static let processingWidth: CGFloat = 300
     /// 切到进度卡片前字幕窗的宽度，下次录音时恢复
@@ -102,6 +102,9 @@ final class FloatingPanelController {
         #if DEBUG
         // 仅调试：允许截图核对界面
         if ProcessInfo.processInfo.environment["MOTING_CAPTURABLE"] == "1" { panel.sharingType = .readOnly }
+        #if DEBUG
+        if DemoScene.isActive { panel.sharingType = .readOnly }
+        #endif
         #endif
         panel.minSize = NSSize(width: 240, height: 40)
         panel.maxSize = Self.maxSize
