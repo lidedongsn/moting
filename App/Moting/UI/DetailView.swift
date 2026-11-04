@@ -472,7 +472,7 @@ struct DetailView: View {
                         ForEach(turns) { turn in
                             let current = turn.id == currentTurn
                             TurnView(turn: turn, name: speakerName(turn), color: Theme.speaker(turn.speaker, in: indices),
-                                     currentSegment: current ? currentSegmentID : nil, isCurrent: current,
+                                     currentSegment: current ? currentSegmentID : nil, isCurrent: current, isPlaying: player.isPlaying,
                                      hasMark: marks.contains { $0.at >= turn.start && $0.at <= turn.end + 1 },
                                      onRename: renameAction(turn)) {
                                 // 实时识别的句首普遍偏晚，提前 1 秒播放，避免切掉第一个字
@@ -629,13 +629,15 @@ struct SpeakerAvatar: View {
     }
 }
 
-/// 转写稿的一段发言：头像、名字、时间，下面是连续的几句话。播放时当前句亮，其余句暗
+/// 转写稿的一段发言：头像、名字、时间，下面是连续的几句话。
+/// 当前句用强调色，当前段带淡底；播放时其余文字变暗，暂停时恢复，方便阅读
 struct TurnView: View {
     let turn: TranscriptTurn
     let name: String
     let color: Color
     let currentSegment: UUID?
     let isCurrent: Bool
+    let isPlaying: Bool
     let hasMark: Bool
     let onRename: (() -> Void)?
     let onPlay: () -> Void
@@ -643,8 +645,8 @@ struct TurnView: View {
 
     private var body_: Text {
         turn.segments.reduce(Text("")) { text, s in
-            let dim = currentSegment != nil && s.id != currentSegment
-            return text + Text(s.text).foregroundColor(dim ? .secondary : .primary)
+            let color: Color = s.id == currentSegment ? .accentColor : isPlaying ? .secondary : .primary
+            return text + Text(s.text).foregroundColor(color)
         }
     }
 
@@ -673,7 +675,7 @@ struct TurnView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(isCurrent ? Color.primary.opacity(0.05) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .background(isCurrent ? Color.accentColor.opacity(0.1) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
         .onTapGesture(perform: onPlay)
