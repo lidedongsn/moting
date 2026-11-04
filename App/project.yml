@@ -33,3 +33,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "6.0"
+      # 调试版用独立的身份：不和正式版抢程序坞图标、通知和系统权限，也不读写正式版的设置
+      configs:
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.lidedongsn.moting.debug

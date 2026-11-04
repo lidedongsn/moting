@@ -12,6 +12,10 @@ if [ -f "$DB" ] && [ "$(sqlite3 "$DB" "select count(*) from meeting where status
   exit 1
 fi
 
+# 构建目录不进 Spotlight，否则系统会把编译产物也登记成 Moting，打开的可能不是 /Applications 里那个
+mkdir -p "$ROOT/.build"
+touch "$ROOT/.build/.metadata_never_index"
+
 cd "$ROOT/App"
 xcodegen generate -q
 # 版本号用提交数：每次都递增。版本号和修改时间不变时，访达、程序坞、通知中心会一直显示缓存的旧图标
@@ -38,9 +42,9 @@ ditto "$APP" "$DEST"
 # 否则 Dock 可能指向调试版、显示旧图标
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 # （包括通知中心：它按登记的副本取图标，可能取到旧版）
+"$LSREGISTER" -f "$DEST" > /dev/null 2>&1 || true
 for copy in "$ROOT"/.build*/xcode/Build/Products/*/Moting.app; do
   [ -d "$copy" ] && "$LSREGISTER" -u "$copy" > /dev/null 2>&1 || true
 done
-"$LSREGISTER" -f "$DEST" > /dev/null 2>&1 || true
 open "$DEST"
 echo "已安装：${DEST}"
