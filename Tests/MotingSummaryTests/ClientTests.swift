@@ -140,3 +140,14 @@ extension ClientTests {
     #expect(try store.read(account: "DeepSeek") == nil)
     #expect(try store.read(account: "Kimi") == nil)
 }
+
+@Test func checkingForAKeyDoesNotNeedItsValue() throws {
+    let store = APIKeyStore(service: "com.lidedongsn.moting.test.\(UUID().uuidString)")
+    defer { try? store.delete(account: "DeepSeek") }
+    #expect(!store.contains(account: "DeepSeek"))
+    try store.save("sk-secret-123", account: "DeepSeek")
+    #expect(store.contains(account: "DeepSeek"))
+    #expect(!store.contains(account: "别的服务"))
+    try store.delete(account: "DeepSeek")
+    #expect(!store.contains(account: "DeepSeek"))
+}

@@ -38,3 +38,36 @@ public enum TranscriptTurns {
         return lo > 0 ? lo - 1 : nil
     }
 }
+
+/// 一段发言拼成的文字，记着每句的位置：点到哪个字就知道是哪句。位置用 UTF-16，和 NSString / NSTextView 一致
+public struct TurnText: Sendable {
+    public let text: String
+    public let ranges: [(segment: TranscriptSegment, range: NSRange)]
+
+    public init(_ turn: TranscriptTurn) {
+        var text = ""
+        var ranges: [(TranscriptSegment, NSRange)] = []
+        for s in turn.segments {
+            // 英文句子之间要有空格，中文不要
+            if let last = text.last, let first = s.text.first, last.isASCII, first.isASCII, !last.isWhitespace { text += " " }
+            let location = (text as NSString).length
+            text += s.text
+            ranges.append((s, NSRange(location: location, length: (s.text as NSString).length)))
+        }
+        self.text = text
+        self.ranges = ranges
+    }
+
+    /// 句子之间的空格算前一句；超出文字范围返回 nil
+    public func segment(atCharacter index: Int) -> TranscriptSegment? {
+        guard index >= 0, index < (text as NSString).length else { return nil }
+        return ranges.last { $0.range.location <= index }?.segment
+    }
+}
+
+extension TranscriptTurns {
+    /// 点一句时从哪里开始播：精准稿时间准，只留一点余量；实时识别的句首偏晚，提前 1 秒避免切掉第一个字
+    public static func playbackStart(of segment: TranscriptSegment, kind: TranscriptKind?) -> TimeInterval {
+        max(0, segment.start - (kind == .final ? 0.2 : 1))
+    }
+}

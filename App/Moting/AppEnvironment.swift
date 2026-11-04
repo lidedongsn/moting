@@ -47,7 +47,8 @@ final class AppEnvironment: ObservableObject {
     /// 打开数据库，把上次崩溃遗留的"录音中"会议与"处理中"任务收尾
     static func bootstrap() throws -> AppEnvironment {
         #if DEBUG
-        let paths = DemoData.root.map(AppPaths.init(root:)) ?? .default
+        // 调试版永远不碰真实数据：没指定演示目录时也用单独的目录
+        let paths = AppPaths(root: DemoData.root ?? AppPaths.default.root.deletingLastPathComponent().appendingPathComponent("Moting Debug", isDirectory: true))
         #else
         let paths = AppPaths.default
         #endif

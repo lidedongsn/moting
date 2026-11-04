@@ -44,3 +44,47 @@ private func seg(_ ch: AudioChannel, _ label: String?, _ start: Double, _ end: D
     #expect(TranscriptTurns.index(in: turns, at: 6) == 1)
     #expect(TranscriptTurns.index(in: turns, at: 100) == 2)
 }
+
+// MARK: - 一段发言里点到哪句
+
+@Test func chineseSentencesJoinWithoutSpaces() {
+    let turn = TranscriptTurns.group([seg(.mic, nil, 0, 1, "你好。"), seg(.mic, nil, 1, 2, "再见。")])[0]
+    #expect(TurnText(turn).text == "你好。再见。")
+}
+
+@Test func englishSentencesGetASpaceBetween() {
+    let turn = TranscriptTurns.group([seg(.mic, nil, 0, 1, "Hello."), seg(.mic, nil, 1, 2, "Bye.")])[0]
+    #expect(TurnText(turn).text == "Hello. Bye.")
+}
+
+@Test func characterPositionFindsItsSentence() throws {
+    let turn = TranscriptTurns.group([seg(.mic, nil, 0, 1, "你好。"), seg(.mic, nil, 3, 4, "再见。")])[0]
+    let t = TurnText(turn)
+    #expect(t.segment(atCharacter: 0)?.start == 0)
+    #expect(t.segment(atCharacter: 2)?.start == 0)
+    #expect(t.segment(atCharacter: 3)?.start == 3)
+    #expect(t.segment(atCharacter: 5)?.start == 3)
+    #expect(t.segment(atCharacter: 6) == nil)
+    #expect(t.segment(atCharacter: -1) == nil)
+}
+
+@Test func spaceBetweenSentencesBelongsToThePreviousOne() {
+    let turn = TranscriptTurns.group([seg(.mic, nil, 0, 1, "Hi."), seg(.mic, nil, 3, 4, "Bye.")])[0]
+    #expect(TurnText(turn).segment(atCharacter: 3)?.start == 0)   // "Hi. " 的空格
+    #expect(TurnText(turn).segment(atCharacter: 4)?.start == 3)
+}
+
+@Test func rangesAreInUTF16SoEmojiDoNotShiftThem() {
+    let turn = TranscriptTurns.group([seg(.mic, nil, 0, 1, "😀好。"), seg(.mic, nil, 3, 4, "再见。")])[0]
+    let t = TurnText(turn)
+    #expect(t.ranges[1].range.location == ("😀好。" as NSString).length)
+    #expect(t.segment(atCharacter: 4)?.start == 3)
+}
+
+@Test func playbackLeadDependsOnTranscriptKind() {
+    let s = seg(.mic, nil, 10, 12)
+    // 精准稿时间准，只留一点余量；实时草稿句首偏晚，多提前一些
+    #expect(TranscriptTurns.playbackStart(of: s, kind: .final) == 9.8)
+    #expect(TranscriptTurns.playbackStart(of: s, kind: .draft) == 9)
+    #expect(TranscriptTurns.playbackStart(of: seg(.mic, nil, 0.1, 1), kind: .final) == 0)
+}

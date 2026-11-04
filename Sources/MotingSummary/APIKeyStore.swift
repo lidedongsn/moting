@@ -4,11 +4,17 @@ import Security
 
 /// API Key 存在钥匙串里（仅本机、解锁后可读，不随 iCloud 同步），不落盘到任何配置文件
 public struct APIKeyStore: Sendable {
-    public static let `default` = APIKeyStore(service: "com.lidedongsn.moting.summary")
+    /// 按 bundle id 区分：正式版是 com.lidedongsn.moting.summary，调试版和测试用自己的条目，碰不到正式版的密钥
+    public static let `default` = APIKeyStore(service: "\(Bundle.main.bundleIdentifier ?? "com.lidedongsn.moting").summary")
     private let service: String
 
     public init(service: String) {
         self.service = service
+    }
+
+    /// 只查有没有，不取内容：不读出密钥，也不会触发系统的钥匙串授权弹窗
+    public func contains(account: String) -> Bool {
+        SecItemCopyMatching(base(account) as CFDictionary, nil) == errSecSuccess
     }
 
     public func read(account: String) throws -> String? {

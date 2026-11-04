@@ -48,6 +48,7 @@ struct DetailView: View {
     @State private var inspectorTab: Tab = .notes
     @AppStorage("detail.showInspector") private var showInspector = true
     @State private var turns: [TranscriptTurn] = []
+    @State private var turnTexts: [UUID: TurnText] = [:]
     @State private var title: String
     @State private var editingTitle = false
     @FocusState private var titleFocused: Bool
@@ -471,14 +472,16 @@ struct DetailView: View {
                     LazyVStack(alignment: .leading, spacing: 4) {
                         ForEach(turns) { turn in
                             let current = turn.id == currentTurn
-                            TurnView(turn: turn, name: speakerName(turn), color: Theme.speaker(turn.speaker, in: indices),
+                            TurnView(turn: turn, turnText: turnTexts[turn.id] ?? TurnText(turn),
+                                     name: speakerName(turn), color: Theme.speaker(turn.speaker, in: indices),
                                      currentSegment: current ? currentSegmentID : nil, isCurrent: current, isPlaying: player.isPlaying,
                                      hasMark: marks.contains { $0.at >= turn.start && $0.at <= turn.end + 1 },
-                                     onRename: renameAction(turn)) {
-                                // 实时识别的句首普遍偏晚，提前 1 秒播放，避免切掉第一个字
-                                player.seek(to: max(0, turn.start - 1))
-                                player.play()
-                            }
+                                     onRename: renameAction(turn),
+                                     onSeek: { segment in
+                                         player.seek(to: TranscriptTurns.playbackStart(of: segment, kind: transcriptKind))
+                                         player.play()
+                                     },
+                                     onTogglePlay: { player.toggle() })
                             .id(turn.id)
                         }
                     }
@@ -571,6 +574,7 @@ struct DetailView: View {
             transcriptKind = nil
         }
         turns = TranscriptTurns.group(segments)
+        turnTexts = Dictionary(uniqueKeysWithValues: turns.map { ($0.id, TurnText($0)) })
         // 颜色以精准稿（有说话人分离）为准，保证各处一致
         allSegmentsForColors = final.flatMap { try? env.transcripts.segments(versionID: $0) } ?? segments
         indices = SpeakerPalette.indices(for: allSegmentsForColors)
@@ -629,10 +633,11 @@ struct SpeakerAvatar: View {
     }
 }
 
-/// 转写稿的一段发言：头像、名字、时间，下面是连续的几句话。
+/// 转写稿的一段发言：头像、名字、时间，下面是连续的几句话，点哪句从哪句开始播。
 /// 当前句用强调色，当前段带淡底；播放时其余文字变暗，暂停时恢复，方便阅读
 struct TurnView: View {
     let turn: TranscriptTurn
+    let turnText: TurnText
     let name: String
     let color: Color
     let currentSegment: UUID?
@@ -640,16 +645,8 @@ struct TurnView: View {
     let isPlaying: Bool
     let hasMark: Bool
     let onRename: (() -> Void)?
-    let onPlay: () -> Void
-    @State private var hovering = false
-
-    private var body_: Text {
-        turn.segments.reduce(Text("")) { text, s in
-            let color: Color = s.id == currentSegment ? .accentColor : isPlaying ? .secondary : .primary
-            return text + Text(s.text).foregroundColor(color)
-        }
-    }
-
+    let onSeek: (TranscriptSegment) -> Void
+    let onTogglePlay: () -> Void
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             SpeakerAvatar(name: name, color: color)
@@ -659,25 +656,15 @@ struct TurnView: View {
                     Text(name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                         .onTapGesture { onRename?() }
                         .help(onRename == nil ? name : L("\(name)（点击改名）"))
-                    HStack(spacing: 3) {
-                        if hovering { Image(systemName: "play.fill").font(.system(size: 8)) }
-                        Text(clock(turn.start)).font(.system(size: 12)).monospacedDigit()
-                    }
-                    .foregroundStyle(hovering ? .secondary : .tertiary)
+                    Text(clock(turn.start)).font(.system(size: 12)).monospacedDigit().foregroundStyle(.tertiary)
                     if hasMark { Text("★").font(.system(size: 11)).foregroundStyle(Theme.mark) }
                 }
-                body_
-                    .font(Theme.readingFont)
-                    .lineSpacing(Theme.readingLineSpacing)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                SentenceText(turnText: turnText, currentSegment: currentSegment, isPlaying: isPlaying,
+                             onSeek: onSeek, onTogglePlay: onTogglePlay)
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(isCurrent ? Color.accentColor.opacity(0.1) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .contentShape(Rectangle())
-        .onHover { hovering = $0 }
-        .onTapGesture(perform: onPlay)
     }
 }

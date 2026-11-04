@@ -48,7 +48,7 @@ final class SummaryModel: ObservableObject {
     }
 
     private func refreshKey() {
-        hasKey = ((try? keys.read(account: service.name)) ?? nil) != nil
+        hasKey = keys.contains(account: service.name)
     }
 
     private func savedServices() -> [String: SummaryService] {
