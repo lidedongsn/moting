@@ -175,6 +175,8 @@ struct PaneButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 12.5, weight: kind == .primary ? .semibold : .regular))
             .foregroundStyle(kind == .primary ? Color.white : kind == .danger ? Color(light: 0xD70015, dark: 0xFF6961) : Color.primary)
+            .lineLimit(1)
+            .fixedSize()
             .padding(.horizontal, 11)
             .frame(height: 26)
             .background(kind == .primary ? AnyShapeStyle(Theme.me) : AnyShapeStyle(Color.primary.opacity(0.07)),
