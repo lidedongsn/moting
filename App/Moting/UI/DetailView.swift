@@ -217,7 +217,7 @@ struct DetailView: View {
                 ForEach(people, id: \.key) { p in
                     HStack(spacing: 6) {
                         SpeakerAvatar(name: p.name, color: Theme.speaker(p.index), size: 20)
-                        Text(p.name)
+                        Text(p.name).lineLimit(1).fixedSize()
                     }
                     .contentShape(Rectangle())
                     .onTapGesture { if case .other(let label) = p.key, label != SpeakerLabel.other { beginRename(label) } }
