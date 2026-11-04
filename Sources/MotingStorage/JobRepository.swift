@@ -14,6 +14,7 @@ struct JobRecord: Codable, FetchableRecord, PersistableRecord {
     var versionId: String?
     var filterOutcome: String?
     var createdAt: Date
+    var interruptions: Int
 
     init(_ j: Job) {
         id = j.id.uuidString
@@ -26,14 +27,17 @@ struct JobRecord: Codable, FetchableRecord, PersistableRecord {
         versionId = j.versionID?.uuidString
         filterOutcome = j.filterOutcome
         createdAt = j.createdAt
+        interruptions = j.interruptions
     }
 
     var model: Job? {
         guard let id = UUID(uuidString: id), let meeting = UUID(uuidString: meetingId) else { return nil }
-        return Job(id: id, meetingID: meeting, status: JobStatus(rawValue: status) ?? .failed,
-                   completedSteps: completedSteps.split(separator: ",").compactMap { JobStep(rawValue: String($0)) },
-                   progress: progress, error: error, modelID: modelId,
-                   versionID: versionId.flatMap(UUID.init(uuidString:)), filterOutcome: filterOutcome, createdAt: createdAt)
+        var job = Job(id: id, meetingID: meeting, status: JobStatus(rawValue: status) ?? .failed,
+                      completedSteps: completedSteps.split(separator: ",").compactMap { JobStep(rawValue: String($0)) },
+                      progress: progress, error: error, modelID: modelId,
+                      versionID: versionId.flatMap(UUID.init(uuidString:)), filterOutcome: filterOutcome, createdAt: createdAt)
+        job.interruptions = interruptions
+        return job
     }
 }
 
@@ -83,13 +87,30 @@ public final class JobRepository: Sendable {
         }
     }
 
-    /// app 启动时调用：上次退出时还在跑的任务改回排队，已完成的步骤保留
+    /// 连续中断这么多次就不再自动重试
+    static let maxInterruptions = 2
+
+    /// app 启动时调用：上次退出时还在跑的任务改回排队，已完成的步骤保留；返回改回排队的个数。
+    /// 识别库可能直接退出进程，走不到错误处理：同一步反复中断就标记失败，否则就是打开 app 就退
     @discardableResult
     public func requeueStaleRunning() throws -> Int {
         try db.writer.write { db in
-            try db.execute(sql: "UPDATE job SET status = ? WHERE status = ?",
-                           arguments: [JobStatus.queued.rawValue, JobStatus.running.rawValue])
-            return db.changesCount
+            var requeued = 0
+            for record in try JobRecord.filter(Column("status") == JobStatus.running.rawValue).fetchAll(db) {
+                var r = record
+                r.interruptions += 1
+                if r.interruptions >= Self.maxInterruptions {
+                    r.status = JobStatus.failed.rawValue
+                    r.error = L("精准转写反复意外中断，已停止自动重试。可以在设置里换一个识别模型后再试。")
+                    try db.execute(sql: "UPDATE meeting SET status = ? WHERE id = ?",
+                                   arguments: [MeetingStatus.failed.rawValue, r.meetingId])
+                } else {
+                    r.status = JobStatus.queued.rawValue
+                    requeued += 1
+                }
+                try r.update(db)
+            }
+            return requeued
         }
     }
 

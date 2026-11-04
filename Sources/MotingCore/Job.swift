@@ -25,6 +25,8 @@ public struct Job: Identifiable, Sendable, Equatable {
     /// 声纹过滤结果（filtered / skippedNoVoiceprint / fellBack）
     public var filterOutcome: String?
     public var createdAt: Date
+    /// 连续意外中断的次数（app 被杀或识别库退出进程）；有步骤完成时清零
+    public var interruptions = 0
 
     public init(id: UUID = UUID(), meetingID: UUID, status: JobStatus, completedSteps: [JobStep] = [],
                 progress: Double = 0, error: String? = nil, modelID: String, versionID: UUID? = nil,

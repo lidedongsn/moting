@@ -198,3 +198,21 @@ private func file(_ name: String, _ content: String) -> ModelFile {
     #expect(results.allSatisfy { $0 }, "有 \(results.filter { !$0 }.count) 次安装失败")
     #expect(store.isInstalled(m))
 }
+
+@Test func whisperIsAMultilingualOptionWithoutHotwords() throws {
+    let m = OfflineCatalog.whisperTurbo
+    #expect(m.kind == .whisper)
+    #expect(OfflineCatalog.all.contains(m))
+    // 自带标点；没有真正的热词能力，界面不能说支持
+    #expect(m.hasPunctuation)
+    #expect(!m.supportsHotwords)
+    #expect(Set(m.roles.keys) == ["encoder", "decoder", "tokens"])
+    #expect(m.roles.values.allSatisfy { role in m.files.contains { $0.name == role } })
+}
+
+@Test func whisperRecognizerReportsMissingFilesInsteadOfCrashing() {
+    let dir = FileManager.default.temporaryDirectory.appendingPathComponent("moting-no-whisper-\(UUID().uuidString)")
+    #expect(throws: OfflineASRError.self) {
+        _ = try SherpaOfflineRecognizer(model: OfflineCatalog.whisperTurbo, directory: dir, hotwords: [])
+    }
+}

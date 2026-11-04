@@ -102,6 +102,10 @@ public final class AppDatabase: Sendable {
                 t.column("createdAt", .datetime).notNull()
             }
         }
+        m.registerMigration("v5") { db in
+            // 连续意外中断的次数，防止任务反复把 app 带崩
+            try db.alter(table: "job") { t in t.add(column: "interruptions", .integer).notNull().defaults(to: 0) }
+        }
         return m
     }
 }

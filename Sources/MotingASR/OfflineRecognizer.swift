@@ -13,7 +13,8 @@ public final class SherpaOfflineRecognizer: OfflineRecognizing {
     /// 仅 transducer：每个流单独带热词（一行一个）
     private let streamHotwords: String?
 
-    public init(model: OfflineModel, directory: URL, hotwords: [String], numThreads: Int = 4) throws {
+    /// whisperLanguage：Whisper 的语种，空表示自动判断
+    public init(model: OfflineModel, directory: URL, hotwords: [String], numThreads: Int = 4, whisperLanguage: String = "") throws {
         self.model = model
         let pool = CStringPool()
         func path(_ role: String) throws -> UnsafePointer<CChar> {
@@ -51,7 +52,10 @@ public final class SherpaOfflineRecognizer: OfflineRecognizing {
                 config.max_active_paths = 4
                 config.hotwords_score = 1.5
                 config.model_config.modeling_unit = pool.c("cjkchar+bpe")
-                config.model_config.bpe_vocab = try path("bpe")
+                // 必须是文本格式的 bpe.vocab；给 bpe.model 识别库会退出整个进程
+                _ = try path("bpe")
+                let vocab = try BPEVocab.ensure(modelAt: directory.appendingPathComponent(model.roles["bpe"] ?? ""))
+                config.model_config.bpe_vocab = pool.c(vocab.path)
                 hotwordsForStream = words.joined(separator: "\n")
             }
         case .qwen3ASR:
@@ -65,6 +69,13 @@ public final class SherpaOfflineRecognizer: OfflineRecognizing {
             config.model_config.qwen3_asr.top_p = 0.8
             config.model_config.qwen3_asr.seed = 42
             if !words.isEmpty { config.model_config.qwen3_asr.hotwords = pool.c(words.joined(separator: ",")) }
+        case .whisper:
+            config.model_config.whisper.encoder = try path("encoder")
+            config.model_config.whisper.decoder = try path("decoder")
+            config.model_config.whisper.language = pool.c(whisperLanguage)
+            config.model_config.whisper.task = pool.c("transcribe")
+            config.model_config.whisper.tail_paddings = -1
+            config.model_config.tokens = try path("tokens")
         case .fireRedASR:
             config.model_config.fire_red_asr.encoder = try path("encoder")
             config.model_config.fire_red_asr.decoder = try path("decoder")

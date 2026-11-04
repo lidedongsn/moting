@@ -78,3 +78,33 @@ private func setup() throws -> (AppDatabase, MeetingRepository, JobRepository, M
     #expect(try jobs.job(for: m.id) == nil)
     #expect(try SpeakerRepository(db: db).names(meetingID: m.id).isEmpty)
 }
+
+@Test func jobThatKeepsDyingStopsRetryingAfterSecondInterruption() throws {
+    // 原生库直接退出时不会走到错误处理：不停重试就是打开 app 就退
+    let (_, repo, jobs, m) = try setup()
+    var j = try jobs.enqueue(meetingID: m.id, modelID: "x", status: .queued, at: Date())
+    j.status = .running
+    try jobs.update(j)
+    #expect(try jobs.requeueStaleRunning() == 1)
+    #expect(try jobs.job(for: m.id)?.status == .queued)
+    #expect(try jobs.job(for: m.id)?.interruptions == 1)
+
+    var again = try #require(try jobs.job(for: m.id))
+    again.status = .running
+    try jobs.update(again)
+    #expect(try jobs.requeueStaleRunning() == 0)
+    let failed = try #require(try jobs.job(for: m.id))
+    #expect(failed.status == .failed)
+    #expect(failed.error?.isEmpty == false)
+    #expect(try repo.meeting(m.id)?.status == .failed)
+    #expect(try jobs.next() == nil)
+}
+
+@Test func retryAfterFailureStartsWithACleanCount() throws {
+    let (_, _, jobs, m) = try setup()
+    var j = try jobs.enqueue(meetingID: m.id, modelID: "x", status: .queued, at: Date())
+    j.interruptions = 2
+    j.status = .failed
+    try jobs.update(j)
+    #expect(try jobs.enqueue(meetingID: m.id, modelID: "x", status: .queued, at: Date()).interruptions == 0)
+}

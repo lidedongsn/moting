@@ -160,6 +160,7 @@ public final class PipelineRunner: @unchecked Sendable {
                 if paused { task.cancel() }
                 job = try await task.value
                 job.completedSteps.append(step)
+                job.interruptions = 0
                 job.progress = Double(job.completedSteps.count) / total
                 try jobs.update(job)
                 report(job, job.progress)

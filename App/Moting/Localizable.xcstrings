@@ -361,6 +361,16 @@
         }
       }
     },
+    "Whisper turbo（多语言）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whisper turbo (multilingual)"
+          }
+        }
+      }
+    },
     "X-ASR 中英（带标点，支持热词）": {
       "localizations": {
         "en": {
@@ -2817,6 +2827,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Transcription keeps the CPU busy for a few minutes and uses more battery."
+          }
+        }
+      }
+    },
+    "精准转写反复意外中断，已停止自动重试。可以在设置里换一个识别模型后再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription kept stopping unexpectedly, so automatic retries are off. Choose another speech model in Settings and try again."
           }
         }
       }

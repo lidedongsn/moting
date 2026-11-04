@@ -39,14 +39,16 @@ func meetingBenchmark() throws {
             recognize = { transcribe(r, $0) }
         } else {
             let m = try #require(OfflineCatalog.model(id: spec))
-            let r = try SherpaOfflineRecognizer(model: m, directory: store.directory(for: m), hotwords: [])
+            // MOTING_BENCH_WHISPER_LANG：Whisper 指定语种；不设是自动判断
+            let language = env["MOTING_BENCH_WHISPER_LANG"] ?? ""
+            let r = try SherpaOfflineRecognizer(model: m, directory: store.directory(for: m), hotwords: [], whisperLanguage: language)
             let p: Punctuator? = m.hasPunctuation ? nil
                 : try Punctuator(model: OfflineCatalog.punctuation, directory: store.directory(for: OfflineCatalog.punctuation))
             recognize = { s in
                 let t = try r.recognize(s)
                 return p?.punctuate(t) ?? t
             }
-            name = spec
+            name = language.isEmpty ? spec : "\(spec)-\(language)"
         }
         let loaded = benchRSS() - before
         var lines: [String] = []
