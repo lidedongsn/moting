@@ -29,7 +29,7 @@ final class RibbonCache {
     }
 }
 
-/// 会议详情：标题、参会人、声纹带播放器、处理状态、纪要 / 转写稿 / 标记
+/// 会议详情：标题和参会人在上，转写稿和纪要并排，声纹带播放条常驻底部
 struct DetailView: View {
     static let bins = 180
 
@@ -40,9 +40,14 @@ struct DetailView: View {
     @ObservedObject var processing: ProcessingModel
 
     private enum Tab: Hashable { case notes, transcript, marks }
+    /// 内容区比这个窄时放不下并排的纪要，改成页签
+    private static let sideBySideWidth: CGFloat = 780
 
     @StateObject private var player: MeetingPlayer
     @State private var tab: Tab = .transcript
+    @State private var inspectorTab: Tab = .notes
+    @AppStorage("detail.showInspector") private var showInspector = true
+    @State private var turns: [TranscriptTurn] = []
     @State private var title: String
     @State private var editingTitle = false
     @FocusState private var titleFocused: Bool
@@ -81,27 +86,37 @@ struct DetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 titleRow
-                metaRow.padding(.top, 6)
-                ribbonCard.padding(.top, 18)
-                if let error = player.lastError {
-                    Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption).foregroundStyle(.orange).padding(.top, 6)
-                }
+                metaRow.padding(.top, 8)
                 processingBanner
-                tabBar.padding(.top, 16)
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 8)
-            Group {
-                switch tab {
-                case .transcript: transcript
-                case .marks: marksList
-                case .notes: SummaryView(meetingID: meeting.id, model: processing.summary, hasTranscript: !segments.isEmpty)
+            .padding(.horizontal, 32)
+            .padding(.top, 4)
+            .padding(.bottom, 16)
+            Rectangle().fill(Theme.hairline).frame(height: 0.5)
+            GeometryReader { geo in
+                if geo.size.width >= Self.sideBySideWidth {
+                    HStack(spacing: 0) {
+                        transcriptColumn
+                        if showInspector {
+                            Rectangle().fill(Theme.hairline).frame(width: 0.5)
+                            inspector.frame(width: min(380, geo.size.width * 0.4))
+                        }
+                    }
+                } else {
+                    VStack(spacing: 0) {
+                        tabBar.padding(.horizontal, 24).padding(.vertical, 10)
+                        Group {
+                            switch tab {
+                            case .transcript: transcriptColumn
+                            case .marks: marksList
+                            case .notes: notes
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    }
                 }
             }
-            // 内容区撑满剩余高度：切换页签时头部和播放器位置不动
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(.top, 8)
+            transport
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .toolbar { detailToolbar }
@@ -143,16 +158,12 @@ struct DetailView: View {
     @ToolbarContentBuilder
     private var detailToolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
-            Button("导出", systemImage: "square.and.arrow.down", action: exportMarkdown)
-                .buttonStyle(ToolbarPillStyle())
-                .help("导出为 Markdown")
-            Button(hasFinal ? L("重新转写") : L("精准转写"), systemImage: "arrow.clockwise") { processing.enqueue(meeting.id) }
-                .buttonStyle(ToolbarPillStyle())
-                .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
-                .help("用离线大模型对整段录音重新识别，生成正式稿（草稿保留）")
             // 录音按钮在「更多」左边，「更多」照 macOS 习惯放最右
             RecordButton(recorder: recorder)
             Menu {
+                Button("导出为 Markdown", action: exportMarkdown)
+                Button(hasFinal ? L("重新转写") : L("精准转写")) { processing.enqueue(meeting.id) }
+                    .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
                 Button("在 Finder 中显示") {
                     NSWorkspace.shared.activateFileViewerSelecting([env.paths.meetingDirectory(meeting.id)])
                 }
@@ -166,6 +177,10 @@ struct DetailView: View {
             .menuIndicator(.hidden)
             .buttonStyle(ToolbarPillStyle(iconOnly: true))
             .help("更多")
+            Button { showInspector.toggle() } label: { Image(systemName: "sidebar.right") }
+                .buttonStyle(ToolbarPillStyle(iconOnly: true))
+                .help(showInspector ? L("隐藏纪要") : L("显示纪要"))
+                .keyboardShortcut("i", modifiers: [.command, .option])
         }
     }
 
@@ -176,7 +191,7 @@ struct DetailView: View {
         if editingTitle {
             TextField("会议标题", text: $title)
                 .textFieldStyle(.roundedBorder)
-                .font(.system(size: 24, weight: .bold))
+                .font(Theme.titleFont)
                 .focused($titleFocused)
                 .onSubmit(commitTitle)
                 .onExitCommand(perform: cancelTitle)
@@ -185,8 +200,7 @@ struct DetailView: View {
         } else {
             HStack(spacing: 8) {
                 Text(title)
-                    .font(.system(size: 26, weight: .bold))
-                    .tracking(-0.3)
+                    .font(Theme.titleFont)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { editingTitle = true }
                 Button { editingTitle = true } label: { Image(systemName: "pencil").foregroundStyle(.tertiary) }
@@ -197,12 +211,12 @@ struct DetailView: View {
     }
 
     private var metaRow: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 18) {
             Text(timeRange)
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 ForEach(people, id: \.key) { p in
-                    HStack(spacing: 5) {
-                        Circle().fill(Theme.speaker(p.index)).frame(width: 8, height: 8)
+                    HStack(spacing: 6) {
+                        SpeakerAvatar(name: p.name, color: Theme.speaker(p.index), size: 20)
                         Text(p.name)
                     }
                     .contentShape(Rectangle())
@@ -233,50 +247,46 @@ struct DetailView: View {
     private var timeRange: String {
         let day = meeting.startedAt.formatted(.dateTime.month().day().weekday(.abbreviated).hour().minute())
         guard let end = meeting.endedAt else { return day }
-        return "\(day)–\(end.formatted(.dateTime.hour().minute())) · \(durationText(end.timeIntervalSince(meeting.startedAt)))"
+        return "\(day)–\(end.formatted(.dateTime.hour().minute()))  \(durationText(end.timeIntervalSince(meeting.startedAt)))"
     }
 
-    // MARK: - 声纹带播放器
+    // MARK: - 底部播放条
 
-    private var ribbonCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 12) {
+    private var transport: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let error = player.lastError {
+                Label(error, systemImage: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
+            }
+            HStack(spacing: 14) {
                 Button { player.toggle() } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Color(nsColor: .windowBackgroundColor))
-                        .frame(width: 34, height: 34)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(Theme.canvas)
+                        .frame(width: 32, height: 32)
                         .background(.primary, in: Circle())
                 }
                 .buttonStyle(HoverGrowStyle())
                 .keyboardShortcut(editingTitle ? nil : KeyboardShortcut(.space, modifiers: []))
                 .disabled(player.duration == 0)
-                Text(clock(player.currentTime)).font(.system(size: 13, weight: .semibold)).monospacedDigit()
-                Text("/ \(clock(player.duration))").font(.system(size: 13)).monospacedDigit().foregroundStyle(.secondary)
-                Spacer()
+                Text(clock(player.currentTime)).font(.system(size: 12, weight: .medium)).monospacedDigit()
+                VoiceRibbon(mine: mine, theirs: theirs, theirColors: theirColors,
+                            marks: player.duration > 0 ? marks.map { $0.at / player.duration } : [],
+                            progress: player.duration > 0 ? player.currentTime / player.duration : 0) { f in
+                    player.seek(to: f * player.duration)
+                }
+                Text(clock(player.duration)).font(.system(size: 12)).monospacedDigit().foregroundStyle(.secondary)
                 playbackOptions
             }
-            VoiceRibbon(mine: mine, theirs: theirs, theirColors: theirColors,
-                        marks: player.duration > 0 ? marks.map { $0.at / player.duration } : [],
-                        progress: player.duration > 0 ? player.currentTime / player.duration : 0) { f in
-                player.seek(to: f * player.duration)
-            }
-            HStack {
-                Text("我 · 上")
-                Spacer()
-                Text("对方 · 下（按说话人着色）")
-            }
-            .font(.system(size: 11))
-            .foregroundStyle(.tertiary)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .glassCard(material: .thinMaterial)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(Theme.chrome)
+        .overlay(alignment: .top) { Rectangle().fill(Theme.hairline).frame(height: 0.5) }
     }
 
     /// 倍速（点一下换一档）与跳过静音，记住上次的选择
     private var playbackOptions: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 10) {
             Button {
                 let rates: [Double] = [1, 1.25, 1.5, 2]
                 playbackRate = rates[((rates.firstIndex(of: playbackRate) ?? 0) + 1) % rates.count]
@@ -286,9 +296,9 @@ struct DetailView: View {
                     .foregroundStyle(playbackRate == 1 ? Color.secondary : Theme.me)
             }
             .help("播放速度（点击切换 1× / 1.25× / 1.5× / 2×）")
-            Text("·").foregroundStyle(.tertiary)
             Button { skipSilence.toggle() } label: {
-                Text("跳过静音").foregroundStyle(skipSilence ? Theme.me : Color.secondary)
+                Image(systemName: "forward.end.alt").foregroundStyle(skipSilence ? Theme.me : Color.secondary)
+                    .frame(width: 22, height: 22).contentShape(Rectangle())
             }
             .help(skipSilence ? L("已开启：长于半秒的静音只停半秒") : L("开启后跳过长时间没人说话的部分"))
         }
@@ -320,7 +330,7 @@ struct DetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Theme.me.opacity(0.08), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.me.opacity(0.25), lineWidth: 0.5))
-                .padding(.top, 14)
+                .padding(.top, 12)
         }
     }
 
@@ -372,31 +382,68 @@ struct DetailView: View {
 
     // MARK: - 页签
 
+    /// 窄窗口下的页签
     private var tabBar: some View {
         HStack {
             PillTabs(selection: $tab, items: [
-                .init(value: .notes, title: L("纪要")),
                 .init(value: .transcript, title: L("转写稿")),
+                .init(value: .notes, title: L("纪要")),
                 .init(value: .marks, title: L("标记"), badge: marks.isEmpty ? nil : "\(marks.count)"),
-            ])
+            ], size: .small)
             Spacer()
-            if tab == .transcript {
-                if hasFinal && hasDraft {
-                    HStack(spacing: 8) {
-                        Text("版本").font(.system(size: 12)).foregroundStyle(.tertiary)
-                        PillTabs(selection: $showDraft, items: [
-                            .init(value: false, title: L("精准")),
-                            .init(value: true, title: L("实时草稿")),
-                        ], size: .small)
-                    }
-                } else if let kind = transcriptKind {
-                    Text(kind == .draft ? L("实时字幕草稿") : L("精准转写")).font(.system(size: 12)).foregroundStyle(.tertiary)
-                }
-            }
         }
     }
 
+    // MARK: - 右栏
+
+    private var notes: some View {
+        SummaryView(meetingID: meeting.id, model: processing.summary, hasTranscript: !segments.isEmpty)
+    }
+
+    private var inspector: some View {
+        VStack(spacing: 0) {
+            HStack {
+                PillTabs(selection: $inspectorTab, items: [
+                    .init(value: .notes, title: L("纪要")),
+                    .init(value: .marks, title: L("标记"), badge: marks.isEmpty ? nil : "\(marks.count)"),
+                ], size: .small)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            Group {
+                if inspectorTab == .marks { marksList } else { notes }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .background(Theme.chrome.opacity(0.5))
+    }
+
     // MARK: - 转写稿
+
+    private var transcriptColumn: some View {
+        VStack(spacing: 0) {
+            if hasFinal && hasDraft {
+                HStack {
+                    Spacer()
+                    PillTabs(selection: $showDraft, items: [
+                        .init(value: false, title: L("精准")),
+                        .init(value: true, title: L("实时草稿")),
+                    ], size: .small)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+            } else if transcriptKind == .draft {
+                HStack {
+                    Spacer()
+                    Text("实时字幕草稿").font(.system(size: 12)).foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+            }
+            transcript
+        }
+    }
 
     @ViewBuilder
     private var transcript: some View {
@@ -410,32 +457,42 @@ struct DetailView: View {
                     .disabled(meeting.status == .recording)
             }
         } else {
-            // 当前句每次刷新只找一次，不在每一行里各找一遍
-            let current = player.currentTime > 0 ? currentSegmentID : nil
+            let t = player.currentTime
+            let currentTurn = t > 0 ? TranscriptTurns.index(in: turns, at: t).map { turns[$0].id } : nil
             ScrollViewReader { proxy in
-                List(segments) { s in
-                    TranscriptLine(segment: s, name: MarkdownExporter.displayName(s, names),
-                                   color: Theme.speaker(s.speakerKey, in: indices),
-                                   isCurrent: s.id == current,
-                                   hasMark: marks.contains { $0.at >= s.start && $0.at <= s.end + 1 },
-                                   onRename: s.speakerLabel.map { label in { beginRename(label) } })
-                        .id(s.id)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 1, leading: 20, bottom: 1, trailing: 20))
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            // 实时识别的句首普遍偏晚，提前 1 秒播放，避免切掉第一个字
-                            player.seek(to: max(0, s.start - 1))
-                            player.play()
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 4) {
+                        ForEach(turns) { turn in
+                            let current = turn.id == currentTurn
+                            TurnView(turn: turn, name: speakerName(turn), color: Theme.speaker(turn.speaker, in: indices),
+                                     currentSegment: current ? currentSegmentID : nil, isCurrent: current,
+                                     hasMark: marks.contains { $0.at >= turn.start && $0.at <= turn.end + 1 },
+                                     onRename: renameAction(turn)) {
+                                // 实时识别的句首普遍偏晚，提前 1 秒播放，避免切掉第一个字
+                                player.seek(to: max(0, turn.start - 1))
+                                player.play()
+                            }
+                            .id(turn.id)
                         }
+                    }
+                    .frame(maxWidth: 720, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .onChange(of: currentSegmentID) { _, id in
+                .onChange(of: currentTurn) { _, id in
                     if player.isPlaying, let id { withAnimation { proxy.scrollTo(id, anchor: .center) } }
                 }
             }
         }
+    }
+
+    private func speakerName(_ turn: TranscriptTurn) -> String {
+        MarkdownExporter.displayName(turn.segments[0], names)
+    }
+
+    private func renameAction(_ turn: TranscriptTurn) -> (() -> Void)? {
+        turn.segments[0].speakerLabel.map { label in { beginRename(label) } }
     }
 
     /// segments 按开始时间排好序：二分找最后一个开始时间不晚于当前播放位置的句子
@@ -469,11 +526,11 @@ struct DetailView: View {
                 .padding(.vertical, 6)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    tab = .transcript
+                    if tab == .marks { tab = .transcript }
                     player.seek(to: max(0, m.at - 5))
                     player.play()
                 }
-                .listRowInsets(EdgeInsets(top: 0, leading: 28, bottom: 0, trailing: 28))
+                .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -506,6 +563,7 @@ struct DetailView: View {
             segments = []
             transcriptKind = nil
         }
+        turns = TranscriptTurns.group(segments)
         // 颜色以精准稿（有说话人分离）为准，保证各处一致
         allSegmentsForColors = final.flatMap { try? env.transcripts.segments(versionID: $0) } ?? segments
         indices = SpeakerPalette.indices(for: allSegmentsForColors)
@@ -544,38 +602,73 @@ struct DetailView: View {
     }
 }
 
-/// 转写稿的一行：时间、说话人色条与名字、文字
-struct TranscriptLine: View {
-    let segment: TranscriptSegment
+/// 说话人头像：彩色圆底加名字的一个字；"说话人 2"这样的显示编号
+struct SpeakerAvatar: View {
     let name: String
     let color: Color
+    var size: CGFloat = 28
+
+    private var glyph: String {
+        if let last = name.last, last.isNumber { return String(last) }
+        return name.first.map { String($0).uppercased() } ?? ""
+    }
+
+    var body: some View {
+        Text(glyph)
+            .font(.system(size: size * 0.46, weight: .semibold))
+            .foregroundStyle(color)
+            .frame(width: size, height: size)
+            .background(color.opacity(0.16), in: Circle())
+    }
+}
+
+/// 转写稿的一段发言：头像、名字、时间，下面是连续的几句话。播放时当前句亮，其余句暗
+struct TurnView: View {
+    let turn: TranscriptTurn
+    let name: String
+    let color: Color
+    let currentSegment: UUID?
     let isCurrent: Bool
     let hasMark: Bool
     let onRename: (() -> Void)?
+    let onPlay: () -> Void
+    @State private var hovering = false
+
+    private var body_: Text {
+        turn.segments.reduce(Text("")) { text, s in
+            let dim = currentSegment != nil && s.id != currentSegment
+            return text + Text(s.text).foregroundColor(dim ? .secondary : .primary)
+        }
+    }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(clock(segment.start))
-                .font(.system(size: 12)).monospacedDigit().foregroundStyle(.tertiary)
-                .frame(width: 52, alignment: .leading)
-            HStack(spacing: 6) {
-                RoundedRectangle(cornerRadius: 1.5).fill(color).frame(width: 3, height: 14)
-                Text(name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+        HStack(alignment: .top, spacing: 12) {
+            SpeakerAvatar(name: name, color: color)
+                .onTapGesture { onRename?() }
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                        .onTapGesture { onRename?() }
+                        .help(onRename == nil ? name : L("\(name)（点击改名）"))
+                    HStack(spacing: 3) {
+                        if hovering { Image(systemName: "play.fill").font(.system(size: 8)) }
+                        Text(clock(turn.start)).font(.system(size: 12)).monospacedDigit()
+                    }
+                    .foregroundStyle(hovering ? .secondary : .tertiary)
+                    if hasMark { Text("★").font(.system(size: 11)).foregroundStyle(Theme.mark) }
+                }
+                body_
+                    .font(Theme.readingFont)
+                    .lineSpacing(Theme.readingLineSpacing)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            // 固定宽度：各行正文左边对齐
-            .frame(width: 92, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture { onRename?() }
-            .help(onRename == nil ? name : L("\(name)（点击改名）"))
-            (Text(segment.text) + (hasMark ? Text("  ★").foregroundColor(Theme.mark) : Text("")))
-                .font(.system(size: 14.5))
-                .lineSpacing(3)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(isCurrent ? Theme.me.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control + 2, style: .continuous).strokeBorder(isCurrent ? Theme.me.opacity(0.3) : .clear, lineWidth: 0.5))
+        .padding(.vertical, 10)
+        .background(isCurrent ? Color.primary.opacity(0.05) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+        .onTapGesture(perform: onPlay)
     }
 }

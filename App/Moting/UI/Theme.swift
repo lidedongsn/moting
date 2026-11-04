@@ -24,9 +24,22 @@ enum Theme {
     }
 
     /// 深色界面的三层底色：内容区最深，侧栏稍亮，卡片再亮一点（实色，不透出桌面）
-    static let darkCanvas = Color(hex: 0x0E0E10)
     static let darkSidebar = Color(hex: 0x161618)
-    static let darkCard = Color(hex: 0x1C1C1F)
+
+    /// 主窗口底色：内容区是阅读的纸面，侧栏和底部播放条退后一层
+    static let canvas = Color(light: 0xFDFDFD, dark: 0x0E0E10)
+    static let chrome = Color(light: 0xF4F4F5, dark: 0x161618)
+    static let hairline = Color.primary.opacity(0.09)
+    /// 设置页：底色退后，白卡片浮在上面
+    static let settingsCanvas = Color(light: 0xF4F4F5, dark: 0x0E0E10)
+    static let settingsSidebar = Color(light: 0xEBEBED, dark: 0x161618)
+    static let card = Color(light: 0xFFFFFF, dark: 0x1C1C1F)
+
+    /// 会议标题用衬线体：这是一份记录，不是一个面板
+    static let titleFont = Font.system(size: 28, weight: .semibold, design: .serif)
+    /// 转写稿和纪要的正文
+    static let readingFont = Font.system(size: 15)
+    static let readingLineSpacing: CGFloat = 5
 
     /// 圆角：按 macOS 15 的尺度（窗口约 10，系统设置分组约 10，控件约 6）。以后换 macOS 26 的大圆角只改这里
     enum Radius {
@@ -59,17 +72,15 @@ extension Color {
     }
 }
 
-/// 卡片：材质 + 一条细描边，平铺不加阴影（同 macOS 15 系统设置的分组）
+/// 卡片：实色 + 一条细描边，平铺不加阴影
 struct GlassCard: ViewModifier {
     var radius: CGFloat = Theme.Radius.card
-    var material: Material = .regularMaterial
     @Environment(\.colorScheme) private var scheme
 
     func body(content: Content) -> some View {
         content
             // 浅色下材质发灰，叠一层白（设计稿卡片约 75% 白）
-            .background(scheme == .light ? Color.white.opacity(0.6) : Theme.darkCard, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .background(scheme == .light ? AnyShapeStyle(material) : AnyShapeStyle(.clear), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(Color.primary.opacity(scheme == .dark ? 0.12 : 0.08), lineWidth: 0.5)
@@ -78,8 +89,8 @@ struct GlassCard: ViewModifier {
 }
 
 extension View {
-    func glassCard(radius: CGFloat = Theme.Radius.card, material: Material = .regularMaterial) -> some View {
-        modifier(GlassCard(radius: radius, material: material))
+    func glassCard(radius: CGFloat = Theme.Radius.card) -> some View {
+        modifier(GlassCard(radius: radius))
     }
 }
 

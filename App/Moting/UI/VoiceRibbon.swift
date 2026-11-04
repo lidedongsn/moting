@@ -11,9 +11,12 @@ struct VoiceRibbon: View {
     /// 0–1 位置
     let marks: [Double]
     let progress: Double
-    let onSeek: (Double) -> Void
 
-    private let laneHeight: CGFloat = 28
+    var laneHeight: CGFloat = 18
+    var showsPlayhead = true
+    let onSeek: (Double) -> Void
+    /// ★ 标记占的高度
+    private let top: CGFloat = 8
 
     var body: some View {
         GeometryReader { geo in
@@ -27,21 +30,22 @@ struct VoiceRibbon: View {
                     Text("★")
                         .font(.system(size: 10))
                         .foregroundStyle(Theme.mark)
-                        .position(x: width * m, y: 4)
+                        .position(x: width * m, y: 3)
                 }
                 // 播放头
-                Capsule()
-                    .fill(.primary)
-                    .frame(width: 2, height: laneHeight * 2 + 10)
-                    .overlay(alignment: .top) { Circle().fill(.primary).frame(width: 9, height: 9).offset(y: -3) }
-                    .position(x: width * min(max(progress, 0), 1), y: 12 + laneHeight)
+                if showsPlayhead {
+                    Capsule()
+                        .fill(.primary)
+                        .frame(width: 2, height: laneHeight * 2 + 6)
+                        .position(x: width * min(max(progress, 0), 1), y: top + laneHeight)
+                }
             }
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { v in
                 onSeek(min(max(v.location.x / max(width, 1), 0), 1))
             })
         }
-        .frame(height: laneHeight * 2 + 18)
+        .frame(height: laneHeight * 2 + top + 4)
         .accessibilityElement()
         .accessibilityLabel("声纹带播放进度")
         .accessibilityValue("\(Int(progress * 100))%")
@@ -50,21 +54,19 @@ struct VoiceRibbon: View {
     private func draw(_ ctx: GraphicsContext, _ size: CGSize) {
         let n = max(mine.count, theirs.count)
         guard n > 0 else { return }
-        let gap: CGFloat = 2
+        let gap: CGFloat = 1.5
         let barW = max(1, (size.width - gap * CGFloat(n - 1)) / CGFloat(n))
-        let mid: CGFloat = 12 + laneHeight
-        // 中轴线
-        ctx.fill(Path(CGRect(x: 0, y: mid - 0.25, width: size.width, height: 0.5)), with: .color(.secondary.opacity(0.35)))
+        let mid: CGFloat = top + laneHeight
         for i in 0..<n {
             let x = CGFloat(i) * (barW + gap)
             let played = Double(i) / Double(n) <= progress
-            let dim = played ? 1.0 : 0.42
+            let dim = played ? 1.0 : 0.38
             let m = i < mine.count ? CGFloat(mine[i]) : 0
             let t = i < theirs.count ? CGFloat(theirs[i]) : 0
             let up = max(1.5, m * (laneHeight - 2))
             let down = max(1.5, t * (laneHeight - 2))
-            let meColor = m > 0.04 ? Theme.me.opacity(dim) : Color.secondary.opacity(0.25)
-            let themColor = t > 0.04 ? (i < theirColors.count ? theirColors[i] : Theme.them).opacity(dim) : Color.secondary.opacity(0.25)
+            let meColor = m > 0.04 ? Theme.me.opacity(dim) : Color.secondary.opacity(0.18)
+            let themColor = t > 0.04 ? (i < theirColors.count ? theirColors[i] : Theme.them).opacity(dim) : Color.secondary.opacity(0.18)
             ctx.fill(Path(roundedRect: CGRect(x: x, y: mid - 1 - up, width: barW, height: up), cornerRadius: barW / 2), with: .color(meColor))
             ctx.fill(Path(roundedRect: CGRect(x: x, y: mid + 1, width: barW, height: down), cornerRadius: barW / 2), with: .color(themColor))
         }
@@ -93,7 +95,7 @@ struct MiniTimeline: View {
                 }
             }
         }
-        .frame(height: 5)
+        .frame(height: 3)
         .clipShape(Capsule())
     }
 }

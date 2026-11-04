@@ -61,16 +61,6 @@
         }
       }
     },
-    "  ★": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "  ★"
-          }
-        }
-      }
-    },
     "%@ %@": {
       "localizations": {
         "en": {
@@ -241,16 +231,6 @@
         }
       }
     },
-    "/ %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "/ %@"
-          }
-        }
-      }
-    },
     "1 小时会议约 %lld 分钟": {
       "localizations": {
         "en": {
@@ -331,6 +311,16 @@
         }
       }
     },
+    "Moting 同时录你的麦克风和对方的声音，在这台 Mac 上转写，不需要联网。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moting records your microphone and the other participants, then transcribes on this Mac. No internet needed."
+          }
+        }
+      }
+    },
     "Moting 的所有文件都在一个文件夹里，可以在这里查看和删除。": {
       "localizations": {
         "en": {
@@ -397,16 +387,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "sk-••••••••"
-          }
-        }
-      }
-    },
-    "·": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "·"
           }
         }
       }
@@ -1411,16 +1391,6 @@
         }
       }
     },
-    "对方 · 下（按说话人着色）": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Others · below (colored by speaker)"
-          }
-        }
-      }
-    },
     "对方一直没有声音。如果会议里有人在说话，请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting": {
       "localizations": {
         "en": {
@@ -1437,16 +1407,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Others (system audio)"
-          }
-        }
-      }
-    },
-    "导出": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Export"
           }
         }
       }
@@ -1581,12 +1541,12 @@
         }
       }
     },
-    "开会时点右上角的「开始录音」，或按 ⌥⌘R。": {
+    "开会时在任何 app 里按 ⌥⌘R 也能开始": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "When a meeting starts, click Record at the top right or press ⌥⌘R."
+            "value": "You can also press ⌥⌘R in any app to start"
           }
         }
       }
@@ -1661,22 +1621,22 @@
         }
       }
     },
+    "录下第一场会议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record your first meeting"
+          }
+        }
+      }
+    },
     "录音": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Recordings"
-          }
-        }
-      }
-    },
-    "录音 %@ · 模型 %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recordings %@ · Models %@"
           }
         }
       }
@@ -1807,16 +1767,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Me "
-          }
-        }
-      }
-    },
-    "我 · 上": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Me · above"
           }
         }
       }
@@ -2027,6 +1977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show Captions"
+          }
+        }
+      }
+    },
+    "显示纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Notes"
           }
         }
       }
@@ -2631,16 +2591,6 @@
         }
       }
     },
-    "版本": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
-          }
-        }
-      }
-    },
     "现在处理": {
       "localizations": {
         "en": {
@@ -2697,16 +2647,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Uses %@ on this Mac to generate an overview, decisions and action items. Your data stays on this Mac."
-          }
-        }
-      }
-    },
-    "用离线大模型对整段录音重新识别，生成正式稿（草稿保留）": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Re-recognize the whole recording with the offline model to create the final transcript (the draft is kept)"
           }
         }
       }
@@ -3271,16 +3211,6 @@
         }
       }
     },
-    "跳过静音": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip Silence"
-          }
-        }
-      }
-    },
     "转写中 %lld%%": {
       "localizations": {
         "en": {
@@ -3337,16 +3267,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "The input device changed"
-          }
-        }
-      }
-    },
-    "还没有会议记录": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No meetings yet"
           }
         }
       }
@@ -3541,16 +3461,6 @@
         }
       }
     },
-    "重新生成": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Regenerate"
-          }
-        }
-      }
-    },
     "重新登记": {
       "localizations": {
         "en": {
@@ -3597,6 +3507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keychain error: %@"
+          }
+        }
+      }
+    },
+    "隐藏纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Notes"
           }
         }
       }

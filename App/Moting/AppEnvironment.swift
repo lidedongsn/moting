@@ -46,8 +46,15 @@ final class AppEnvironment: ObservableObject {
 
     /// 打开数据库，把上次崩溃遗留的"录音中"会议与"处理中"任务收尾
     static func bootstrap() throws -> AppEnvironment {
+        #if DEBUG
+        let paths = DemoData.root.map(AppPaths.init(root:)) ?? .default
+        #else
         let paths = AppPaths.default
+        #endif
         let env = AppEnvironment(paths: paths, db: try AppDatabase.open(at: paths.databaseURL))
+        #if DEBUG
+        if DemoData.root != nil { try DemoData.seedIfEmpty(paths: paths, env: env) }
+        #endif
         try RecordingRecovery.run(repository: env.repository, paths: paths, now: Date())
         try env.pipeline.recoverAfterLaunch()
         return env

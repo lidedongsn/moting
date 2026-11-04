@@ -25,8 +25,7 @@ struct MainWindow: View {
     var body: some View {
         NavigationSplitView {
             sidebar
-                // 浅色：侧栏透出的桌面偏暗，叠一层白玻璃（设计稿 .side 42% 白）；深色：实色
-                .background(scheme == .light ? Color.white.opacity(0.45) : Theme.darkSidebar)
+                .background(Theme.chrome)
                 .navigationSplitViewColumnWidth(min: 250, ideal: 286, max: 380)
         } detail: {
             ZStack {
@@ -35,23 +34,27 @@ struct MainWindow: View {
                         // 录音结束时重建一次：播放器在录音中创建时文件还是空的，时长为 0
                         .id("\(m.id)|\(m.endedAt?.timeIntervalSince1970 ?? 0)")
                 } else {
-                    ContentUnavailableView {
-                        Label(meetings.isEmpty ? L("还没有会议记录") : L("选择一场会议"), systemImage: "waveform")
-                    } description: {
-                        Text(meetings.isEmpty ? L("开会时点右上角的「开始录音」，或按 ⌥⌘R。") : L("在左侧选择会议，查看转写稿、回放录音。"))
+                    if meetings.isEmpty {
+                        FirstMeetingView(recorder: recorder)
+                    } else {
+                        ContentUnavailableView {
+                            Label("选择一场会议", systemImage: "waveform")
+                        } description: {
+                            Text("在左侧选择会议，查看转写稿、回放录音。")
+                        }
                     }
                 }
             }
-            // 浅色：系统窗口底是灰的，按设计稿在内容区叠一层白（.main 55% 白）；深色：比系统更深的实色
-            .background { (scheme == .light ? Color.white.opacity(0.6) : Theme.darkCanvas).ignoresSafeArea() }
+            .background { Theme.canvas.ignoresSafeArea() }
             .toolbar {
                 // 有会议时录音按钮由详情页放在工具栏最右；没有选中会议时放在这里
-                if processing.selectedMeetingID == nil || !meetings.contains(where: { $0.id == processing.selectedMeetingID }) {
+                // 一场会议都没有时，首屏中间已经有录音按钮
+                if !meetings.isEmpty, !meetings.contains(where: { $0.id == processing.selectedMeetingID }) {
                     ToolbarItem(placement: .primaryAction) { RecordButton(recorder: recorder) }
                 }
             }
         }
-        .frame(minWidth: 900, minHeight: 600)
+        .frame(minWidth: 860, minHeight: 560)
         // 设计稿里工具栏和内容连成一片，不要分隔线
         .toolbarBackground(.hidden, for: .windowToolbar)
         // 标题留空而不是移除：移除后工具栏按钮会挤到左边
@@ -109,10 +112,8 @@ struct MainWindow: View {
                             .contentShape(Rectangle())
                             .onTapGesture { click(m.id) }
                             .listRowBackground(
-                                RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                                    .fill(on ? Theme.me.opacity(0.16) : .clear)
-                                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                                        .strokeBorder(on ? Theme.me.opacity(0.35) : .clear, lineWidth: 0.5))
+                                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                                    .fill(on ? Color.primary.opacity(0.08) : .clear)
                                     .padding(.horizontal, 8)
                             )
                             .contextMenu { rowMenu(m) }
@@ -149,35 +150,22 @@ struct MainWindow: View {
         .safeAreaInset(edge: .bottom) { storageCard }
     }
 
+    /// 占用空间退到一行：数据始终看得见，但不抢内容的位置
     private var storageCard: some View {
-        let total = usage.recordings + usage.models
-        let fraction = { (n: Int64) in total > 0 ? CGFloat(n) / CGFloat(max(total, 1)) : 0 }
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("占用 \(bytes(total))")
-                Spacer()
-                Button("管理") {
-                    UserDefaults.standard.set("storage", forKey: SettingsRoot.paneKey)
-                    openSettings()
-                }
-                .buttonStyle(.link)
+        HStack {
+            Text("占用 \(bytes(usage.recordings + usage.models))")
+            Spacer()
+            Button("管理") {
+                UserDefaults.standard.set("storage", forKey: SettingsRoot.paneKey)
+                openSettings()
             }
-            GeometryReader { geo in
-                HStack(spacing: 0) {
-                    Rectangle().fill(Theme.me).frame(width: geo.size.width * fraction(usage.recordings))
-                    Rectangle().fill(Color.secondary.opacity(0.6)).frame(width: geo.size.width * fraction(usage.models))
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(height: 5)
-            .background(Color.secondary.opacity(0.15))
-            .clipShape(Capsule())
-            Text("录音 \(bytes(usage.recordings)) · 模型 \(bytes(usage.models))").foregroundStyle(.secondary)
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
         }
         .font(.system(size: 12))
-        .padding(12)
-        .glassCard(material: .thinMaterial)
-        .padding(10)
+        .foregroundStyle(.tertiary)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
     }
 
     // MARK: - 选择与管理
@@ -317,7 +305,7 @@ struct MeetingRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(meeting.title).font(.system(size: 13.5, weight: .semibold)).lineLimit(1)
+                Text(meeting.title).font(.system(size: 13.5, weight: .medium)).lineLimit(1)
                 Spacer(minLength: 4)
                 tag
             }
@@ -352,7 +340,7 @@ struct MeetingRow: View {
             ? meeting.startedAt.formatted(.dateTime.hour().minute())
             : meeting.startedAt.formatted(.dateTime.month().day().hour().minute())
         guard let end = meeting.endedAt else { return start }
-        return "\(start) · \(durationText(end.timeIntervalSince(meeting.startedAt)))"
+        return "\(start)  \(durationText(end.timeIntervalSince(meeting.startedAt)))"
     }
 
     private func loadTimeline() {
@@ -369,6 +357,39 @@ struct MeetingRow: View {
                 peopleCount = people
             }
         }
+    }
+}
+
+/// 还没有会议时的首屏：告诉用户第一步做什么，以及录音和转写都发生在哪里
+struct FirstMeetingView: View {
+    @ObservedObject var recorder: RecordingController
+
+    /// 示意用的两路声音：你一句，对方一句
+    private static let sample: (mine: [Float], theirs: [Float]) = {
+        let n = 72
+        let wave = { (i: Int) in Float(0.45 + 0.55 * abs(sin(Double(i) * 0.55) * sin(Double(i) * 0.17 + 0.6))) }
+        let mineOn = { (i: Int) in (i / 12) % 2 == 0 }
+        return ((0..<n).map { mineOn($0) ? wave($0) : 0 }, (0..<n).map { mineOn($0) ? 0 : wave($0) })
+    }()
+
+    var body: some View {
+        VStack(spacing: 22) {
+            VoiceRibbon(mine: Self.sample.mine, theirs: Self.sample.theirs,
+                        theirColors: Array(repeating: Theme.them, count: Self.sample.theirs.count),
+                        marks: [], progress: 1, laneHeight: 26, showsPlayhead: false) { _ in }
+                .frame(width: 360)
+                .allowsHitTesting(false)
+            VStack(spacing: 8) {
+                Text("录下第一场会议").font(Theme.titleFont)
+                Text("Moting 同时录你的麦克风和对方的声音，在这台 Mac 上转写，不需要联网。")
+                    .font(.system(size: 14)).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400)
+            }
+            RecordButton(recorder: recorder)
+            Text("开会时在任何 app 里按 ⌥⌘R 也能开始").font(.system(size: 12)).foregroundStyle(.tertiary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

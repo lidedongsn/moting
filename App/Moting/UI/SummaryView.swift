@@ -2,7 +2,7 @@ import MotingCore
 import MotingStorage
 import SwiftUI
 
-/// 纪要页（设计稿"主窗口·纪要"）：左边概要 / 决策 / 议题，右边待办；没有纪要时说明会发送什么再让用户点
+/// 纪要：放在转写稿旁边，单栏从上到下读。没有纪要时说明会发送什么再让用户点
 struct SummaryView: View {
     let meetingID: UUID
     @ObservedObject var model: SummaryModel
@@ -33,80 +33,63 @@ struct SummaryView: View {
 
     private func content(_ s: MeetingSummary) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    if let error = model.errors[meetingID] {
-                        Label(error, systemImage: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
-                    }
-                    Spacer()
-                    if let st = stored {
-                        Text("由 \(st.provider) 生成 · \(st.createdAt.formatted(.dateTime.month().day().hour().minute()))")
-                            .font(.system(size: 12)).foregroundStyle(.tertiary)
-                    }
-                    Button { model.generate(meetingID) } label: { Label("重新生成", systemImage: "arrow.clockwise") }
-                        .buttonStyle(ToolbarPillStyle())
-                        .help("会再次把转写文字发送给 \(model.service.name)")
+            VStack(alignment: .leading, spacing: 22) {
+                if let error = model.errors[meetingID] {
+                    Label(error, systemImage: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
                 }
-                // 宽时左右两栏，窄时待办放到下面
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .top, spacing: 36) {
-                        mainColumn(s).frame(minWidth: 420, maxWidth: .infinity, alignment: .leading)
-                        todoColumn(s).frame(width: 300, alignment: .leading)
-                    }
-                    VStack(alignment: .leading, spacing: 26) {
-                        mainColumn(s)
-                        todoColumn(s)
+                section(L("概要")) {
+                    Text(s.overview).font(.system(size: 14)).lineSpacing(4).textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if !s.decisions.isEmpty {
+                    section(L("决策")) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(s.decisions, id: \.self) { bullet($0) }
+                        }
                     }
                 }
-            }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 14)
-        }
-    }
-
-    private func mainColumn(_ s: MeetingSummary) -> some View {
-        VStack(alignment: .leading, spacing: 22) {
-            section(L("概要")) {
-                Text(s.overview).font(.system(size: 14.5)).lineSpacing(5).textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if !s.decisions.isEmpty {
-                section(L("决策")) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        ForEach(s.decisions, id: \.self) { bullet($0) }
+                section(L("待办")) {
+                    if s.todos.isEmpty {
+                        Text("会上没有明确的待办。").font(.system(size: 13)).foregroundStyle(.tertiary)
+                    } else {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(s.todos) { todo($0) }
+                        }
                     }
                 }
-            }
-            if !s.topics.isEmpty {
-                section(L("议题")) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        ForEach(s.topics, id: \.title) { t in
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(t.title).font(.system(size: 14, weight: .semibold))
-                                ForEach(t.points, id: \.self) { bullet($0) }
+                if !s.topics.isEmpty {
+                    section(L("议题")) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(s.topics, id: \.title) { t in
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text(t.title).font(.system(size: 13.5, weight: .medium))
+                                    ForEach(t.points, id: \.self) { bullet($0) }
+                                }
                             }
                         }
                     }
                 }
-            }
-        }
-    }
-
-    private func todoColumn(_ s: MeetingSummary) -> some View {
-        section(L("待办")) {
-            if s.todos.isEmpty {
-                Text("会上没有明确的待办。").font(.system(size: 13)).foregroundStyle(.tertiary)
-            } else {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(s.todos) { todo($0) }
+                HStack(spacing: 8) {
+                    if let st = stored {
+                        Text("由 \(st.provider) 生成 · \(st.createdAt.formatted(.dateTime.month().day().hour().minute()))")
+                            .lineLimit(1)
+                    }
+                    Spacer()
+                    Button { model.generate(meetingID) } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.plain)
+                        .help("会再次把转写文字发送给 \(model.service.name)")
                 }
+                .font(.system(size: 12))
+                .foregroundStyle(.tertiary)
             }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
         }
     }
 
     private func section<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+            Text(title).font(.system(size: 13, weight: .semibold))
             content()
         }
     }
@@ -114,7 +97,7 @@ struct SummaryView: View {
     private func bullet(_ text: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Circle().fill(.tertiary).frame(width: 4, height: 4).alignmentGuide(.firstTextBaseline) { $0[.bottom] + 4 }
-            Text(text).font(.system(size: 14)).lineSpacing(3).textSelection(.enabled)
+            Text(text).font(.system(size: 13.5)).lineSpacing(3).textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -128,7 +111,7 @@ struct SummaryView: View {
             }
             .buttonStyle(.plain)
             VStack(alignment: .leading, spacing: 3) {
-                Text(t.task).font(.system(size: 14)).fixedSize(horizontal: false, vertical: true)
+                Text(t.task).font(.system(size: 13.5)).fixedSize(horizontal: false, vertical: true)
                     .strikethrough(t.done).foregroundStyle(t.done ? .secondary : .primary)
                     .textSelection(.enabled)
                 let meta = [t.owner, t.due].compactMap { $0 }
@@ -136,8 +119,6 @@ struct SummaryView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 10)
-        .overlay(alignment: .bottom) { Divider() }
     }
 
     // MARK: - 还没有纪要

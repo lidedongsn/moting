@@ -12,7 +12,6 @@ struct SettingsRoot: View {
     let env: AppEnvironment
     @ObservedObject var recorder: RecordingController
     @StateObject private var downloads: ModelDownloads
-    @Environment(\.colorScheme) private var scheme
     @AppStorage(SettingsRoot.paneKey) private var pane = "general"
 
     init(live: LiveTranscriptModel, processing: ProcessingModel, env: AppEnvironment, recorder: RecordingController) {
@@ -59,7 +58,7 @@ struct SettingsRoot: View {
         // 标题栏并入内容区后窗口会高出一截，高度随窗口撑满
         .frame(width: 800)
         .frame(minHeight: 620, maxHeight: .infinity)
-        .background(scheme == .dark ? Theme.darkCanvas : .clear)
+        .background(Theme.settingsCanvas)
         .background(WindowChrome())
         .ignoresSafeArea()
     }
@@ -81,7 +80,7 @@ struct SettingsRoot: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(on ? Theme.me.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                    .background(on ? Color.primary.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -93,7 +92,7 @@ struct SettingsRoot: View {
         .padding(.bottom, 10)
         .frame(width: 220)
         .frame(maxHeight: .infinity)
-        .background(scheme == .dark ? Theme.darkSidebar : .clear)
+        .background(Theme.settingsSidebar)
         .overlay(alignment: .trailing) { Divider() }
     }
 }
@@ -144,7 +143,7 @@ struct PaneHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 22, weight: .bold)).tracking(-0.2)
+            Text(title).font(.system(size: 24, weight: .semibold, design: .serif))
             Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary)
         }
         .padding(.bottom, 14)
@@ -157,7 +156,7 @@ struct PaneCard<Content: View>: View {
 
     var body: some View {
         VStack(spacing: 0) { content }
-            .glassCard(material: .regularMaterial)
+            .glassCard()
     }
 }
 
