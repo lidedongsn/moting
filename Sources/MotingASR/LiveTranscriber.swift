@@ -44,7 +44,8 @@ public final class LiveTranscriber: @unchecked Sendable {
 
     private let versionID: UUID
     private let onEvent: @Sendable (TranscriptEvent) -> Void
-    private let queue = DispatchQueue(label: "moting.asr.live", qos: .utility)
+    /// 字幕是用户正在看的内容，优先级要高于后台任务；低了会在系统繁忙时越积越多，字幕一直落后
+    private let queue = DispatchQueue(label: "moting.asr.live", qos: .userInitiated)
     private var states: [AudioChannel: ChannelState] = [:]
     /// 外放时去掉麦克风里的扬声器回声（以系统音频一路为参考），只在 queue 上用
     private let echoFilter = MicEchoFilter()
