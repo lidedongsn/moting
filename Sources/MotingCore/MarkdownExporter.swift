@@ -1,4 +1,5 @@
 import Foundation
+import MotingCore
 
 /// 会议导出为 Markdown（spec 5.7）：标题、时间、参会人、AI 纪要、重点标记、转写稿
 public enum MarkdownExporter {
@@ -7,55 +8,63 @@ public enum MarkdownExporter {
                               names: [String: String] = [:], summary: MeetingSummary? = nil,
                               timeZone: TimeZone = .current) -> String {
         var out = "# \(m.title)\n\n"
-        out += "- 时间：\(timeRange(m, timeZone))\n"
-        var speakers = ["我"]
+        out += L("- 时间：\(timeRange(m, timeZone))\n")
+        var speakers = [L("我")]
         for s in segments.sorted(by: { $0.start < $1.start }) {
-            let name = speakerName(s, names)
+            let name = displayName(s, names)
             if !speakers.contains(name) { speakers.append(name) }
         }
-        out += "- 参会：\(speakers.joined(separator: "、"))\n"
+        out += L("- 参会：\(speakers.joined(separator: "、"))\n")
         if let summary { out += summarySection(summary) }
 
         if !marks.isEmpty {
-            out += "\n## 重点标记\n"
+            out += L("\n## 重点标记\n")
             for mark in marks.sorted(by: { $0.at < $1.at }) {
                 out += "- [\(clock(mark.at))]\n"
             }
         }
 
-        out += "\n## 转写稿\n\n"
+        out += L("\n## 转写稿\n\n")
         if segments.isEmpty {
-            out += "（暂无转写内容）\n"
+            out += L("（暂无转写内容）\n")
         } else {
             for s in segments.sorted(by: { $0.start < $1.start }) {
-                out += "**[\(clock(s.start))] \(speakerName(s, names))：** \(s.text)\n\n"
+                out += "**[\(clock(s.start))] \(displayName(s, names))：** \(s.text)\n\n"
             }
         }
         return out
     }
 
     private static func summarySection(_ s: MeetingSummary) -> String {
-        var out = "\n## 纪要\n\n\(s.overview)\n"
+        var out = L("\n## 纪要\n\n\(s.overview)\n")
         if !s.decisions.isEmpty {
-            out += "\n### 决策\n" + s.decisions.map { "- \($0)\n" }.joined()
+            out += L("\n### 决策\n") + s.decisions.map { "- \($0)\n" }.joined()
         }
         if !s.todos.isEmpty {
-            out += "\n### 待办\n" + s.todos.map { t in
+            out += L("\n### 待办\n") + s.todos.map { t in
                 let meta = [t.owner, t.due].compactMap { $0 }.filter { !$0.isEmpty }
-                return "- [\(t.done ? "x" : " ")] \(t.task)\(meta.isEmpty ? "" : "（\(meta.joined(separator: " · "))）")\n"
+                let suffix = meta.isEmpty ? "" : L("（\(meta.joined(separator: " · "))）")
+                return "- [\(t.done ? "x" : " ")] \(t.task)\(suffix)\n"
             }.joined()
         }
         if !s.topics.isEmpty {
-            out += "\n### 主要内容\n" + s.topics.map { t in
+            out += L("\n### 主要内容\n") + s.topics.map { t in
                 "**\(t.title)**\n" + t.points.map { "- \($0)\n" }.joined()
             }.joined(separator: "\n")
         }
         return out
     }
 
+    /// 发给大模型用：标签固定是中文，和提示词的约定一致
     public static func speakerName(_ s: TranscriptSegment, _ names: [String: String] = [:]) -> String {
         if let label = s.speakerLabel { return names[label] ?? label }
-        return s.channel == .mic ? "我" : "对方"
+        return s.channel == .mic ? SpeakerLabel.me : SpeakerLabel.other
+    }
+
+    /// 给人看：界面和导出用，标签换成当前语言
+    public static func displayName(_ s: TranscriptSegment, _ names: [String: String] = [:]) -> String {
+        if let label = s.speakerLabel, let name = names[label] { return name }
+        return SpeakerLabel.display(speakerName(s))
     }
 
     /// 00:00:00
@@ -74,6 +83,6 @@ public enum MarkdownExporter {
         hm.dateFormat = "HH:mm"
         guard let end = m.endedAt else { return day.string(from: m.startedAt) }
         let minutes = Int((end.timeIntervalSince(m.startedAt) / 60).rounded())
-        return "\(day.string(from: m.startedAt))–\(hm.string(from: end))（\(minutes) 分钟）"
+        return L("\(day.string(from: m.startedAt))–\(hm.string(from: end))（\(minutes) 分钟）")
     }
 }

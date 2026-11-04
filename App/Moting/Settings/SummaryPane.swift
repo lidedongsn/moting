@@ -1,3 +1,4 @@
+import MotingCore
 import MotingSummary
 import SwiftUI
 
@@ -18,7 +19,7 @@ struct SummaryPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PaneHeader(title: "AI 纪要", subtitle: "根据转写稿生成概要、决策和待办。")
+            PaneHeader(title: L("AI 纪要"), subtitle: L("根据转写稿生成概要、决策和待办。"))
             privacy.padding(.bottom, 16)
             Text("服务").font(.headline).padding(.bottom, 8)
             PaneCard {
@@ -39,8 +40,8 @@ struct SummaryPane: View {
                 HStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("精准转写完成后自动生成纪要")
-                        Text(auto ? "每场会议转写完成后，会自动把转写文字发给\(service.isLocal ? "本机模型" : " \(service.name)")。"
-                                  : "关闭时不会自动发送任何内容，在会议的「纪要」页点「生成纪要」才发送。")
+                        Text(auto ? (service.isLocal ? L("每场会议转写完成后，会自动把转写文字发给本机模型。") : L("每场会议转写完成后，会自动把转写文字发给 \(service.name)。"))
+                                  : L("关闭时不会自动发送任何内容，在会议的「纪要」页点「生成纪要」才发送。"))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
@@ -80,7 +81,7 @@ struct SummaryPane: View {
     }
 
     private var serviceRow: some View {
-        row("服务", detail: service.isLocal ? "数据不出这台 Mac" : "使用该服务的 OpenAI 兼容接口") {
+        row(L("服务"), detail: service.isLocal ? L("数据不出这台 Mac") : L("使用该服务的 OpenAI 兼容接口")) {
             Picker("", selection: Binding(get: { service.id }, set: { model.select($0) })) {
                 ForEach(SummaryService.presets, id: \.id) { p in
                     Text(p.name).tag(p.id)
@@ -93,7 +94,7 @@ struct SummaryPane: View {
     }
 
     private var addressRow: some View {
-        row("服务地址", detail: service.validationError ?? (addressEditable ? "只能用 https，本机服务除外" : "")) {
+        row(L("服务地址"), detail: service.validationError ?? (addressEditable ? L("只能用 https，本机服务除外") : "")) {
             if addressEditable {
                 TextField("https://…/v1", text: $model.service.baseURL)
                     .textFieldStyle(.plain)
@@ -108,7 +109,7 @@ struct SummaryPane: View {
 
     private var modelRow: some View {
         let choices = model.availableModels.isEmpty ? service.suggestedModels : model.availableModels
-        return row("模型", detail: model.availableModels.isEmpty ? "可直接改名；测试连接后能从实际可用的模型里选" : "已从服务获取可用模型") {
+        return row(L("模型"), detail: model.availableModels.isEmpty ? L("可直接改名；测试连接后能从实际可用的模型里选") : L("已从服务获取可用模型")) {
             HStack(spacing: 6) {
                 TextField("模型名", text: $model.service.model)
                     .textFieldStyle(.plain)
@@ -168,7 +169,7 @@ struct SummaryPane: View {
 
     private var checkRow: some View {
         HStack(spacing: 8) {
-            Button(checking ? "正在测试…" : "测试连接", action: check).buttonStyle(PaneButtonStyle())
+            Button(checking ? L("正在测试…") : L("测试连接"), action: check).buttonStyle(PaneButtonStyle())
                 .disabled(checking || !model.isReady || service.validationError != nil)
             if let r = checkResult {
                 Label(r.text, systemImage: r.ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
@@ -213,7 +214,7 @@ struct SummaryPane: View {
             defer { checking = false }
             do {
                 let models = try await model.testConnection()
-                checkResult = (true, models.isEmpty ? "连接正常" : "连接正常，有 \(models.count) 个可用模型")
+                checkResult = (true, models.isEmpty ? L("连接正常") : L("连接正常，有 \(models.count) 个可用模型"))
             } catch {
                 checkResult = (false, error.localizedDescription)
             }

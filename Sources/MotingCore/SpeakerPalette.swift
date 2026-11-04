@@ -8,7 +8,7 @@ public enum SpeakerKey: Hashable, Sendable {
 
 extension TranscriptSegment {
     public var speakerKey: SpeakerKey {
-        channel == .mic ? .me : .other(speakerLabel ?? "对方")
+        channel == .mic ? .me : .other(speakerLabel ?? SpeakerLabel.other)
     }
 }
 

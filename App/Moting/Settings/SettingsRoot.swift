@@ -1,5 +1,6 @@
 import AppKit
 import MotingASR
+import MotingCore
 import SwiftUI
 
 /// 设置窗口：系统设置样式的左侧分栏
@@ -27,12 +28,12 @@ struct SettingsRoot: View {
     }
 
     private let items: [Item] = [
-        Item(id: "general", title: "通用", symbol: "gearshape.fill", color: .gray),
-        Item(id: "models", title: "识别模型", symbol: "waveform", color: Theme.me),
-        Item(id: "summary", title: "AI 纪要", symbol: "sparkles", color: .purple),
-        Item(id: "voice", title: "热词与声纹", symbol: "person.wave.2.fill", color: .orange),
-        Item(id: "storage", title: "存储", symbol: "internaldrive.fill", color: .green),
-        Item(id: "download", title: "下载", symbol: "arrow.down.circle.fill", color: .blue),
+        Item(id: "general", title: L("通用"), symbol: "gearshape.fill", color: .gray),
+        Item(id: "models", title: L("识别模型"), symbol: "waveform", color: Theme.me),
+        Item(id: "summary", title: L("AI 纪要"), symbol: "sparkles", color: .purple),
+        Item(id: "voice", title: L("热词与声纹"), symbol: "person.wave.2.fill", color: .orange),
+        Item(id: "storage", title: L("存储"), symbol: "internaldrive.fill", color: .green),
+        Item(id: "download", title: L("下载"), symbol: "arrow.down.circle.fill", color: .blue),
     ]
 
     var body: some View {

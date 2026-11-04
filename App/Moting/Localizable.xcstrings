@@ -1,0 +1,3756 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "\n## 纪要\n\n%@\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\n## Notes\n\n%@\n"
+          }
+        }
+      }
+    },
+    "\n## 转写稿\n\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\n## Transcript\n\n"
+          }
+        }
+      }
+    },
+    "\n## 重点标记\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\n## Highlights\n"
+          }
+        }
+      }
+    },
+    "\n### 主要内容\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\n### Main points\n"
+          }
+        }
+      }
+    },
+    "\n### 决策\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\n### Decisions\n"
+          }
+        }
+      }
+    },
+    "\n### 待办\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\n### Action items\n"
+          }
+        }
+      }
+    },
+    "  ★": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "  ★"
+          }
+        }
+      }
+    },
+    "%@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@"
+          }
+        }
+      }
+    },
+    "%@ 里好像在开会": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looks like a meeting in %@"
+          }
+        }
+      }
+    },
+    "%@×": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@×"
+          }
+        }
+      }
+    },
+    "%@–%@（%lld 分钟）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@–%@ (%lld min)"
+          }
+        }
+      }
+    },
+    "%@已中断：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ was interrupted: %@"
+          }
+        }
+      }
+    },
+    "%@超过 3 秒没有收到音频数据": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has received no audio for over 3 seconds"
+          }
+        }
+      }
+    },
+    "%@（未连接）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (not connected)"
+          }
+        }
+      }
+    },
+    "%@（点击改名）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (click to rename)"
+          }
+        }
+      }
+    },
+    "%@：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: %@"
+          }
+        }
+      }
+    },
+    "%lld 个模型当前没有使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld models are not in use"
+          }
+        }
+      }
+    },
+    "%lld 人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld people"
+          }
+        }
+      }
+    },
+    "%lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld 小时 %lld 分": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hr %lld min"
+          }
+        }
+      }
+    },
+    "%lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%"
+          }
+        }
+      }
+    },
+    "%lld%%%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%%@"
+          }
+        }
+      }
+    },
+    "- 参会：%@\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "- Participants: %@\n"
+          }
+        }
+      }
+    },
+    "- 时间：%@\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "- Time: %@\n"
+          }
+        }
+      }
+    },
+    "/ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/ %@"
+          }
+        }
+      }
+    },
+    "1 小时会议约 %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %lld min per hour of audio"
+          }
+        }
+      }
+    },
+    "1×": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1×"
+          }
+        }
+      }
+    },
+    "AI 纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI Notes"
+          }
+        }
+      }
+    },
+    "API Key": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API Key"
+          }
+        }
+      }
+    },
+    "API Key 只保存在这台 Mac 的钥匙串里，不写入任何文件，也不随 iCloud 同步。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your API key stays in this Mac's Keychain. It isn't written to any file or synced to iCloud."
+          }
+        }
+      }
+    },
+    "API Key 无效，请在设置里检查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The API key is invalid. Check it in Settings."
+          }
+        }
+      }
+    },
+    "FireRedASR2 中英": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FireRedASR2 Chinese & English"
+          }
+        }
+      }
+    },
+    "Moting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moting"
+          }
+        }
+      }
+    },
+    "Moting 的所有文件都在一个文件夹里，可以在这里查看和删除。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All of Moting's files live in one folder. You can review and delete them here."
+          }
+        }
+      }
+    },
+    "Paraformer 中文大模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paraformer Chinese (large)"
+          }
+        }
+      }
+    },
+    "Qwen3-ASR 0.6B（支持热词）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qwen3-ASR 0.6B (hotwords)"
+          }
+        }
+      }
+    },
+    "SenseVoice（中英日韩粤）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SenseVoice (Chinese, English, Japanese, Korean, Cantonese)"
+          }
+        }
+      }
+    },
+    "X-ASR 中英（带标点，支持热词）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X-ASR Chinese & English (punctuation, hotwords)"
+          }
+        }
+      }
+    },
+    "https://…/v1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://…/v1"
+          }
+        }
+      }
+    },
+    "sk-••••••••": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sk-••••••••"
+          }
+        }
+      }
+    },
+    "·": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "·"
+          }
+        }
+      }
+    },
+    "⌥⌘R": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌥⌘R"
+          }
+        }
+      }
+    },
+    "■ 结束": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "■ Stop"
+          }
+        }
+      }
+    },
+    "▶ 继续": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "▶ Resume"
+          }
+        }
+      }
+    },
+    "★": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "★"
+          }
+        }
+      }
+    },
+    "★ 标记": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "★ Mark"
+          }
+        }
+      }
+    },
+    "★ 标记重点": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "★ Mark highlight"
+          }
+        }
+      }
+    },
+    "❚❚ 暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "❚❚ Pause"
+          }
+        }
+      }
+    },
+    "「%@」正在通话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is in a call"
+          }
+        }
+      }
+    },
+    "「%@」通话好像结束了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The %@ call seems to have ended"
+          }
+        }
+      }
+    },
+    "下次开始录音时生效。选定的设备断开时，录音自动改用系统默认，不会中断。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applies the next time you record. If the chosen device disconnects, recording switches to the system default without stopping."
+          }
+        }
+      }
+    },
+    "下载": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloads"
+          }
+        }
+      }
+    },
+    "下载失败：%@。如果你用代理上网，请在「下载」页填写代理地址。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download failed: %@. If you use a proxy, enter its address on the Downloads page."
+          }
+        }
+      }
+    },
+    "下载完成后，本场录音会自动开始显示字幕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions for this recording start automatically once the download finishes"
+          }
+        }
+      }
+    },
+    "不录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't Record"
+          }
+        }
+      }
+    },
+    "中文 Zipformer（2025）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chinese Zipformer (2025)"
+          }
+        }
+      }
+    },
+    "中英双语 Paraformer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chinese & English Paraformer"
+          }
+        }
+      }
+    },
+    "中英双语 Zipformer（2023）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chinese & English Zipformer (2023)"
+          }
+        }
+      }
+    },
+    "为保护隐私，只能使用 https 地址（本机服务除外）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To protect your privacy, only https addresses are allowed (except local services)"
+          }
+        }
+      }
+    },
+    "主窗口、设置和菜单栏面板的明暗；悬浮字幕窗始终是深色，方便叠在会议画面上看。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applies to the main window, Settings and the menu bar panel. The floating captions window is always dark so it stays readable over a meeting."
+          }
+        }
+      }
+    },
+    "人声检测（Silero VAD）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice detection (Silero VAD)"
+          }
+        }
+      }
+    },
+    "什么时候生成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When to generate"
+          }
+        }
+      }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "今天的会议主要讨论三件事：第一是新版本的上线时间，第二是测试环境的搭建，第三是接口文档的评审。请大家会后把各自的待办整理一下，周五之前同步给我。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's meeting covers three things: first, the launch date of the new version; second, setting up the test environment; and third, reviewing the API documentation. After the meeting, please organize your action items and send them to me by Friday."
+          }
+        }
+      }
+    },
+    "代理地址": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy address"
+          }
+        }
+      }
+    },
+    "企业微信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WeCom"
+          }
+        }
+      }
+    },
+    "会上没有明确的待办。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No clear action items from this meeting."
+          }
+        }
+      }
+    },
+    "会中实时字幕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live captions"
+          }
+        }
+      }
+    },
+    "会再次把转写文字发送给 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The transcript will be sent to %@ again"
+          }
+        }
+      }
+    },
+    "会后精准转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post-meeting transcription"
+          }
+        }
+      }
+    },
+    "会后转写在用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In use for transcription"
+          }
+        }
+      }
+    },
+    "会把这场会议的转写文字（不含录音）发送给 %@，生成概要、决策和待办。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sends this meeting's transcript (not the audio) to %@ to generate an overview, decisions and action items."
+          }
+        }
+      }
+    },
+    "会议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meeting"
+          }
+        }
+      }
+    },
+    "会议标题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meeting title"
+          }
+        }
+      }
+    },
+    "会议纪要已生成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meeting notes are ready"
+          }
+        }
+      }
+    },
+    "使用电池时": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On battery"
+          }
+        }
+      }
+    },
+    "使用该服务的 OpenAI 兼容接口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses this service's OpenAI-compatible API"
+          }
+        }
+      }
+    },
+    "例如 127.0.0.1:7897，留空表示不用代理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. 127.0.0.1:7897. Leave empty for no proxy"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "先填写 API Key": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an API key first"
+          }
+        }
+      }
+    },
+    "先配置 AI 纪要服务": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set up an AI notes service first"
+          }
+        }
+      }
+    },
+    "共占用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total"
+          }
+        }
+      }
+    },
+    "关闭时不会自动发送任何内容，在会议的「纪要」页点「生成纪要」才发送。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When off, nothing is sent automatically. Content is only sent when you click Generate Notes on a meeting's Notes tab."
+          }
+        }
+      }
+    },
+    "关闭（转写在后台继续）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close (transcription continues in the background)"
+          }
+        }
+      }
+    },
+    "其他": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other"
+          }
+        }
+      }
+    },
+    "写盘失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't write to disk: %@"
+          }
+        }
+      }
+    },
+    "决策": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisions"
+          }
+        }
+      }
+    },
+    "准确率 %@%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accuracy %@%%"
+          }
+        }
+      }
+    },
+    "准确率 未实测": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accuracy not measured"
+          }
+        }
+      }
+    },
+    "准确率和速度来自在这台 Mac 上对 400 条真实会议语音的实测；没有实测过的模型不显示数字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accuracy and speed were measured on this Mac with 400 real meeting clips. Models that haven't been measured show no numbers."
+          }
+        }
+      }
+    },
+    "出错了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong"
+          }
+        }
+      }
+    },
+    "创建转写记录失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't create the transcript: %@"
+          }
+        }
+      }
+    },
+    "删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "删除 %lld 个模型，释放 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %lld models and free %@"
+          }
+        }
+      }
+    },
+    "删除 %lld 场": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %lld"
+          }
+        }
+      }
+    },
+    "删除 %lld 场会议…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %lld Meetings…"
+          }
+        }
+      }
+    },
+    "删除 %lld 场会议？将释放 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %lld meetings? This frees %@"
+          }
+        }
+      }
+    },
+    "删除 Moting 全部数据…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete All Moting Data…"
+          }
+        }
+      }
+    },
+    "删除 Moting 全部数据？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete all Moting data?"
+          }
+        }
+      }
+    },
+    "删除「%@」？将释放 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete “%@”? This frees %@"
+          }
+        }
+      }
+    },
+    "删除会议…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete Meeting…"
+          }
+        }
+      }
+    },
+    "删除全部录音、转写稿、模型、设置和 API Key，然后退出": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletes all recordings, transcripts, models, settings and your API key, then quits"
+          }
+        }
+      }
+    },
+    "删除失败\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't delete\n"
+          }
+        }
+      }
+    },
+    "加载识别模型失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load the speech model: %@"
+          }
+        }
+      }
+    },
+    "占用 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Using %@"
+          }
+        }
+      }
+    },
+    "卸载 Moting 时，删除这个文件夹即可清理干净。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To remove Moting completely, delete this folder when you uninstall."
+          }
+        }
+      }
+    },
+    "发现会议时提醒录音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offer to record when a meeting starts"
+          }
+        }
+      }
+    },
+    "取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "只能用 https，本机服务除外": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https only, except local services"
+          }
+        }
+      }
+    },
+    "可以关掉这个窗口，完成后会通知你。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can close this window. You'll be notified when it's done."
+          }
+        }
+      }
+    },
+    "可以释放 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ can be freed"
+          }
+        }
+      }
+    },
+    "可直接改名；测试连接后能从实际可用的模型里选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type a name, or test the connection to choose from the available models"
+          }
+        }
+      }
+    },
+    "名字（留空恢复默认）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name (leave empty to reset)"
+          }
+        }
+      }
+    },
+    "启动失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't start: %@"
+          }
+        }
+      }
+    },
+    "回到最新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jump to Latest"
+          }
+        }
+      }
+    },
+    "在 %@ 控制台创建：": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create one in the %@ console:"
+          }
+        }
+      }
+    },
+    "在 Finder 中显示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show in Finder"
+          }
+        }
+      }
+    },
+    "在主窗口按会议删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete by meeting in the main window"
+          }
+        }
+      }
+    },
+    "在主窗口查看这场会议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View this meeting in the main window"
+          }
+        }
+      }
+    },
+    "在左侧选择会议，查看转写稿、回放录音。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a meeting on the left to read its transcript and play the recording."
+          }
+        }
+      }
+    },
+    "在用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In use"
+          }
+        }
+      }
+    },
+    "在用模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models in use"
+          }
+        }
+      }
+    },
+    "在用的模型不会被删除。之后需要时可以在「识别模型」里重新下载。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models in use won't be deleted. You can download others again from Speech Models."
+          }
+        }
+      }
+    },
+    "在设置里选择服务（DeepSeek、通义千问、Kimi 等）并填写 API Key 后，就能根据转写稿生成概要、决策和待办。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a service (DeepSeek, Qwen, Kimi and others) and enter an API key in Settings to generate an overview, decisions and action items from transcripts."
+          }
+        }
+      }
+    },
+    "声纹已保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voiceprint saved"
+          }
+        }
+      }
+    },
+    "声纹带播放进度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playback progress"
+          }
+        }
+      }
+    },
+    "声纹（3D-Speaker CAM++ 中英）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voiceprint (3D-Speaker CAM++ Chinese & English)"
+          }
+        }
+      }
+    },
+    "外观": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "外观、什么时候提醒录音，以及录音结束后怎么处理。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance, recording prompts and what happens after a recording ends."
+          }
+        }
+      }
+    },
+    "失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed"
+          }
+        }
+      }
+    },
+    "好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "存储": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storage"
+          }
+        }
+      }
+    },
+    "完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "完成后会替换实时草稿，并通知你。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The live draft is replaced when this finishes, and you'll be notified."
+          }
+        }
+      }
+    },
+    "实时字幕在用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In use for live captions"
+          }
+        }
+      }
+    },
+    "实时字幕模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live caption models"
+          }
+        }
+      }
+    },
+    "实时字幕草稿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live caption draft"
+          }
+        }
+      }
+    },
+    "实时字幕需要先下载识别模型（约 %@）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live captions need a speech model (about %@)"
+          }
+        }
+      }
+    },
+    "实时草稿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live Draft"
+          }
+        }
+      }
+    },
+    "对方": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Others"
+          }
+        }
+      }
+    },
+    "对方 ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Others "
+          }
+        }
+      }
+    },
+    "对方 · 下（按说话人着色）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Others · below (colored by speaker)"
+          }
+        }
+      }
+    },
+    "对方一直没有声音。如果会议里有人在说话，请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sound from other participants. If someone is talking, allow Moting in System Settings → Privacy & Security → Screen & System Audio Recording → System Audio Recording Only"
+          }
+        }
+      }
+    },
+    "对方声音（系统音频）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Others (system audio)"
+          }
+        }
+      }
+    },
+    "导出": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
+          }
+        }
+      }
+    },
+    "导出为 Markdown": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export as Markdown"
+          }
+        }
+      }
+    },
+    "导出失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't export: %@"
+          }
+        }
+      }
+    },
+    "展开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expand"
+          }
+        }
+      }
+    },
+    "已下载 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloaded · %@"
+          }
+        }
+      }
+    },
+    "已从服务获取可用模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Available models loaded from the service"
+          }
+        }
+      }
+    },
+    "已保存在钥匙串": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved in Keychain"
+          }
+        }
+      }
+    },
+    "已完成的部分会保留，继续时接着处理。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finished work is kept and picks up where it left off."
+          }
+        }
+      }
+    },
+    "已开启：长于半秒的静音只停半秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On: silences longer than half a second are cut to half a second"
+          }
+        }
+      }
+    },
+    "已把转写文字发送给 %@，通常几十秒。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The transcript was sent to %@. This usually takes under a minute."
+          }
+        }
+      }
+    },
+    "已暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused"
+          }
+        }
+      }
+    },
+    "已替换实时草稿，点这里查看。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The live draft has been replaced. Click to view."
+          }
+        }
+      }
+    },
+    "已登记你的声纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your voiceprint is enrolled"
+          }
+        }
+      }
+    },
+    "平时通过 Clash 等代理上网、但没有打开系统代理时，下载可能很慢或失败，在这里填上本机代理地址。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you use a proxy such as Clash without enabling the system proxy, downloads may be slow or fail. Enter the local proxy address here."
+          }
+        }
+      }
+    },
+    "开会时点右上角的「开始录音」，或按 ⌥⌘R。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When a meeting starts, click Record at the top right or press ⌥⌘R."
+          }
+        }
+      }
+    },
+    "开会时点悬浮窗或菜单栏里的 ★，会在这里留下时间点。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click ★ in the floating window or menu bar during a meeting to save a moment here."
+          }
+        }
+      }
+    },
+    "开启后跳过长时间没人说话的部分": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip long stretches where nobody is talking"
+          }
+        }
+      }
+    },
+    "开始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        }
+      }
+    },
+    "开始录音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record"
+          }
+        }
+      }
+    },
+    "开始录音时，用日历里正在开的会议标题代替「会议 日期 时间」。日历只在这台 Mac 上读取，不上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When recording starts, use the title of the current calendar event instead of “Meeting date time”. Your calendar is read only on this Mac and never uploaded."
+          }
+        }
+      }
+    },
+    "开始录音（⌥⌘R，任何 app 里都能按）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start recording (⌥⌘R works in any app)"
+          }
+        }
+      }
+    },
+    "当前精准转写模型「%@」不支持热词。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The current transcription model, %@, doesn't support hotwords."
+          }
+        }
+      }
+    },
+    "录音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordings"
+          }
+        }
+      }
+    },
+    "录音 %@ · 模型 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordings %@ · Models %@"
+          }
+        }
+      }
+    },
+    "录音中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording"
+          }
+        }
+      }
+    },
+    "录音中断": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interrupted"
+          }
+        }
+      }
+    },
+    "录音出错：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording error: %@"
+          }
+        }
+      }
+    },
+    "录音太短，已丢弃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording too short, discarded"
+          }
+        }
+      }
+    },
+    "录音文件、转写稿和会议记录会被永久删除，无法恢复。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio, transcripts and meeting records will be permanently deleted. This can't be undone."
+          }
+        }
+      }
+    },
+    "录音结束后可重启": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart after recording"
+          }
+        }
+      }
+    },
+    "录音结束后自动精准转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribe automatically after recording"
+          }
+        }
+      }
+    },
+    "录音还在继续。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still recording."
+          }
+        }
+      }
+    },
+    "待办": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Action Items"
+          }
+        }
+      }
+    },
+    "待转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting"
+          }
+        }
+      }
+    },
+    "微信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WeChat"
+          }
+        }
+      }
+    },
+    "我": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me"
+          }
+        }
+      }
+    },
+    "我 ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me "
+          }
+        }
+      }
+    },
+    "我 · 上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me · above"
+          }
+        }
+      }
+    },
+    "我方声音（麦克风）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me (microphone)"
+          }
+        }
+      }
+    },
+    "我的声纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Voiceprint"
+          }
+        }
+      }
+    },
+    "打开 Moting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Moting"
+          }
+        }
+      }
+    },
+    "打开设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "把「%@」改成真实姓名，转写稿和导出会同步更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename “%@” to a real name. The transcript and exports update too."
+          }
+        }
+      }
+    },
+    "接通电源后自动精准转写。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribes automatically when plugged in."
+          }
+        }
+      }
+    },
+    "提取声纹失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't extract the voiceprint: %@"
+          }
+        }
+      }
+    },
+    "搜索会议和转写内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search meetings and transcripts"
+          }
+        }
+      }
+    },
+    "播放速度（点击切换 1× / 1.25× / 1.5× / 2×）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playback speed (click to cycle 1× / 1.25× / 1.5× / 2×)"
+          }
+        }
+      }
+    },
+    "支持热词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hotwords"
+          }
+        }
+      }
+    },
+    "收起": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collapse"
+          }
+        }
+      }
+    },
+    "收起模型原文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Raw Output"
+          }
+        }
+      }
+    },
+    "改名失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't rename: %@"
+          }
+        }
+      }
+    },
+    "数据不出这台 Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data stays on this Mac"
+          }
+        }
+      }
+    },
+    "数据库、声纹、热词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Database, voiceprint, hotwords"
+          }
+        }
+      }
+    },
+    "数据库、声纹与热词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Database, voiceprint and hotwords"
+          }
+        }
+      }
+    },
+    "新设备启动失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't start the new device: %@"
+          }
+        }
+      }
+    },
+    "无法打开麦克风：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open the microphone: %@"
+          }
+        }
+      }
+    },
+    "无法播放：%@。请稍后再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't play: %@. Try again later."
+          }
+        }
+      }
+    },
+    "昨天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yesterday"
+          }
+        }
+      }
+    },
+    "显示字幕窗": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Captions"
+          }
+        }
+      }
+    },
+    "智谱 GLM": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zhipu GLM"
+          }
+        }
+      }
+    },
+    "暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      }
+    },
+    "暂无转写内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No transcript yet"
+          }
+        }
+      }
+    },
+    "更多": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More"
+          }
+        }
+      }
+    },
+    "更换": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change"
+          }
+        }
+      }
+    },
+    "更早": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Earlier"
+          }
+        }
+      }
+    },
+    "最近": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent"
+          }
+        }
+      }
+    },
+    "服务": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service"
+          }
+        }
+      }
+    },
+    "服务地址": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service address"
+          }
+        }
+      }
+    },
+    "服务地址不是有效的网址": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service address isn't a valid URL"
+          }
+        }
+      }
+    },
+    "服务地址无效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid service address"
+          }
+        }
+      }
+    },
+    "未下载的离线模型在第一次精准转写时会自动下载。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models that aren't downloaded yet download automatically the first time they're needed."
+          }
+        }
+      }
+    },
+    "未使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not in use"
+          }
+        }
+      }
+    },
+    "未使用模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unused models"
+          }
+        }
+      }
+    },
+    "未知错误": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown error"
+          }
+        }
+      }
+    },
+    "本周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Week"
+          }
+        }
+      }
+    },
+    "本机 Ollama": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local Ollama"
+          }
+        }
+      }
+    },
+    "查看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View"
+          }
+        }
+      }
+    },
+    "查看模型原文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Raw Output"
+          }
+        }
+      }
+    },
+    "标点（CT-Transformer 中英）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Punctuation (CT-Transformer Chinese & English)"
+          }
+        }
+      }
+    },
+    "标记": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marks"
+          }
+        }
+      }
+    },
+    "标记重点": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark highlight"
+          }
+        }
+      }
+    },
+    "根据转写稿生成概要、决策和待办。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate an overview, decisions and action items from transcripts."
+          }
+        }
+      }
+    },
+    "概要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overview"
+          }
+        }
+      }
+    },
+    "模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model"
+          }
+        }
+      }
+    },
+    "模型下载失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't download the model: %@"
+          }
+        }
+      }
+    },
+    "模型从 hf-mirror、HuggingFace 或 GitHub 下载。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models download from hf-mirror, Hugging Face or GitHub."
+          }
+        }
+      }
+    },
+    "模型名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model name"
+          }
+        }
+      }
+    },
+    "模型返回的内容无法解析，已保存原文。可以稍后重新生成。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't read the model's response. The raw output was saved, and you can regenerate later."
+          }
+        }
+      }
+    },
+    "正在下载识别模型… %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading speech model… %lld%%"
+          }
+        }
+      }
+    },
+    "正在使用电池": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On battery"
+          }
+        }
+      }
+    },
+    "正在使用电池，接通电源后自动开始。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On battery. Starts automatically when plugged in."
+          }
+        }
+      }
+    },
+    "正在加载识别模型…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading speech model…"
+          }
+        }
+      }
+    },
+    "正在启动…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting…"
+          }
+        }
+      }
+    },
+    "正在录音… %lld 秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording… %lld s"
+          }
+        }
+      }
+    },
+    "正在提取声纹…（首次需要下载约 27MB 的声纹模型）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extracting voiceprint… (the first time downloads a model of about 27 MB)"
+          }
+        }
+      }
+    },
+    "正在测试…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Testing…"
+          }
+        }
+      }
+    },
+    "正在生成纪要…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generating notes…"
+          }
+        }
+      }
+    },
+    "正在用本机模型生成，可能需要几分钟。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generating with the local model. This may take a few minutes."
+          }
+        }
+      }
+    },
+    "正在精准转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing"
+          }
+        }
+      }
+    },
+    "正在精准转写 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing %lld%%"
+          }
+        }
+      }
+    },
+    "正在结束…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopping…"
+          }
+        }
+      }
+    },
+    "每场会议转写完成后，会自动把转写文字发给 %@。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After each meeting is transcribed, the transcript is sent to %@ automatically."
+          }
+        }
+      }
+    },
+    "每场会议转写完成后，会自动把转写文字发给本机模型。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After each meeting is transcribed, the transcript is sent to the local model automatically."
+          }
+        }
+      }
+    },
+    "每行一个：人名、产品名、术语。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One per line: names, products, terms."
+          }
+        }
+      }
+    },
+    "没有可用的输入设备": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No input device available"
+          }
+        }
+      }
+    },
+    "没有日历权限。请在系统设置 › 隐私与安全性 › 日历 里允许 Moting，再打开这里。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No calendar access. Allow Moting in System Settings › Privacy & Security › Calendars, then turn this on."
+          }
+        }
+      }
+    },
+    "没有标记": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No marks"
+          }
+        }
+      }
+    },
+    "没有系统音频录制权限。请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No system audio permission. Allow Moting in System Settings → Privacy & Security → Screen & System Audio Recording → System Audio Recording Only."
+          }
+        }
+      }
+    },
+    "没有麦克风权限。请到 系统设置 → 隐私与安全性 → 麦克风 中允许 Moting。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No microphone permission. Allow Moting in System Settings → Privacy & Security → Microphone."
+          }
+        }
+      }
+    },
+    "浅色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        }
+      }
+    },
+    "测试连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test Connection"
+          }
+        }
+      }
+    },
+    "深色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
+          }
+        }
+      }
+    },
+    "清理未使用的模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean Up Unused Models"
+          }
+        }
+      }
+    },
+    "清理未使用的模型？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean up unused models?"
+          }
+        }
+      }
+    },
+    "点「开始」后，用平时开会的音量和距离朗读下面这段话，约 10 秒。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click Start, then read the text below aloud at your usual meeting volume and distance. It takes about 10 seconds."
+          }
+        }
+      }
+    },
+    "点击改名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click to rename"
+          }
+        }
+      }
+    },
+    "点这里到主窗口重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click to retry in the main window."
+          }
+        }
+      }
+    },
+    "热词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hotwords"
+          }
+        }
+      }
+    },
+    "热词与声纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hotwords & Voiceprint"
+          }
+        }
+      }
+    },
+    "版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "现在处理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Process Now"
+          }
+        }
+      }
+    },
+    "生成会议纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate meeting notes"
+          }
+        }
+      }
+    },
+    "生成纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate Notes"
+          }
+        }
+      }
+    },
+    "生成纪要时，会把这场会议的转写文字（含说话人名字和时间）发送给 %@。录音不会上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generating notes sends this meeting's transcript (with speaker names and times) to %@. Audio is never uploaded."
+          }
+        }
+      }
+    },
+    "用日历事件给会议命名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name meetings from calendar events"
+          }
+        }
+      }
+    },
+    "用本机的 %@ 根据转写文字生成概要、决策和待办，数据不出这台 Mac。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses %@ on this Mac to generate an overview, decisions and action items. Your data stays on this Mac."
+          }
+        }
+      }
+    },
+    "用离线大模型对整段录音重新识别，生成正式稿（草稿保留）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-recognize the whole recording with the offline model to create the final transcript (the draft is kept)"
+          }
+        }
+      }
+    },
+    "用离线大模型识别整段录音，生成带说话人的转写稿。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recognize the whole recording with the offline model to create a transcript with speakers."
+          }
+        }
+      }
+    },
+    "用离线大模型重新识别整段录音，生成带说话人的正式稿。关闭后可在会议详情里手动开始。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-recognizes the whole recording with the offline model to create a final transcript with speakers. When off, start it manually from the meeting."
+          }
+        }
+      }
+    },
+    "由 %@ 生成 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generated by %@ · %@"
+          }
+        }
+      }
+    },
+    "界面语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
+    "登记后，精准转写只保留麦克风里你自己的声音，旁边同事说话会被去掉。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once enrolled, transcription keeps only your own voice from the microphone. Nearby colleagues are removed."
+          }
+        }
+      }
+    },
+    "登记声纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enroll Voiceprint"
+          }
+        }
+      }
+    },
+    "登记我的声纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enroll My Voiceprint"
+          }
+        }
+      }
+    },
+    "立即处理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Process immediately"
+          }
+        }
+      }
+    },
+    "立即重启": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart Now"
+          }
+        }
+      }
+    },
+    "等待接通电源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for power"
+          }
+        }
+      }
+    },
+    "等待说话…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for speech…"
+          }
+        }
+      }
+    },
+    "等接通电源再处理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wait until plugged in"
+          }
+        }
+      }
+    },
+    "管理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage"
+          }
+        }
+      }
+    },
+    "粘贴 API Key": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste API key"
+          }
+        }
+      }
+    },
+    "精准": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Final"
+          }
+        }
+      }
+    },
+    "精准转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribe"
+          }
+        }
+      }
+    },
+    "精准转写会持续占用 CPU 几分钟，耗电较多。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription keeps the CPU busy for a few minutes and uses more battery."
+          }
+        }
+      }
+    },
+    "精准转写失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription failed"
+          }
+        }
+      }
+    },
+    "精准转写失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription failed: %@"
+          }
+        }
+      }
+    },
+    "精准转写完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription complete"
+          }
+        }
+      }
+    },
+    "精准转写完成后自动生成纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate notes automatically after transcription"
+          }
+        }
+      }
+    },
+    "精准转写已完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription complete"
+          }
+        }
+      }
+    },
+    "精准转写已暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription paused"
+          }
+        }
+      }
+    },
+    "精准转写已暂停 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription paused %lld%%"
+          }
+        }
+      }
+    },
+    "精准转写模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcription models"
+          }
+        }
+      }
+    },
+    "系统音频重建失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't restart system audio: %@"
+          }
+        }
+      }
+    },
+    "系统音频（对方）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System audio (others)"
+          }
+        }
+      }
+    },
+    "约 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@"
+          }
+        }
+      }
+    },
+    "纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes"
+          }
+        }
+      }
+    },
+    "纪要服务暂时不可用（%lld），稍后再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The notes service is temporarily unavailable (%lld). Try again later."
+          }
+        }
+      }
+    },
+    "纪要服务返回错误 %lld。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The notes service returned error %lld."
+          }
+        }
+      }
+    },
+    "纪要由这台 Mac 上的模型生成，转写文字不会离开这台电脑。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes are generated by a model on this Mac. Your transcript never leaves this computer."
+          }
+        }
+      }
+    },
+    "结束": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
+    "结束录音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Recording"
+          }
+        }
+      }
+    },
+    "继续": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume"
+          }
+        }
+      }
+    },
+    "继续录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Recording"
+          }
+        }
+      }
+    },
+    "缺少转写结果，请重新转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The transcript is missing. Please transcribe again"
+          }
+        }
+      }
+    },
+    "腾讯会议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tencent Meeting"
+          }
+        }
+      }
+    },
+    "腾讯会议、飞书、钉钉、Zoom 等开始用麦克风时，在屏幕右上角问要不要录；通话结束时提醒结束录音。只看哪个 app 在用麦克风，不会自动开始录音。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When Tencent Meeting, Feishu, DingTalk, Zoom or similar apps start using the microphone, Moting asks at the top right whether to record, and reminds you to stop when the call ends. It only checks which app is using the microphone and never starts recording on its own."
+          }
+        }
+      }
+    },
+    "自定义": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom"
+          }
+        }
+      }
+    },
+    "要录下这场会议吗？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record this meeting?"
+          }
+        }
+      }
+    },
+    "让精准转写认得你们的专有名词，并去掉旁边无关的人声。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teach transcription your terminology and remove unrelated voices nearby."
+          }
+        }
+      }
+    },
+    "议题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topics"
+          }
+        }
+      }
+    },
+    "设备 %u 没有输入声道": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device %u has no input channels"
+          }
+        }
+      }
+    },
+    "设置…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings…"
+          }
+        }
+      }
+    },
+    "识别模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech Models"
+          }
+        }
+      }
+    },
+    "识别模型正在准备，字幕马上开始…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing the speech model. Captions will start soon…"
+          }
+        }
+      }
+    },
+    "说话人 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speaker %lld"
+          }
+        }
+      }
+    },
+    "说话人分段（pyannote 3.0）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speaker segmentation (pyannote 3.0)"
+          }
+        }
+      }
+    },
+    "说话人改名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename Speaker"
+          }
+        }
+      }
+    },
+    "请求太频繁，稍后再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many requests. Try again later."
+          }
+        }
+      }
+    },
+    "读取会议列表失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load meetings: %@"
+          }
+        }
+      }
+    },
+    "豆包": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doubao"
+          }
+        }
+      }
+    },
+    "账户余额不足，请到服务商处充值。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insufficient balance. Top up with your provider."
+          }
+        }
+      }
+    },
+    "跟随系统": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        }
+      }
+    },
+    "跟随系统（%@）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System (%@)"
+          }
+        }
+      }
+    },
+    "跳过静音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip Silence"
+          }
+        }
+      }
+    },
+    "转写中 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing %lld%%"
+          }
+        }
+      }
+    },
+    "转写完成后可以生成纪要。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can generate notes after transcription."
+          }
+        }
+      }
+    },
+    "转写稿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcript"
+          }
+        }
+      }
+    },
+    "辅助模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support models"
+          }
+        }
+      }
+    },
+    "辅助模型（人声检测、说话人分离、声纹、标点）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support models (voice detection, speaker separation, voiceprint, punctuation)"
+          }
+        }
+      }
+    },
+    "输入设备已变化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The input device changed"
+          }
+        }
+      }
+    },
+    "还没有会议记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No meetings yet"
+          }
+        }
+      }
+    },
+    "还没有登记声纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No voiceprint enrolled"
+          }
+        }
+      }
+    },
+    "还没有转写内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No transcript yet"
+          }
+        }
+      }
+    },
+    "还没有配置 AI 纪要服务，请在设置里选择服务并填写 API Key。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No AI notes service is set up. Choose a service and enter an API key in Settings."
+          }
+        }
+      }
+    },
+    "这会永久删除 %@ 的数据，无法恢复。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This permanently deletes %@ of data and can't be undone."
+          }
+        }
+      }
+    },
+    "这场会议还没有转写内容。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This meeting has no transcript yet."
+          }
+        }
+      }
+    },
+    "这次只录了 %lld 秒，没有保存，也不会转写。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only %lld seconds were recorded, so it wasn't saved or transcribed."
+          }
+        }
+      }
+    },
+    "连不上纪要服务：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't reach the notes service: %@"
+          }
+        }
+      }
+    },
+    "连接正常": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected"
+          }
+        }
+      }
+    },
+    "连接正常，有 %lld 个可用模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected. %lld models available"
+          }
+        }
+      }
+    },
+    "退出": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit"
+          }
+        }
+      }
+    },
+    "选择一场会议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a Meeting"
+          }
+        }
+      }
+    },
+    "选择模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Model"
+          }
+        }
+      }
+    },
+    "选用这个模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use This Model"
+          }
+        }
+      }
+    },
+    "透明度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacity"
+          }
+        }
+      }
+    },
+    "通义千问": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qwen"
+          }
+        }
+      }
+    },
+    "通用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        }
+      }
+    },
+    "重命名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename"
+          }
+        }
+      }
+    },
+    "重命名…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename…"
+          }
+        }
+      }
+    },
+    "重命名会议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename Meeting"
+          }
+        }
+      }
+    },
+    "重新生成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regenerate"
+          }
+        }
+      }
+    },
+    "重新登记": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enroll Again"
+          }
+        }
+      }
+    },
+    "重新转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribe Again"
+          }
+        }
+      }
+    },
+    "重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        }
+      }
+    },
+    "钉钉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DingTalk"
+          }
+        }
+      }
+    },
+    "钥匙串操作失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain error: %@"
+          }
+        }
+      }
+    },
+    "需要先安装并运行 Ollama，下载好模型。本机模型较慢，长会议会分段处理。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install and run Ollama and download a model first. Local models are slower, so long meetings are processed in parts."
+          }
+        }
+      }
+    },
+    "音量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume"
+          }
+        }
+      }
+    },
+    "音频设备不可用：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio device unavailable: %@"
+          }
+        }
+      }
+    },
+    "音频输出没有启动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio output didn't start"
+          }
+        }
+      }
+    },
+    "音频输出没有启动：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio output didn't start: %@"
+          }
+        }
+      }
+    },
+    "飞书": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feishu"
+          }
+        }
+      }
+    },
+    "麦克风": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone"
+          }
+        }
+      }
+    },
+    "麦克风一直没有声音，请检查麦克风是否被静音或权限是否被关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sound from the microphone. Check whether it's muted or its permission is off"
+          }
+        }
+      }
+    },
+    "麦克风一路与你的声纹匹配度偏低，这次没有过滤旁人声音。可以在设置里重新登记声纹。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The microphone track didn't closely match your voiceprint, so nearby voices weren't removed this time. You can enroll again in Settings."
+          }
+        }
+      }
+    },
+    "麦克风（我）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone (me)"
+          }
+        }
+      }
+    },
+    "默认跟随系统语言。切换后重启 Moting 生效；录音和转写内容不受影响。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follows the system language by default. Restart Moting to apply a change. Recordings and transcripts aren't affected."
+          }
+        }
+      }
+    },
+    "默认输出设备已变化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The default output device changed"
+          }
+        }
+      }
+    },
+    "（%@）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " (%@)"
+          }
+        }
+      }
+    },
+    "（暂无转写内容）\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(No transcript yet)\n"
+          }
+        }
+      }
+    },
+    "（这段时间没有转写内容）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(No transcript for this period)"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

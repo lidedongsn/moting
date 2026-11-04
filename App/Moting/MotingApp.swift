@@ -1,3 +1,4 @@
+import MotingCore
 import SwiftUI
 
 @main
@@ -18,7 +19,7 @@ struct MotingApp: App {
             recorder = RecordingController(env: env)
         } catch {
             env = nil
-            bootError = "启动失败：\(error.localizedDescription)"
+            bootError = L("启动失败：\(error.localizedDescription)")
             recorder = RecordingController(env: nil)
         }
         _recorder = StateObject(wrappedValue: recorder)

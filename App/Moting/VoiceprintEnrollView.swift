@@ -1,5 +1,6 @@
 import MotingASR
 import MotingCapture
+import MotingCore
 import SwiftUI
 
 /// 登记声纹：朗读一段文字约 10 秒，提取声纹保存
@@ -17,7 +18,7 @@ struct VoiceprintEnrollView: View {
     /// 录音计时与提取：取消时一并取消，不能拿录了一半的声音覆盖已有声纹
     @State private var work: Task<Void, Never>?
 
-    private static let script = "今天的会议主要讨论三件事：第一是新版本的上线时间，第二是测试环境的搭建，第三是接口文档的评审。请大家会后把各自的待办整理一下，周五之前同步给我。"
+    private static let script = L("今天的会议主要讨论三件事：第一是新版本的上线时间，第二是测试环境的搭建，第三是接口文档的评审。请大家会后把各自的待办整理一下，周五之前同步给我。")
     private static let duration: TimeInterval = 10
 
     var body: some View {
@@ -53,7 +54,7 @@ struct VoiceprintEnrollView: View {
             }
             HStack {
                 Spacer()
-                Button(phase == .done ? "完成" : "取消") {
+                Button(phase == .done ? L("完成") : L("取消")) {
                     work?.cancel()
                     mic?.stop()
                     onDone()
@@ -85,7 +86,7 @@ struct VoiceprintEnrollView: View {
                 }
             }
         } catch {
-            phase = .failed("无法打开麦克风：\(error.localizedDescription)")
+            phase = .failed(L("无法打开麦克风：\(error.localizedDescription)"))
             return
         }
         work = Task { @MainActor in
@@ -124,7 +125,7 @@ struct VoiceprintEnrollView: View {
             try VoiceprintMatcher.save(try result.get(), to: url)
             phase = .done
         } catch {
-            phase = .failed("提取声纹失败：\(error.localizedDescription)")
+            phase = .failed(L("提取声纹失败：\(error.localizedDescription)"))
         }
     }
 }

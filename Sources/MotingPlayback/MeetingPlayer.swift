@@ -1,6 +1,7 @@
 import AVFoundation
 import Combine
 import MotingCapture
+import MotingCore
 import MotingObjCSupport
 
 /// 会议录音回放：把"我""对方"两路实时混音播放，按需分段读取文件。
@@ -80,11 +81,11 @@ public final class MeetingPlayer: ObservableObject {
                 try engine.start()
             }
         } catch {
-            fail("音频输出没有启动：\(error.localizedDescription)")
+            fail(L("音频输出没有启动：\(error.localizedDescription)"))
             return
         }
         guard engine.isRunning else {
-            fail("音频输出没有启动")
+            fail(L("音频输出没有启动"))
             return
         }
         if queued == 0 { restart(at: Int(currentTime * Self.rate)) }
@@ -125,7 +126,7 @@ public final class MeetingPlayer: ObservableObject {
     // MARK: - 内部
 
     private func fail(_ reason: String) {
-        lastError = "无法播放：\(reason)。请稍后再试。"
+        lastError = L("无法播放：\(reason)。请稍后再试。")
         engineStopped()
     }
 

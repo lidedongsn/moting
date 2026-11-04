@@ -17,7 +17,7 @@ struct SummaryView: View {
                 VStack(spacing: 10) {
                     ProgressView().controlSize(.small)
                     Text("正在生成纪要…").font(.system(size: 13, weight: .semibold))
-                    Text(model.service.isLocal ? "正在用本机模型生成，可能需要几分钟。" : "已把转写文字发送给 \(model.service.name)，通常几十秒。").font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(model.service.isLocal ? L("正在用本机模型生成，可能需要几分钟。") : L("已把转写文字发送给 \(model.service.name)，通常几十秒。")).font(.system(size: 12)).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let s = stored?.summary {
@@ -66,19 +66,19 @@ struct SummaryView: View {
 
     private func mainColumn(_ s: MeetingSummary) -> some View {
         VStack(alignment: .leading, spacing: 22) {
-            section("概要") {
+            section(L("概要")) {
                 Text(s.overview).font(.system(size: 14.5)).lineSpacing(5).textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if !s.decisions.isEmpty {
-                section("决策") {
+                section(L("决策")) {
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(s.decisions, id: \.self) { bullet($0) }
                     }
                 }
             }
             if !s.topics.isEmpty {
-                section("议题") {
+                section(L("议题")) {
                     VStack(alignment: .leading, spacing: 14) {
                         ForEach(s.topics, id: \.title) { t in
                             VStack(alignment: .leading, spacing: 5) {
@@ -93,7 +93,7 @@ struct SummaryView: View {
     }
 
     private func todoColumn(_ s: MeetingSummary) -> some View {
-        section("待办") {
+        section(L("待办")) {
             if s.todos.isEmpty {
                 Text("会上没有明确的待办。").font(.system(size: 13)).foregroundStyle(.tertiary)
             } else {
@@ -163,8 +163,8 @@ struct SummaryView: View {
             } else {
                 Text("生成会议纪要").font(.system(size: 17, weight: .semibold))
                 Text(model.service.isLocal
-                     ? "用本机的 \(model.service.model) 根据转写文字生成概要、决策和待办，数据不出这台 Mac。"
-                     : "会把这场会议的转写文字（不含录音）发送给 \(model.service.name)，生成概要、决策和待办。")
+                     ? L("用本机的 \(model.service.model) 根据转写文字生成概要、决策和待办，数据不出这台 Mac。")
+                     : L("会把这场会议的转写文字（不含录音）发送给 \(model.service.name)，生成概要、决策和待办。"))
                     .font(.system(size: 13)).foregroundStyle(.secondary)
                 Button { model.generate(meetingID) } label: { Label("生成纪要", systemImage: "sparkles") }
                     .buttonStyle(AccentPillStyle())
@@ -174,7 +174,7 @@ struct SummaryView: View {
                 Text(error).font(.system(size: 12)).foregroundStyle(.orange).padding(.top, 4)
             }
             if let raw = stored?.raw, stored?.summary == nil {
-                Button(showRaw ? "收起模型原文" : "查看模型原文") { showRaw.toggle() }.buttonStyle(.link).font(.system(size: 12))
+                Button(showRaw ? L("收起模型原文") : L("查看模型原文")) { showRaw.toggle() }.buttonStyle(.link).font(.system(size: 12))
                 if showRaw {
                     ScrollView { Text(raw).font(.system(size: 12, design: .monospaced)).textSelection(.enabled) }
                         .frame(maxWidth: 520, maxHeight: 160)

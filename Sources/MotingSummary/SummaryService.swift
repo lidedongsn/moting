@@ -1,4 +1,5 @@
 import Foundation
+import MotingCore
 
 /// AI 纪要服务配置（OpenAI 兼容的 Chat Completions 接口）。API Key 不在这里，存钥匙串
 public struct SummaryService: Codable, Equatable, Sendable {
@@ -50,21 +51,21 @@ public struct SummaryService: Codable, Equatable, Sendable {
 
     public static let presets: [SummaryService] = [
         deepSeek,
-        SummaryService(id: "qwen", name: "通义千问", baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus",
+        SummaryService(id: "qwen", name: L("通义千问"), baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus",
                        suggestedModels: ["qwen-plus", "qwen-max", "qwen-turbo"], keyPage: "https://bailian.console.aliyun.com/"),
         SummaryService(id: "kimi", name: "Kimi", baseURL: "https://api.moonshot.cn/v1", model: "kimi-k3.1-pro",
                        suggestedModels: ["kimi-k3.1-pro", "kimi-k3.1-pro-highspeed"], keyPage: "https://platform.kimi.com/console/api-keys"),
-        SummaryService(id: "zhipu", name: "智谱 GLM", baseURL: "https://open.bigmodel.cn/api/paas/v4", model: "glm-5.3",
+        SummaryService(id: "zhipu", name: L("智谱 GLM"), baseURL: "https://open.bigmodel.cn/api/paas/v4", model: "glm-5.3",
                        suggestedModels: ["glm-5.3", "glm-5.3-flash"], keyPage: "https://open.bigmodel.cn/usercenter/apikeys"),
-        SummaryService(id: "doubao", name: "豆包", baseURL: "https://ark.cn-beijing.volces.com/api/v3", model: "doubao-seed-2-1-pro-260915",
+        SummaryService(id: "doubao", name: L("豆包"), baseURL: "https://ark.cn-beijing.volces.com/api/v3", model: "doubao-seed-2-1-pro-260915",
                        suggestedModels: ["doubao-seed-2-1-pro-260915"], keyPage: "https://console.volcengine.com/ark"),
         SummaryService(id: "openai", name: "OpenAI", baseURL: "https://api.openai.com/v1", model: "gpt-6.1-sol",
                        suggestedModels: ["gpt-6.1-sol", "gpt-6-luna", "gpt-6-astra"], keyPage: "https://platform.openai.com/api-keys"),
         // 本机模型上下文通常只有几千 token，按小上限分段
-        SummaryService(id: "ollama", name: "本机 Ollama", baseURL: "http://localhost:11434/v1", model: "qwen3",
+        SummaryService(id: "ollama", name: L("本机 Ollama"), baseURL: "http://localhost:11434/v1", model: "qwen3",
                        contextChars: 6_000, requiresKey: false, suggestedModels: ["qwen3", "qwen3:14b", "llama3.3"],
                        keyPage: "https://ollama.com"),
-        SummaryService(id: "custom", name: "自定义", baseURL: "https://", model: ""),
+        SummaryService(id: "custom", name: L("自定义"), baseURL: "https://", model: ""),
     ]
 
     public static func preset(_ id: String) -> SummaryService? {
@@ -80,10 +81,10 @@ public struct SummaryService: Codable, Equatable, Sendable {
     /// 只允许 HTTPS；本机（如 Ollama）可以用 HTTP，数据不出这台电脑
     public var validationError: String? {
         guard let url = URL(string: baseURL), let scheme = url.scheme?.lowercased(), url.host != nil else {
-            return "服务地址不是有效的网址"
+            return L("服务地址不是有效的网址")
         }
         if scheme == "https" || (scheme == "http" && isLocal) { return nil }
-        return "为保护隐私，只能使用 https 地址（本机服务除外）"
+        return L("为保护隐私，只能使用 https 地址（本机服务除外）")
     }
 }
 
@@ -97,21 +98,21 @@ public enum SummaryError: LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .notConfigured: "还没有配置 AI 纪要服务，请在设置里选择服务并填写 API Key。"
-        case .emptyTranscript: "这场会议还没有转写内容。"
-        case .unparseable: "模型返回的内容无法解析，已保存原文。可以稍后重新生成。"
+        case .notConfigured: L("还没有配置 AI 纪要服务，请在设置里选择服务并填写 API Key。")
+        case .emptyTranscript: L("这场会议还没有转写内容。")
+        case .unparseable: L("模型返回的内容无法解析，已保存原文。可以稍后重新生成。")
         case .http(let status, let message): "\(Self.describe(status))\(message.isEmpty ? "" : "（\(message)）")"
-        case .network(let m): "连不上纪要服务：\(m)"
+        case .network(let m): L("连不上纪要服务：\(m)")
         }
     }
 
     private static func describe(_ status: Int) -> String {
         switch status {
-        case 401: "API Key 无效，请在设置里检查。"
-        case 402: "账户余额不足，请到服务商处充值。"
-        case 429: "请求太频繁，稍后再试。"
-        case 500...599: "纪要服务暂时不可用（\(status)），稍后再试。"
-        default: "纪要服务返回错误 \(status)。"
+        case 401: L("API Key 无效，请在设置里检查。")
+        case 402: L("账户余额不足，请到服务商处充值。")
+        case 429: L("请求太频繁，稍后再试。")
+        case 500...599: L("纪要服务暂时不可用（\(status)），稍后再试。")
+        default: L("纪要服务返回错误 \(status)。")
         }
     }
 }

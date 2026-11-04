@@ -133,7 +133,7 @@ struct DetailView: View {
             }
             Button("取消", role: .cancel) { renamingSpeaker = nil }
         } message: {
-            Text(renamingSpeaker.map { "把「\($0)」改成真实姓名，转写稿和导出会同步更新。" } ?? "")
+            Text(renamingSpeaker.map { L("把「\($0)」改成真实姓名，转写稿和导出会同步更新。") } ?? "")
         }
         .onDisappear { player.close() }
     }
@@ -146,7 +146,7 @@ struct DetailView: View {
             Button("导出", systemImage: "square.and.arrow.down", action: exportMarkdown)
                 .buttonStyle(ToolbarPillStyle())
                 .help("导出为 Markdown")
-            Button(hasFinal ? "重新转写" : "精准转写", systemImage: "arrow.clockwise") { processing.enqueue(meeting.id) }
+            Button(hasFinal ? L("重新转写") : L("精准转写"), systemImage: "arrow.clockwise") { processing.enqueue(meeting.id) }
                 .buttonStyle(ToolbarPillStyle())
                 .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
                 .help("用离线大模型对整段录音重新识别，生成正式稿（草稿保留）")
@@ -206,8 +206,8 @@ struct DetailView: View {
                         Text(p.name)
                     }
                     .contentShape(Rectangle())
-                    .onTapGesture { if case .other(let label) = p.key, label != "对方" { beginRename(label) } }
-                    .help(p.key == .me || p.key == .other("对方") ? "" : "点击改名")
+                    .onTapGesture { if case .other(let label) = p.key, label != SpeakerLabel.other { beginRename(label) } }
+                    .help(p.key == .me || p.key == .other(SpeakerLabel.other) ? "" : "点击改名")
                 }
             }
             Spacer()
@@ -222,8 +222,8 @@ struct DetailView: View {
         indices.sorted { $0.value < $1.value }.map { key, i in
             let name: String
             switch key {
-            case .me: name = "我"
-            case .other(let label): name = names[label] ?? label
+            case .me: name = L("我")
+            case .other(let label): name = names[label] ?? SpeakerLabel.display(label)
             }
             return Person(key: key, index: i, name: name)
         }
@@ -290,7 +290,7 @@ struct DetailView: View {
             Button { skipSilence.toggle() } label: {
                 Text("跳过静音").foregroundStyle(skipSilence ? Theme.me : Color.secondary)
             }
-            .help(skipSilence ? "已开启：长于半秒的静音只停半秒" : "开启后跳过长时间没人说话的部分")
+            .help(skipSilence ? L("已开启：长于半秒的静音只停半秒") : L("开启后跳过长时间没人说话的部分"))
         }
         .buttonStyle(.plain)
         .font(.system(size: 12, weight: .medium))
@@ -354,7 +354,7 @@ struct DetailView: View {
         case .failed:
             return AnyView(Group {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange).frame(width: 20)
-                Text("精准转写失败：\(job.error ?? "未知错误")").lineLimit(2)
+                Text("精准转写失败：\(job.error ?? L("未知错误"))").lineLimit(2)
                 Spacer(minLength: 0)
                 Button("重试") { processing.enqueue(meeting.id) }.buttonStyle(PaneButtonStyle())
             })
@@ -375,9 +375,9 @@ struct DetailView: View {
     private var tabBar: some View {
         HStack {
             PillTabs(selection: $tab, items: [
-                .init(value: .notes, title: "纪要"),
-                .init(value: .transcript, title: "转写稿"),
-                .init(value: .marks, title: "标记", badge: marks.isEmpty ? nil : "\(marks.count)"),
+                .init(value: .notes, title: L("纪要")),
+                .init(value: .transcript, title: L("转写稿")),
+                .init(value: .marks, title: L("标记"), badge: marks.isEmpty ? nil : "\(marks.count)"),
             ])
             Spacer()
             if tab == .transcript {
@@ -385,12 +385,12 @@ struct DetailView: View {
                     HStack(spacing: 8) {
                         Text("版本").font(.system(size: 12)).foregroundStyle(.tertiary)
                         PillTabs(selection: $showDraft, items: [
-                            .init(value: false, title: "精准"),
-                            .init(value: true, title: "实时草稿"),
+                            .init(value: false, title: L("精准")),
+                            .init(value: true, title: L("实时草稿")),
                         ], size: .small)
                     }
                 } else if let kind = transcriptKind {
-                    Text(kind == .draft ? "实时字幕草稿" : "精准转写").font(.system(size: 12)).foregroundStyle(.tertiary)
+                    Text(kind == .draft ? L("实时字幕草稿") : L("精准转写")).font(.system(size: 12)).foregroundStyle(.tertiary)
                 }
             }
         }
@@ -414,7 +414,7 @@ struct DetailView: View {
             let current = player.currentTime > 0 ? currentSegmentID : nil
             ScrollViewReader { proxy in
                 List(segments) { s in
-                    TranscriptLine(segment: s, name: MarkdownExporter.speakerName(s, names),
+                    TranscriptLine(segment: s, name: MarkdownExporter.displayName(s, names),
                                    color: Theme.speaker(s.speakerKey, in: indices),
                                    isCurrent: s.id == current,
                                    hasMark: marks.contains { $0.at >= s.start && $0.at <= s.end + 1 },
@@ -461,7 +461,7 @@ struct DetailView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Image(systemName: "star.fill").foregroundStyle(Theme.mark).font(.system(size: 11))
                     Text(clock(m.at)).font(.system(size: 12)).monospacedDigit().foregroundStyle(.secondary).frame(width: 52, alignment: .leading)
-                    Text(context(for: m) ?? "（这段时间没有转写内容）")
+                    Text(context(for: m) ?? L("（这段时间没有转写内容）"))
                         .foregroundStyle(context(for: m) == nil ? .tertiary : .primary)
                         .lineLimit(2)
                     Spacer(minLength: 0)
@@ -482,7 +482,7 @@ struct DetailView: View {
 
     /// 标记附近的原话：标记前最近开始的一句
     private func context(for m: Mark) -> String? {
-        segments.last { $0.start <= m.at + 1 }.map { "\(MarkdownExporter.speakerName($0, names))：\($0.text)" }
+        segments.last { $0.start <= m.at + 1 }.map { "\(MarkdownExporter.displayName($0, names))：\($0.text)" }
     }
 
     // MARK: - 数据与操作
@@ -523,7 +523,7 @@ struct DetailView: View {
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { title = meeting.title; return }
         title = t
-        do { try env.repository.rename(meeting.id, to: t) } catch { recorder.lastError = "改名失败：\(error.localizedDescription)" }
+        do { try env.repository.rename(meeting.id, to: t) } catch { recorder.lastError = L("改名失败：\(error.localizedDescription)") }
     }
 
     private func cancelTitle() {
@@ -540,7 +540,7 @@ struct DetailView: View {
         m.title = title
         let md = MarkdownExporter.export(meeting: m, segments: segments, marks: marks, names: names,
                                          summary: processing.summary.stored(meeting.id)?.summary)
-        do { try md.write(to: url, atomically: true, encoding: .utf8) } catch { recorder.lastError = "导出失败：\(error.localizedDescription)" }
+        do { try md.write(to: url, atomically: true, encoding: .utf8) } catch { recorder.lastError = L("导出失败：\(error.localizedDescription)") }
     }
 }
 
@@ -566,7 +566,7 @@ struct TranscriptLine: View {
             .frame(width: 92, alignment: .leading)
             .contentShape(Rectangle())
             .onTapGesture { onRename?() }
-            .help(onRename == nil ? name : "\(name)（点击改名）")
+            .help(onRename == nil ? name : L("\(name)（点击改名）"))
             (Text(segment.text) + (hasMark ? Text("  ★").foregroundColor(Theme.mark) : Text("")))
                 .font(.system(size: 14.5))
                 .lineSpacing(3)

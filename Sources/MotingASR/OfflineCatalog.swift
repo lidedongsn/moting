@@ -1,4 +1,5 @@
 import Foundation
+import MotingCore
 
 public enum OfflineModelKind: String, Sendable {
     case senseVoice, paraformer, transducer, qwen3ASR, fireRedASR
@@ -39,7 +40,7 @@ public enum OfflineCatalog {
     private static let github = URL(string: "https://github.com/k2-fsa/sherpa-onnx/releases/download")!
 
     public static let senseVoice = OfflineModel(
-        id: "offline-sense-voice-int8-2025-09-09", displayName: "SenseVoice（中英日韩粤）",
+        id: "offline-sense-voice-int8-2025-09-09", displayName: L("SenseVoice（中英日韩粤）"),
         source: .huggingFace(repo: "csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09"),
         files: [
             ModelFile(name: "model.int8.onnx", sha256: "12ca1a2ae7ecf3e0019ef2822307ee0b5cadc9196569e379b4c4026f8205276d", size: 237_115_547),
@@ -52,7 +53,7 @@ public enum OfflineCatalog {
         benchmark: Benchmark(cer: 10.23, minutesPerHour: 2.5))
 
     public static let paraformerZh = OfflineModel(
-        id: "offline-paraformer-zh-int8-2025-10-07", displayName: "Paraformer 中文大模型",
+        id: "offline-paraformer-zh-int8-2025-10-07", displayName: L("Paraformer 中文大模型"),
         source: .huggingFace(repo: "csukuangfj/sherpa-onnx-paraformer-zh-int8-2025-10-07"),
         files: [
             ModelFile(name: "model.int8.onnx", sha256: "53813ee1d41722cc6370a571c887e6d0b391d25b8312cf714a31af85ea603812", size: 238_429_929),
@@ -64,7 +65,7 @@ public enum OfflineCatalog {
         benchmark: Benchmark(cer: 12.67, minutesPerHour: nil))
 
     public static let xasrTransducer = OfflineModel(
-        id: "offline-x-asr-zh-en-punct-int8-2026-06-03", displayName: "X-ASR 中英（带标点，支持热词）",
+        id: "offline-x-asr-zh-en-punct-int8-2026-06-03", displayName: L("X-ASR 中英（带标点，支持热词）"),
         source: .huggingFace(repo: "csukuangfj2/sherpa-onnx-x-asr-zipformer-transducer-zh-en-punct-int8-2026-06-03"),
         files: [
             ModelFile(name: "encoder-epoch-99-avg-1.int8.onnx", sha256: "fe0198b52626f2a1012ebb6d6a7259c5137c4c964f3a524135e353f4687b5d14", size: 161_744_450),
@@ -81,7 +82,7 @@ public enum OfflineCatalog {
         benchmark: Benchmark(cer: 7.44, minutesPerHour: 1.6))
 
     public static let qwen3ASR = OfflineModel(
-        id: "offline-qwen3-asr-0.6b-int8-2026-03-25", displayName: "Qwen3-ASR 0.6B（支持热词）",
+        id: "offline-qwen3-asr-0.6b-int8-2026-03-25", displayName: L("Qwen3-ASR 0.6B（支持热词）"),
         source: .huggingFace(repo: "csukuangfj2/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25"),
         files: [
             ModelFile(name: "conv_frontend.onnx", sha256: "d22dc4423e0940e49884e903d2ea2f7e5567c14fc1aed97e4e26d6b8f208ef9e", size: 44_148_281),
@@ -99,7 +100,7 @@ public enum OfflineCatalog {
         benchmark: Benchmark(cer: 7.62, minutesPerHour: 14.5))
 
     public static let fireRedASR2 = OfflineModel(
-        id: "offline-fire-red-asr2-zh-en-int8-2026-02-26", displayName: "FireRedASR2 中英",
+        id: "offline-fire-red-asr2-zh-en-int8-2026-02-26", displayName: L("FireRedASR2 中英"),
         source: .huggingFace(repo: "csukuangfj2/sherpa-onnx-fire-red-asr2-zh_en-int8-2026-02-26"),
         files: [
             ModelFile(name: "encoder.int8.onnx", sha256: "54048d66b6e8f3c80ea7ce95efe794587b0fd81d7271651d0decd3803852ae82", size: 817_286_833),
@@ -122,23 +123,23 @@ public enum OfflineCatalog {
     }
 
     public static let vad = AuxModel(
-        id: "aux-silero-vad", displayName: "人声检测（Silero VAD）",
+        id: "aux-silero-vad", displayName: L("人声检测（Silero VAD）"),
         source: .direct(baseURL: github.appendingPathComponent("asr-models")),
         files: [ModelFile(name: "silero_vad.onnx", sha256: "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6", size: 643_854)])
 
     public static let segmentation = AuxModel(
-        id: "aux-pyannote-segmentation-3-0", displayName: "说话人分段（pyannote 3.0）",
+        id: "aux-pyannote-segmentation-3-0", displayName: L("说话人分段（pyannote 3.0）"),
         source: .huggingFace(repo: "csukuangfj/sherpa-onnx-pyannote-segmentation-3-0"),
         files: [ModelFile(name: "model.int8.onnx", sha256: "d582f4b4c6b48205de7e0643c57df0df5615a3c176189be3fc461e9d18827b5d", size: 1_540_506)])
 
     public static let embedding = AuxModel(
-        id: "aux-3dspeaker-campplus-zh-en", displayName: "声纹（3D-Speaker CAM++ 中英）",
+        id: "aux-3dspeaker-campplus-zh-en", displayName: L("声纹（3D-Speaker CAM++ 中英）"),
         source: .huggingFace(repo: "csukuangfj/speaker-embedding-models"),
         files: [ModelFile(name: "3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx",
                           sha256: "aa3cfc16963a10586a9393f5035d6d6b57e98d358b347f80c2a30bf4f00ceba2", size: 28_281_164)])
 
     public static let punctuation = AuxModel(
-        id: "aux-punct-ct-transformer-zh-en-int8", displayName: "标点（CT-Transformer 中英）",
+        id: "aux-punct-ct-transformer-zh-en-int8", displayName: L("标点（CT-Transformer 中英）"),
         source: .githubArchive(
             url: github.appendingPathComponent("punctuation-models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12-int8.tar.bz2"),
             sha256: "c0d5aa5f8eeb686032345e180bedf39319dc2e0556781c6264bcadba8328a6e1", size: 64_717_756,

@@ -1,4 +1,5 @@
 import Foundation
+import MotingCore
 
 /// 会议 / 通话软件
 public struct CallApp: Hashable, Sendable {
@@ -12,16 +13,16 @@ public struct CallApp: Hashable, Sendable {
 /// 认得的会议软件，按 bundle id 前缀匹配（含其 helper 进程，如 com.google.Chrome.helper）
 public enum CallCatalog {
     private static let entries: [(prefixes: [String], app: CallApp)] = [
-        (["com.tencent.meeting"], call("腾讯会议")),
-        (["com.electron.lark", "com.bytedance.lark", "com.bytedance.feishu", "com.bytedance.macos.feishu", "com.larksuite"], call("飞书")),
-        (["com.alibaba.DingTalkMac"], call("钉钉")),
-        (["com.tencent.WeWorkMac"], call("企业微信")),
+        (["com.tencent.meeting"], call(L("腾讯会议"))),
+        (["com.electron.lark", "com.bytedance.lark", "com.bytedance.feishu", "com.bytedance.macos.feishu", "com.larksuite"], call(L("飞书"))),
+        (["com.alibaba.DingTalkMac"], call(L("钉钉"))),
+        (["com.tencent.WeWorkMac"], call(L("企业微信"))),
         (["us.zoom.xos"], call("Zoom")),
         (["com.microsoft.teams2", "com.microsoft.teams"], call("Teams")),
         (["Cisco-Systems.Spark", "com.webex.meetingmanager"], call("Webex")),
         (["com.apple.FaceTime"], call("FaceTime")),
         // 聊天软件也会为语音消息短暂开麦，要占用久一些才算通话
-        (["com.tencent.xinWeChat"], chat("微信")),
+        (["com.tencent.xinWeChat"], chat(L("微信"))),
         (["com.tencent.qq"], chat("QQ")),
         (["com.tinyspeck.slackmacgap"], chat("Slack")),
         (["com.hnc.Discord"], chat("Discord")),

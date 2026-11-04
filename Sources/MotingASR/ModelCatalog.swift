@@ -1,4 +1,5 @@
 import Foundation
+import MotingCore
 
 public enum StreamingModelKind: String, Sendable {
     case transducer, paraformer
@@ -83,7 +84,7 @@ public struct StreamingModel: Identifiable, Sendable, Equatable, DownloadableMod
 public enum ModelCatalog {
     public static let bilingualZipformer = StreamingModel(
         id: "zipformer-bilingual-zh-en-2023-02-20",
-        displayName: "中英双语 Zipformer（2023）",
+        displayName: L("中英双语 Zipformer（2023）"),
         repo: "csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20",
         kind: .transducer,
         files: [
@@ -98,7 +99,7 @@ public enum ModelCatalog {
 
     public static let chineseZipformer2025 = StreamingModel(
         id: "zipformer-zh-int8-2025-06-30",
-        displayName: "中文 Zipformer（2025）",
+        displayName: L("中文 Zipformer（2025）"),
         repo: "csukuangfj/sherpa-onnx-streaming-zipformer-zh-int8-2025-06-30",
         kind: .transducer,
         files: [
@@ -113,7 +114,7 @@ public enum ModelCatalog {
 
     public static let bilingualParaformer = StreamingModel(
         id: "paraformer-bilingual-zh-en",
-        displayName: "中英双语 Paraformer",
+        displayName: L("中英双语 Paraformer"),
         repo: "csukuangfj/sherpa-onnx-streaming-paraformer-bilingual-zh-en",
         kind: .paraformer,
         files: [

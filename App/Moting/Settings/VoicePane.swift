@@ -1,5 +1,6 @@
 import AppKit
 import MotingASR
+import MotingCore
 import MotingPipeline
 import SwiftUI
 
@@ -15,7 +16,7 @@ struct VoicePane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PaneHeader(title: "热词与声纹", subtitle: "让精准转写认得你们的专有名词，并去掉旁边无关的人声。")
+            PaneHeader(title: L("热词与声纹"), subtitle: L("让精准转写认得你们的专有名词，并去掉旁边无关的人声。"))
             Text("热词").font(.headline).padding(.bottom, 8)
             PaneCard {
                 VStack(alignment: .leading, spacing: 8) {
@@ -43,12 +44,12 @@ struct VoicePane: View {
                     Image(systemName: hasVoiceprint ? "checkmark.seal.fill" : "person.crop.circle.badge.questionmark")
                         .font(.title2).foregroundStyle(hasVoiceprint ? .green : .secondary)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(hasVoiceprint ? "已登记你的声纹" : "还没有登记声纹").fontWeight(.semibold)
+                        Text(hasVoiceprint ? L("已登记你的声纹") : L("还没有登记声纹")).fontWeight(.semibold)
                         Text("登记后，精准转写只保留麦克风里你自己的声音，旁边同事说话会被去掉。")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button(hasVoiceprint ? "重新登记" : "登记声纹") { enrolling = true }.buttonStyle(PaneButtonStyle())
+                    Button(hasVoiceprint ? L("重新登记") : L("登记声纹")) { enrolling = true }.buttonStyle(PaneButtonStyle())
                     if hasVoiceprint {
                         Button("删除", role: .destructive) {
                             try? FileManager.default.removeItem(at: env.paths.voiceprintURL)
@@ -92,7 +93,7 @@ struct DownloadPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PaneHeader(title: "下载", subtitle: "模型从 hf-mirror、HuggingFace 或 GitHub 下载。")
+            PaneHeader(title: L("下载"), subtitle: L("模型从 hf-mirror、HuggingFace 或 GitHub 下载。"))
             PaneCard {
                 VStack(alignment: .leading, spacing: 8) {
                     TextField("代理地址", text: $proxy, prompt: Text("例如 127.0.0.1:7897，留空表示不用代理"))

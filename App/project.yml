@@ -1,6 +1,7 @@
 name: Moting
 options:
   bundleIdPrefix: com.lidedongsn
+  developmentLanguage: zh-Hans
   deploymentTarget:
     macOS: "14.2"
 packages:

@@ -1,4 +1,5 @@
 import Foundation
+import MotingCore
 
 /// 调用大模型：给系统提示和用户内容，返回回复文字
 public protocol ChatCompleting: Sendable {
@@ -66,7 +67,7 @@ public struct OpenAICompatibleClient: ChatCompleting {
     private func request(_ path: String) throws -> URLRequest {
         if let e = service.validationError { throw SummaryError.network(e) }
         let base = service.baseURL.hasSuffix("/") ? service.baseURL : service.baseURL + "/"
-        guard let url = URL(string: path, relativeTo: URL(string: base)) else { throw SummaryError.network("服务地址无效") }
+        guard let url = URL(string: path, relativeTo: URL(string: base)) else { throw SummaryError.network(L("服务地址无效")) }
         var req = URLRequest(url: url.absoluteURL)
         if !apiKey.isEmpty { req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
         return req

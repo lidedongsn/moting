@@ -36,9 +36,9 @@ struct MainWindow: View {
                         .id("\(m.id)|\(m.endedAt?.timeIntervalSince1970 ?? 0)")
                 } else {
                     ContentUnavailableView {
-                        Label(meetings.isEmpty ? "还没有会议记录" : "选择一场会议", systemImage: "waveform")
+                        Label(meetings.isEmpty ? L("还没有会议记录") : L("选择一场会议"), systemImage: "waveform")
                     } description: {
-                        Text(meetings.isEmpty ? "开会时点右上角的「开始录音」，或按 ⌥⌘R。" : "在左侧选择会议，查看转写稿、回放录音。")
+                        Text(meetings.isEmpty ? L("开会时点右上角的「开始录音」，或按 ⌥⌘R。") : L("在左侧选择会议，查看转写稿、回放录音。"))
                     }
                 }
             }
@@ -65,7 +65,7 @@ struct MainWindow: View {
                     refreshUsage()
                 }
             } catch {
-                recorder.lastError = "读取会议列表失败：\(error.localizedDescription)"
+                recorder.lastError = L("读取会议列表失败：\(error.localizedDescription)")
             }
         }
         .task(id: query) {
@@ -75,7 +75,7 @@ struct MainWindow: View {
         }
         .confirmationDialog(deleteTitle, isPresented: Binding(get: { !pendingDelete.isEmpty }, set: { if !$0 { pendingDelete = [] } }),
                             titleVisibility: .visible) {
-            Button(pendingDelete.count > 1 ? "删除 \(pendingDelete.count) 场" : "删除", role: .destructive) { delete(pendingDelete) }
+            Button(pendingDelete.count > 1 ? L("删除 \(pendingDelete.count) 场") : L("删除"), role: .destructive) { delete(pendingDelete) }
         } message: {
             Text("录音文件、转写稿和会议记录会被永久删除，无法恢复。")
         }
@@ -101,7 +101,7 @@ struct MainWindow: View {
         // 不用系统选中（实心蓝底会盖住声纹条），自己画浅色选中底（设计稿 .mrow.on）
         List {
             ForEach(MeetingGrouping.group(filtered, now: Date(), calendar: .current), id: \.0) { group, items in
-                Section(group.rawValue) {
+                Section(group.title) {
                     ForEach(items) { m in
                         let on = picked.contains(m.id)
                         MeetingRow(meeting: m, env: env, processing: processing)
@@ -264,8 +264,8 @@ struct MainWindow: View {
 
     private var deleteTitle: String {
         let size = pendingDelete.reduce(Int64(0)) { $0 + env.paths.diskUsage(of: $1.id) }
-        if pendingDelete.count == 1 { return "删除「\(pendingDelete[0].title)」？将释放 \(bytes(size))" }
-        return "删除 \(pendingDelete.count) 场会议？将释放 \(bytes(size))"
+        if pendingDelete.count == 1 { return L("删除「\(pendingDelete[0].title)」？将释放 \(bytes(size))") }
+        return L("删除 \(pendingDelete.count) 场会议？将释放 \(bytes(size))")
     }
 
     private func refreshUsage() {
@@ -297,7 +297,7 @@ struct MainWindow: View {
                 failed.append("「\(m.title)」：\(error.localizedDescription)")
             }
         }
-        if !failed.isEmpty { recorder.lastError = "删除失败\n" + failed.joined(separator: "\n") }
+        if !failed.isEmpty { recorder.lastError = L("删除失败\n") + failed.joined(separator: "\n") }
         pendingDelete = []
     }
 
@@ -338,11 +338,11 @@ struct MeetingRow: View {
     @ViewBuilder
     private var tag: some View {
         switch meeting.status {
-        case .recording: StatusTag(text: "录音中", tint: Theme.record)
-        case .processing: StatusTag(text: "转写中 \(Int((processing.progress[meeting.id] ?? 0) * 100))%", tint: Theme.me)
-        case .failed: StatusTag(text: "失败", tint: .orange)
-        case .interrupted: StatusTag(text: "录音中断", tint: .orange)
-        case .pendingProcessing: StatusTag(text: "待转写", tint: .secondary)
+        case .recording: StatusTag(text: L("录音中"), tint: Theme.record)
+        case .processing: StatusTag(text: L("转写中 \(Int((processing.progress[meeting.id] ?? 0) * 100))%"), tint: Theme.me)
+        case .failed: StatusTag(text: L("失败"), tint: .orange)
+        case .interrupted: StatusTag(text: L("录音中断"), tint: .orange)
+        case .pendingProcessing: StatusTag(text: L("待转写"), tint: .secondary)
         case .done: EmptyView()
         }
     }
@@ -383,7 +383,7 @@ struct RecordButton: View {
             HStack(spacing: 8) {
                 Circle().fill(Theme.record).frame(width: 8, height: 8)
                 Text(clock(recorder.elapsed)).monospacedDigit().font(.system(size: 13, weight: .semibold))
-                Button(recorder.isStopping ? "正在结束…" : "结束") { recorder.stop() }
+                Button(recorder.isStopping ? L("正在结束…") : L("结束")) { recorder.stop() }
                     .buttonStyle(.borderedProminent)
                     .tint(Theme.record)
                     .controlSize(.small)
@@ -395,7 +395,7 @@ struct RecordButton: View {
             Button { recorder.start() } label: {
                 HStack(spacing: 7) {
                     Circle().fill(.white).frame(width: 9, height: 9)
-                    Text(recorder.isStarting ? "正在启动…" : "开始录音").font(.system(size: 13, weight: .semibold))
+                    Text(recorder.isStarting ? L("正在启动…") : L("开始录音")).font(.system(size: 13, weight: .semibold))
                 }
                 .foregroundStyle(.white)
                 .padding(.leading, 11).padding(.trailing, 13)

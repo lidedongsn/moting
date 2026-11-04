@@ -8,7 +8,7 @@ public enum PipelineError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .missingVersion: "缺少转写结果，请重新转写"
+        case .missingVersion: L("缺少转写结果，请重新转写")
         }
     }
 }

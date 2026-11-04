@@ -1,7 +1,16 @@
 import Foundation
 
 public enum MeetingGroup: String, CaseIterable, Sendable {
-    case today = "今天", yesterday = "昨天", thisWeek = "本周", earlier = "更早"
+    case today, yesterday, thisWeek, earlier
+
+    public var title: String {
+        switch self {
+        case .today: L("今天")
+        case .yesterday: L("昨天")
+        case .thisWeek: L("本周")
+        case .earlier: L("更早")
+        }
+    }
 }
 
 /// 侧栏分组：按本地日历判断今天 / 昨天 / 本周 / 更早；组内保持传入顺序，空组省略

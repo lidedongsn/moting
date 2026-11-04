@@ -1,4 +1,5 @@
 import Foundation
+import MotingCore
 import Security
 
 /// API Key 存在钥匙串里（仅本机、解锁后可读，不随 iCloud 同步），不落盘到任何配置文件
@@ -57,6 +58,6 @@ public struct APIKeyStore: Sendable {
 public struct KeychainError: LocalizedError {
     public let status: OSStatus
     public var errorDescription: String? {
-        "钥匙串操作失败：\(SecCopyErrorMessageString(status, nil) as String? ?? "\(status)")"
+        L("钥匙串操作失败：\(SecCopyErrorMessageString(status, nil) as String? ?? "\(status)")")
     }
 }

@@ -72,7 +72,7 @@ struct FloatingPanelView: View {
                 if processing.lastStatus == .running || processing.lastStatus == .queued || processing.lastStatus == .paused {
                     Text("\(Int(p * 100))%").monospacedDigit().foregroundStyle(.white.opacity(0.75))
                 }
-                iconButton("xmark", help: "关闭（转写在后台继续）") { processing.dismissLastRecorded() }
+                iconButton("xmark", help: L("关闭（转写在后台继续）")) { processing.dismissLastRecorded() }
             }
             .font(.system(size: 12.5))
             .padding(.leading, 14).padding(.trailing, ui.collapsed ? 9 : 12).padding(.top, ui.collapsed ? 0 : 11)
@@ -98,9 +98,9 @@ struct FloatingPanelView: View {
                 HStack(spacing: 6) {
                     if let id = processing.lastRecordedMeetingID {
                         switch processing.lastStatus {
-                        case .waitingForPower: pillButton("现在处理") { processing.processNow(id) }
-                        case .queued, .running: pillButton("❚❚ 暂停") { processing.pause(id) }
-                        case .paused: pillButton("▶ 继续") { processing.resume(id) }
+                        case .waitingForPower: pillButton(L("现在处理")) { processing.processNow(id) }
+                        case .queued, .running: pillButton(L("❚❚ 暂停")) { processing.pause(id) }
+                        case .paused: pillButton(L("▶ 继续")) { processing.resume(id) }
                         default: EmptyView()
                         }
                     }
@@ -113,7 +113,7 @@ struct FloatingPanelView: View {
         // 点卡片任意空白处：到主窗口看这场会议
         .contentShape(Rectangle())
         .onTapGesture { if !ui.collapsed { openMeeting() } }
-        .help(ui.collapsed ? "展开" : "在主窗口查看这场会议")
+        .help(ui.collapsed ? L("展开") : L("在主窗口查看这场会议"))
     }
 
     private func openMeeting() {
@@ -123,11 +123,11 @@ struct FloatingPanelView: View {
 
     private var processingHint: String {
         switch processing.lastStatus {
-        case .done: "已替换实时草稿，点这里查看。"
-        case .failed: "点这里到主窗口重试。"
-        case .waitingForPower: "正在使用电池，接通电源后自动开始。"
-        case .paused: "已完成的部分会保留，继续时接着处理。"
-        default: "可以关掉这个窗口，完成后会通知你。"
+        case .done: L("已替换实时草稿，点这里查看。")
+        case .failed: L("点这里到主窗口重试。")
+        case .waitingForPower: L("正在使用电池，接通电源后自动开始。")
+        case .paused: L("已完成的部分会保留，继续时接着处理。")
+        default: L("可以关掉这个窗口，完成后会通知你。")
         }
     }
 
@@ -165,8 +165,8 @@ struct FloatingPanelView: View {
                     .help(recorder.warnings.joined(separator: "\n"))
             }
             Spacer(minLength: 4)
-            iconButton("star.fill", help: "标记重点") { recorder.mark() }
-            iconButton("minus", help: "收起") { ui.collapsed = true }
+            iconButton("star.fill", help: L("标记重点")) { recorder.mark() }
+            iconButton("minus", help: L("收起")) { ui.collapsed = true }
         }
         .padding(.leading, 14).padding(.trailing, 12)
         .padding(.top, 11).padding(.bottom, 8)
@@ -179,14 +179,14 @@ struct FloatingPanelView: View {
             Text(recorder.elapsed.clockText).font(.system(size: 12.5, weight: .semibold)).monospacedDigit()
             HStack(spacing: 6) {
                 if let line = live.lines.last {
-                    Text(line.channel == .mic ? "我" : "对方")
+                    Text(line.channel == .mic ? L("我") : L("对方"))
                         .font(.system(size: 12.5, weight: .semibold))
                         .foregroundStyle(line.channel == .mic ? Self.micColor : Self.systemColor)
                         .fixedSize()
                     // 只截断正文开头，保留最新的字
                     Text(line.text).font(.system(size: 12.5)).lineLimit(1).truncationMode(.head)
                 } else {
-                    Text(recorder.state == .paused ? "已暂停" : "录音中").font(.system(size: 12.5)).foregroundStyle(.white.opacity(0.6))
+                    Text(recorder.state == .paused ? L("已暂停") : L("录音中")).font(.system(size: 12.5)).foregroundStyle(.white.opacity(0.6))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -218,8 +218,8 @@ struct FloatingPanelView: View {
             case .ready:
                 transcriptLines
             case .missing:
-                modelPrompt("实时字幕需要先下载识别模型（约 \(ByteCountFormatter.string(fromByteCount: live.selectedModel.totalSize, countStyle: .file))）",
-                            action: ("下载", { live.installSelected() }))
+                modelPrompt(L("实时字幕需要先下载识别模型（约 \(ByteCountFormatter.string(fromByteCount: live.selectedModel.totalSize, countStyle: .file))）"),
+                            action: (L("下载"), { live.installSelected() }))
             case .downloading(let p):
                 VStack(alignment: .leading, spacing: 4) {
                     Text("正在下载识别模型… \(Int(p * 100))%").font(.system(size: 11)).foregroundStyle(.secondary)
@@ -228,9 +228,9 @@ struct FloatingPanelView: View {
                 }
                 .frame(maxHeight: .infinity)
             case .loading:
-                modelPrompt("正在加载识别模型…", action: nil)
+                modelPrompt(L("正在加载识别模型…"), action: nil)
             case .failed(let msg):
-                modelPrompt(msg, action: ("重试", { live.installSelected() }))
+                modelPrompt(msg, action: (L("重试"), { live.installSelected() }))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -241,7 +241,7 @@ struct FloatingPanelView: View {
     @ViewBuilder
     private var transcriptLines: some View {
         if live.lines.isEmpty {
-            Text(live.waitingToAttach ? "识别模型正在准备，字幕马上开始…" : "等待说话…")
+            Text(live.waitingToAttach ? L("识别模型正在准备，字幕马上开始…") : L("等待说话…"))
                 .font(.system(size: 12)).foregroundStyle(.tertiary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -250,7 +250,7 @@ struct FloatingPanelView: View {
                     ScrollView(.vertical) {
                         LazyVStack(alignment: .leading, spacing: 7) {
                             ForEach(live.lines) { line in
-                                (Text(line.channel == .mic ? "我 " : "对方 ")
+                                (Text(line.channel == .mic ? L("我 ") : L("对方 "))
                                     .font(.system(size: 11.5, weight: .semibold))
                                     .foregroundColor(line.channel == .mic ? Self.micColor : Self.systemColor)
                                  + Text(line.text)
@@ -310,14 +310,14 @@ struct FloatingPanelView: View {
 
     private var actions: some View {
         HStack(spacing: 6) {
-            pillButton("★ 标记") { recorder.mark() }
+            pillButton(L("★ 标记")) { recorder.mark() }
             if recorder.state == .paused {
-                pillButton("▶ 继续") { recorder.resume() }
+                pillButton(L("▶ 继续")) { recorder.resume() }
             } else {
-                pillButton("❚❚ 暂停") { recorder.pause() }
+                pillButton(L("❚❚ 暂停")) { recorder.pause() }
             }
             Spacer()
-            pillButton(recorder.isStopping ? "正在结束…" : "■ 结束", tint: Theme.record) { recorder.stop() }
+            pillButton(recorder.isStopping ? L("正在结束…") : L("■ 结束"), tint: Theme.record) { recorder.stop() }
                 .disabled(recorder.isStopping)
         }
         .padding(.horizontal, 12)
@@ -365,8 +365,8 @@ private struct LevelPair: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            MiniLevel(level: meter.levels[.mic] ?? 0, color: micColor, symbol: "mic.fill", help: "我方声音（麦克风）")
-            MiniLevel(level: meter.levels[.system] ?? 0, color: systemColor, symbol: "speaker.wave.2.fill", help: "对方声音（系统音频）")
+            MiniLevel(level: meter.levels[.mic] ?? 0, color: micColor, symbol: "mic.fill", help: L("我方声音（麦克风）"))
+            MiniLevel(level: meter.levels[.system] ?? 0, color: systemColor, symbol: "speaker.wave.2.fill", help: L("对方声音（系统音频）"))
         }
     }
 }

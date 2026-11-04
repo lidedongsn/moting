@@ -20,7 +20,7 @@ struct MenuBarContent: View {
         VStack(alignment: .leading, spacing: 0) {
             if isRecording { recordingCard } else { startButton }
             if !isRecording && !recent.isEmpty {
-                section("最近")
+                section(L("最近"))
                 ForEach(recent) { m in
                     Button {
                         processing.selectedMeetingID = m.id
@@ -79,7 +79,7 @@ struct MenuBarContent: View {
                     Circle().strokeBorder(.white, lineWidth: 3).frame(width: 22, height: 22)
                     Circle().fill(.white).frame(width: 9, height: 9)
                 }
-                Text(recorder.isStarting ? "正在启动…" : "开始录音").font(.system(size: 15, weight: .semibold))
+                Text(recorder.isStarting ? L("正在启动…") : L("开始录音")).font(.system(size: 15, weight: .semibold))
                 Spacer()
                 Text("⌥⌘R").font(.system(size: 12)).opacity(0.85)
             }
@@ -110,9 +110,9 @@ struct MenuBarContent: View {
                     .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             }
             .buttonStyle(.plain)
-            .help(paused ? "继续" : "暂停")
+            .help(paused ? L("继续") : L("暂停"))
             Button { recorder.stop() } label: {
-                Text(recorder.isStopping ? "正在结束…" : "结束").font(.system(size: 12.5, weight: .semibold))
+                Text(recorder.isStopping ? L("正在结束…") : L("结束")).font(.system(size: 12.5, weight: .semibold))
                     .padding(.horizontal, 11).frame(height: 26)
                     .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             }
@@ -133,11 +133,11 @@ struct MenuBarContent: View {
 
     private func status(_ m: Meeting) -> String {
         switch m.status {
-        case .processing: "转写中 \(Int((processing.progress[m.id] ?? 0) * 100))%"
-        case .pendingProcessing: "待转写"
-        case .failed: "失败"
-        case .recording: "录音中"
-        case .interrupted: "录音中断"
+        case .processing: L("转写中 \(Int((processing.progress[m.id] ?? 0) * 100))%")
+        case .pendingProcessing: L("待转写")
+        case .failed: L("失败")
+        case .recording: L("录音中")
+        case .interrupted: L("录音中断")
         case .done:
             Calendar.current.isDateInToday(m.startedAt)
                 ? m.startedAt.formatted(.dateTime.hour().minute())

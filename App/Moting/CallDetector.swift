@@ -127,16 +127,16 @@ private struct CallPromptView: View {
             switch detector.prompt {
             case .offer(let app):
                 content(icon: "phone.fill",
-                        title: app.isBrowser ? "\(app.name) 里好像在开会" : "「\(app.name)」正在通话",
-                        detail: "要录下这场会议吗？",
-                        secondary: ("不录", detector.dismiss),
-                        primary: ("开始录音", detector.record))
+                        title: app.isBrowser ? L("\(app.name) 里好像在开会") : L("「\(app.name)」正在通话"),
+                        detail: L("要录下这场会议吗？"),
+                        secondary: (L("不录"), detector.dismiss),
+                        primary: (L("开始录音"), detector.record))
             case .ended(let app):
                 content(icon: "phone.down.fill",
-                        title: "「\(app.name)」通话好像结束了",
-                        detail: "录音还在继续。",
-                        secondary: ("继续录", detector.dismiss),
-                        primary: ("结束录音", detector.stopRecording))
+                        title: L("「\(app.name)」通话好像结束了"),
+                        detail: L("录音还在继续。"),
+                        secondary: (L("继续录"), detector.dismiss),
+                        primary: (L("结束录音"), detector.stopRecording))
             case nil:
                 Color.clear
             }

@@ -1,5 +1,6 @@
 import CoreAudio
 import Foundation
+import MotingCore
 
 /// 对一个设备开 IOProc，把输入降混成单声道写入环形缓冲。
 /// 只读取设备属性，不修改采样率和缓冲大小。
@@ -16,7 +17,7 @@ final class DeviceIOReader {
         self.ring = ring
         inputSampleRate = try CA.nominalSampleRate(deviceID)
         guard inputSampleRate > 0, try CA.inputChannelCount(deviceID) > 0 else {
-            throw CaptureError.deviceUnavailable("设备 \(deviceID) 没有输入声道")
+            throw CaptureError.deviceUnavailable(L("设备 \(deviceID) 没有输入声道"))
         }
         // 预分配降混缓冲，实时线程里不再分配
         scratchCapacity = max(Int((try? CA.bufferFrameSize(deviceID)) ?? 0) * 4, 16_384)

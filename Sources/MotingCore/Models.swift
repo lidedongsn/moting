@@ -24,12 +24,21 @@ public struct Meeting: Identifiable, Codable, Sendable, Equatable {
         self.status = status
     }
 
+    /// 默认标题开头的词，随界面语言变化
+    public static var defaultTitlePrefix: String { L("会议") }
+
+    /// 还是默认标题时，把开头的"会议"换成来源（如"飞书 2026-11-04 10:30"）；用户或日历起过名的返回 nil
+    public static func retitle(_ title: String, source: String, prefix: String = defaultTitlePrefix) -> String? {
+        guard title.hasPrefix(prefix + " ") else { return nil }
+        return source + title.dropFirst(prefix.count)
+    }
+
     /// 新建一场录音中的会议，标题为"会议 yyyy-MM-dd HH:mm"（本地时区）
     public static func new(startedAt: Date) -> Meeting {
         let f = DateFormatter()
         f.locale = Locale(identifier: "zh_CN")
         f.dateFormat = "yyyy-MM-dd HH:mm"
-        return Meeting(id: UUID(), title: "会议 \(f.string(from: startedAt))",
+        return Meeting(id: UUID(), title: "\(defaultTitlePrefix) \(f.string(from: startedAt))",
                        startedAt: startedAt, endedAt: nil, status: .recording)
     }
 }

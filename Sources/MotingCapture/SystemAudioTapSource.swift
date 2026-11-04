@@ -100,7 +100,7 @@ public final class SystemAudioTapSource: AudioSource {
     /// 在 pump.queue 上执行：默认输出设备变化后重建 Tap 与聚合设备
     private func rebuild() {
         teardownTap()
-        pump.send(.interrupted("默认输出设备已变化"))
+        pump.send(.interrupted(L("默认输出设备已变化")))
         do {
             let r = try buildTap()
             try pump.reconfigure(inputSampleRate: r.inputSampleRate)
@@ -110,7 +110,7 @@ public final class SystemAudioTapSource: AudioSource {
             pump.send(.resumed)
         } catch {
             teardownTap()
-            pump.send(.interrupted("系统音频重建失败：\(error)"))
+            pump.send(.interrupted(L("系统音频重建失败：\(String(describing: error))")))
         }
     }
 

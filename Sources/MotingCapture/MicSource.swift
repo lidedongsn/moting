@@ -25,7 +25,7 @@ public final class MicSource: AudioSource {
             watch(r.deviceID)
             unlisteners.append(InputDevices.observe(queue: pump.queue) { [weak self] in
                 guard let self, let target = try? self.targetDevice(), target != self.reader?.deviceID else { return }
-                self.switchDevice(reason: "输入设备已变化")
+                self.switchDevice(reason: L("输入设备已变化"))
             })
         }
     }
@@ -42,7 +42,7 @@ public final class MicSource: AudioSource {
 
     private func makeReader() throws -> DeviceIOReader {
         let id = try targetDevice()
-        guard id != kAudioObjectUnknown else { throw CaptureError.deviceUnavailable("没有可用的输入设备") }
+        guard id != kAudioObjectUnknown else { throw CaptureError.deviceUnavailable(L("没有可用的输入设备")) }
         return try DeviceIOReader(deviceID: id, ring: pump.ring)
     }
 
@@ -78,7 +78,7 @@ public final class MicSource: AudioSource {
             watch(r.deviceID)
             pump.send(.resumed)
         } catch {
-            pump.send(.interrupted("新设备启动失败：\(error)"))
+            pump.send(.interrupted(L("新设备启动失败：\(String(describing: error))")))
         }
     }
 

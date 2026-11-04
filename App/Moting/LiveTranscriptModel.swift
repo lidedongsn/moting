@@ -106,7 +106,7 @@ final class LiveTranscriptModel: ObservableObject {
             }
             waitingToAttach = false
         } catch {
-            modelState = .failed("创建转写记录失败：\(error.localizedDescription)")
+            modelState = .failed(L("创建转写记录失败：\(error.localizedDescription)"))
         }
     }
 
@@ -148,7 +148,7 @@ final class LiveTranscriptModel: ObservableObject {
             } catch {
                 await MainActor.run { [weak self] in
                     self?.downloads[m.id] = nil
-                    if m.id == self?.selectedModelID { self?.modelState = .failed("模型下载失败：\(error.localizedDescription)") }
+                    if m.id == self?.selectedModelID { self?.modelState = .failed(L("模型下载失败：\(error.localizedDescription)")) }
                 }
             }
         }
@@ -196,7 +196,7 @@ final class LiveTranscriptModel: ObservableObject {
                 }
             } catch {
                 await MainActor.run { [weak self] in
-                    self?.modelState = .failed("加载识别模型失败：\(error.localizedDescription)")
+                    self?.modelState = .failed(L("加载识别模型失败：\(error.localizedDescription)"))
                 }
             }
         }

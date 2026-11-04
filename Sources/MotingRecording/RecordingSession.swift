@@ -184,7 +184,7 @@ public final class RecordingSession: @unchecked Sendable {
             try w.append(samples)
             onTrackAudio?(channel, samples, start)
         } catch {
-            onEvent?(channel, .interrupted("写盘失败：\(error)"))
+            onEvent?(channel, .interrupted(L("写盘失败：\(String(describing: error))")))
         }
     }
 

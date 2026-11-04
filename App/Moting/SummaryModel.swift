@@ -109,7 +109,7 @@ final class SummaryModel: ObservableObject {
                                names: try env.speakers.names(meetingID: meetingID))
                 try env.summaries.save(meetingID: meetingID, summary: summary, provider: service.name, model: service.model, at: Date())
                 revision += 1
-                notifier.post(title: "会议纪要已生成", body: meeting.title, meetingID: meetingID)
+                notifier.post(title: L("会议纪要已生成"), body: meeting.title, meetingID: meetingID)
             } catch SummaryError.unparseable(let raw) {
                 try? env.summaries.saveFailure(meetingID: meetingID, raw: raw, error: SummaryError.unparseable(raw: raw).localizedDescription,
                                                provider: service.name, model: service.model, at: Date())

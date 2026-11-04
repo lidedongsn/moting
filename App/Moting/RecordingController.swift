@@ -103,8 +103,8 @@ final class RecordingController: ObservableObject {
                 let meeting = try session.start()
                 if let event = CalendarNaming.currentTitle() {
                     try? repository.rename(meeting.id, to: event)
-                } else if let source, meeting.title.hasPrefix("会议 ") {
-                    try? repository.rename(meeting.id, to: source + meeting.title.dropFirst(2))
+                } else if let source, let title = Meeting.retitle(meeting.title, source: source) {
+                    try? repository.rename(meeting.id, to: title)
                 }
                 await self.didStart(session, meetingID: meeting.id)
             } catch {
@@ -219,18 +219,18 @@ final class RecordingController: ObservableObject {
     /// 当前需要提醒用户的问题，没有则为空
     var warnings: [String] {
         AudioChannel.allCases.compactMap { ch in
-            let who = ch == .mic ? "麦克风（我）" : "系统音频（对方）"
+            let who = ch == .mic ? L("麦克风（我）") : L("系统音频（对方）")
             switch statuses[ch] ?? .ok {
             case .ok:
                 return nil
             case .interrupted(let reason):
-                return "\(who)已中断：\(reason)"
+                return L("\(who)已中断：\(reason)")
             case .stalled:
-                return "\(who)超过 3 秒没有收到音频数据"
+                return L("\(who)超过 3 秒没有收到音频数据")
             case .silent where ch == .system:
-                return "对方一直没有声音。如果会议里有人在说话，请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting"
+                return L("对方一直没有声音。如果会议里有人在说话，请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting")
             case .silent:
-                return "麦克风一直没有声音，请检查麦克风是否被静音或权限是否被关闭"
+                return L("麦克风一直没有声音，请检查麦克风是否被静音或权限是否被关闭")
             }
         }
     }
@@ -238,13 +238,13 @@ final class RecordingController: ObservableObject {
     static func describe(_ error: Error) -> String {
         switch error {
         case CaptureError.permissionDenied(.mic):
-            return "没有麦克风权限。请到 系统设置 → 隐私与安全性 → 麦克风 中允许 Moting。"
+            return L("没有麦克风权限。请到 系统设置 → 隐私与安全性 → 麦克风 中允许 Moting。")
         case CaptureError.permissionDenied(.system):
-            return "没有系统音频录制权限。请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting。"
+            return L("没有系统音频录制权限。请到 系统设置 → 隐私与安全性 → 屏幕与系统录音 → 仅系统音频录制 中允许 Moting。")
         case CaptureError.deviceUnavailable(let what):
-            return "音频设备不可用：\(what)"
+            return L("音频设备不可用：\(what)")
         default:
-            return "录音出错：\(error.localizedDescription)"
+            return L("录音出错：\(error.localizedDescription)")
         }
     }
 }

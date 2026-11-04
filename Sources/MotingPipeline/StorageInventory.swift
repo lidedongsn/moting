@@ -1,5 +1,6 @@
 import Foundation
 import MotingASR
+import MotingCore
 import MotingStorage
 
 public struct StorageItem: Identifiable, Sendable {
@@ -33,7 +34,7 @@ public enum StorageInventory {
     /// realtimeID / offlineID 为当前选用的模型；辅助模型一律算在用
     public static func scan(paths: AppPaths, store: ModelStore, realtimeID: String, offlineID: String) -> StorageReport {
         var items: [StorageItem] = [
-            StorageItem(id: "recordings", name: "录音", kind: .recordings, bytes: paths.meetingsDiskUsage(), inUse: true),
+            StorageItem(id: "recordings", name: L("录音"), kind: .recordings, bytes: paths.meetingsDiskUsage(), inUse: true),
         ]
         for m in ModelCatalog.all where store.diskUsage(m) > 0 {
             items.append(StorageItem(id: m.id, name: m.displayName, kind: .realtimeModel, bytes: store.diskUsage(m), inUse: m.id == realtimeID))
@@ -46,7 +47,7 @@ public enum StorageInventory {
         }
         let other = directorySize(paths.root) - items.reduce(0) { $0 + $1.bytes }
         if other > 0 {
-            items.append(StorageItem(id: "other", name: "数据库、声纹与热词", kind: .other, bytes: other, inUse: true))
+            items.append(StorageItem(id: "other", name: L("数据库、声纹与热词"), kind: .other, bytes: other, inUse: true))
         }
         return StorageReport(items: items)
     }

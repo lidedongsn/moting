@@ -28,7 +28,7 @@ let package = Package(
         ),
         // 捕获 AVFoundation 抛出的 Objective-C 异常（Swift 无法捕获）
         .target(name: "MotingObjCSupport"),
-        .target(name: "MotingPlayback", dependencies: ["MotingCapture", "MotingObjCSupport"]),
+        .target(name: "MotingPlayback", dependencies: ["MotingCore", "MotingCapture", "MotingObjCSupport"]),
         // sherpa-onnx 静态库由 Scripts/fetch-sherpa-onnx.sh 生成，不入库
         .binaryTarget(name: "CSherpaOnnx", path: "Vendor/CSherpaOnnx.xcframework"),
         // SpeexDSP 回声消除（BSD，源码入库，只编译用到的几个文件）

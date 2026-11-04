@@ -1,5 +1,6 @@
 import Foundation
 import MotingASR
+import MotingCore
 
 /// 设置页里离线模型与辅助模型的下载状态
 @MainActor
@@ -34,7 +35,7 @@ final class ModelDownloads: ObservableObject {
             } catch {
                 await MainActor.run { [weak self] in
                     self?.progress[m.id] = nil
-                    self?.errors[m.id] = "下载失败：\(error.localizedDescription)。如果你用代理上网，请在「下载」页填写代理地址。"
+                    self?.errors[m.id] = L("下载失败：\(error.localizedDescription)。如果你用代理上网，请在「下载」页填写代理地址。")
                 }
             }
         }

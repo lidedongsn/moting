@@ -1,4 +1,5 @@
 import MotingASR
+import MotingCore
 import SwiftUI
 
 /// 设置·识别模型：实时与离线各一组，标出实测准确率与处理速度
@@ -10,8 +11,8 @@ struct ModelsPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PaneHeader(title: "识别模型",
-                       subtitle: "准确率和速度来自在这台 Mac 上对 400 条真实会议语音的实测；没有实测过的模型不显示数字。")
+            PaneHeader(title: L("识别模型"),
+                       subtitle: L("准确率和速度来自在这台 Mac 上对 400 条真实会议语音的实测；没有实测过的模型不显示数字。"))
             Text("会中实时字幕").font(.headline).padding(.bottom, 8)
             PaneCard {
                 ForEach(Array(ModelCatalog.all.enumerated()), id: \.element.id) { i, m in
@@ -51,7 +52,7 @@ struct ModelsPane: View {
                     .help("选用这个模型")
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name).fontWeight(.semibold).lineLimit(1).truncationMode(.tail).help(name)
-                    Text([installed ? "已下载 · \(bytesText(usage))" : "约 \(bytesText(size))", hotwords ? "支持热词" : nil]
+                    Text([installed ? L("已下载 · \(bytesText(usage))") : L("约 \(bytesText(size))"), hotwords ? L("支持热词") : nil]
                         .compactMap { $0 }.joined(separator: " · "))
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -85,7 +86,7 @@ struct ModelsPane: View {
     @ViewBuilder
     private func meter(_ b: Benchmark?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(b.map { "准确率 \(String(format: "%.1f", 100 - $0.cer))%" } ?? "准确率 未实测")
+            Text(b.map { L("准确率 \(String(format: "%.1f", 100 - $0.cer))%") } ?? L("准确率 未实测"))
                 .font(.system(size: 11.5)).foregroundStyle(.secondary)
             Capsule().fill(Color.primary.opacity(0.08))
                 .overlay(alignment: .leading) {

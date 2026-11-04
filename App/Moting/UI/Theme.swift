@@ -107,7 +107,7 @@ func clock(_ t: TimeInterval) -> String {
 /// 62 分钟 / 1 小时 12 分
 func durationText(_ t: TimeInterval) -> String {
     let m = Int((t / 60).rounded())
-    return m >= 60 ? "\(m / 60) 小时 \(m % 60) 分" : "\(max(m, 1)) 分钟"
+    return m >= 60 ? L("\(m / 60) 小时 \(m % 60) 分") : L("\(max(m, 1)) 分钟")
 }
 
 /// 工具栏胶囊按钮（设计稿 .tb）：系统工具栏在暗色下把文字画成次要灰，这里自绘
@@ -209,9 +209,9 @@ enum AppAppearance: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .system: "跟随系统"
-        case .light: "浅色"
-        case .dark: "深色"
+        case .system: L("跟随系统")
+        case .light: L("浅色")
+        case .dark: L("深色")
         }
     }
 

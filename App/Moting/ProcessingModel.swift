@@ -61,7 +61,7 @@ final class ProcessingModel: ObservableObject {
     /// 录音结束后调用：按"通用"设置决定是否自动精准转写、用电池时是否立即处理
     /// 太短的录音被丢弃时提示一下，免得以为没录上
     func noteDiscarded(seconds: TimeInterval) {
-        notifier.post(title: "录音太短，已丢弃", body: "这次只录了 \(Int(seconds.rounded())) 秒，没有保存，也不会转写。", meetingID: nil)
+        notifier.post(title: L("录音太短，已丢弃"), body: L("这次只录了 \(Int(seconds.rounded())) 秒，没有保存，也不会转写。"), meetingID: nil)
     }
 
     func enqueueAfterRecording(_ meetingID: UUID) {
@@ -128,10 +128,10 @@ final class ProcessingModel: ObservableObject {
         }
         guard let env, let meeting = try? env.repository.meeting(job.meetingID) else { return }
         if job.status == .done {
-            notifier.post(title: "精准转写已完成", body: meeting.title, meetingID: job.meetingID)
+            notifier.post(title: L("精准转写已完成"), body: meeting.title, meetingID: job.meetingID)
             summary.autoGenerateIfEnabled(job.meetingID)
         } else {
-            notifier.post(title: "精准转写失败", body: "\(meeting.title)：\(job.error ?? "未知错误")", meetingID: job.meetingID)
+            notifier.post(title: L("精准转写失败"), body: L("\(meeting.title)：\(job.error ?? L("未知错误"))"), meetingID: job.meetingID)
         }
     }
 }

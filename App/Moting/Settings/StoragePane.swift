@@ -1,5 +1,6 @@
 import AppKit
 import MotingASR
+import MotingCore
 import MotingPipeline
 import MotingSummary
 import SwiftUI
@@ -15,16 +16,16 @@ struct StoragePane: View {
     @Environment(\.openWindow) private var openWindow
 
     private var segments: [(String, Int64, Color)] {
-        [("录音", report.bytes(.recordings), Theme.me),
-         ("在用模型", report.bytes(.realtimeModel, inUse: true) + report.bytes(.offlineModel, inUse: true), Color.indigo),
-         ("未使用模型", report.reclaimable, Color.secondary.opacity(0.55)),
-         ("辅助模型", report.bytes(.auxModel), Color.orange),
-         ("其他", report.bytes(.other), Color.green)]
+        [(L("录音"), report.bytes(.recordings), Theme.me),
+         (L("在用模型"), report.bytes(.realtimeModel, inUse: true) + report.bytes(.offlineModel, inUse: true), Color.indigo),
+         (L("未使用模型"), report.reclaimable, Color.secondary.opacity(0.55)),
+         (L("辅助模型"), report.bytes(.auxModel), Color.orange),
+         (L("其他"), report.bytes(.other), Color.green)]
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PaneHeader(title: "存储", subtitle: "Moting 的所有文件都在一个文件夹里，可以在这里查看和删除。")
+            PaneHeader(title: L("存储"), subtitle: L("Moting 的所有文件都在一个文件夹里，可以在这里查看和删除。"))
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(bytesText(report.total)).font(.system(size: 32, weight: .bold)).monospacedDigit()
                 Text("共占用").foregroundStyle(.secondary)
@@ -135,21 +136,21 @@ struct StoragePane: View {
     }
 
     private func usageText(_ item: StorageItem) -> String {
-        guard item.inUse else { return "未使用" }
+        guard item.inUse else { return L("未使用") }
         switch item.kind {
-        case .realtimeModel: return "实时字幕在用"
-        case .offlineModel: return "会后转写在用"
-        default: return "在用"
+        case .realtimeModel: return L("实时字幕在用")
+        case .offlineModel: return L("会后转写在用")
+        default: return L("在用")
         }
     }
 
     private func kindText(_ k: StorageItem.Kind) -> String {
         switch k {
-        case .recordings: "在主窗口按会议删除"
-        case .realtimeModel: "实时字幕模型"
-        case .offlineModel: "精准转写模型"
-        case .auxModel: "辅助模型（人声检测、说话人分离、声纹、标点）"
-        case .other: "数据库、声纹、热词"
+        case .recordings: L("在主窗口按会议删除")
+        case .realtimeModel: L("实时字幕模型")
+        case .offlineModel: L("精准转写模型")
+        case .auxModel: L("辅助模型（人声检测、说话人分离、声纹、标点）")
+        case .other: L("数据库、声纹、热词")
         }
     }
 
