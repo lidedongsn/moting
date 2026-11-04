@@ -1,7 +1,7 @@
 // 生成 Moting 的 app 图标与菜单栏图标（CoreGraphics 绘制，透明背景）。
 // 用法：swift Scripts/render-icon.swift App/Moting/Assets.xcassets
-// 设计（2026-11-02）："一笔"——一条线从声波（听）渐平成直线（转写），末端聚成 ✦（总结）。
-// 青→紫渐变底：左上接 app 内的青色主色，右下的紫色呼应 AI 纪要；macOS 26 连续曲率外形 + 玻璃高光
+// 设计（2026-11-04）：深色底上的"一来一回"——青色（我）说完，琥珀色（对方）接上，两段旋转对称。
+// 和 app 底部的双声部声纹带是同一个图形，颜色也取自 Theme.me / Theme.them 的深色值
 import AppKit
 import CoreGraphics
 
@@ -18,11 +18,6 @@ func linear(_ ctx: CGContext, _ colors: [CGColor], from: CGPoint, to: CGPoint, l
     ctx.drawLinearGradient(g, start: from, end: to, options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
 }
 
-func radial(_ ctx: CGContext, _ colors: [CGColor], center: CGPoint, radius: CGFloat) {
-    let g = CGGradient(colorsSpace: space, colors: colors as CFArray, locations: nil)!
-    ctx.drawRadialGradient(g, startCenter: center, startRadius: 0, endCenter: center, endRadius: radius, options: [.drawsAfterEndLocation])
-}
-
 /// 连续曲率圆角方形（超椭圆近似 macOS 图标外形）
 func squircle(_ r: CGRect, n: CGFloat = 4.2) -> CGPath {
     let p = CGMutablePath()
@@ -37,46 +32,31 @@ func squircle(_ r: CGRect, n: CGFloat = 4.2) -> CGPath {
     return p
 }
 
-/// "一笔"的中心线，坐标 0–100（y 向上）：x 14–40 振荡且振幅衰减，40–53 为直线
-func strokeCenterline(_ map: (CGFloat, CGFloat) -> CGPoint) -> CGPath {
-    let p = CGMutablePath()
-    let x0: CGFloat = 14, x1: CGFloat = 40, x2: CGFloat = 53
-    for i in 0...500 {
-        let x = x0 + (x2 - x0) * CGFloat(i) / 500
-        let k = max(0, (x1 - x) / (x1 - x0))
-        let y = 50 + 22 * pow(k, 1.1) * sin((x - x0) * 0.5)
-        i == 0 ? p.move(to: map(x, y)) : p.addLine(to: map(x, y))
-    }
-    return p
-}
+/// 上半（我）每根柱子的高度，下半（对方）是它的倒序，所以整体旋转对称
+/// 大图标 7 根；小尺寸细节会糊，用 5 根
+let barsLarge: [CGFloat] = [11, 23, 33, 15, 0, 0, 0]
+let barsSmall: [CGFloat] = [14, 31, 14, 0, 0]
 
-/// 四角星 ✦
-func sparkle(center c: CGPoint, big: CGFloat, small: CGFloat) -> CGPath {
-    let p = CGMutablePath()
-    for j in 0..<8 {
-        let ang = CGFloat(j) * .pi / 4 + .pi / 2
-        let r = j % 2 == 0 ? big : small
-        let pt = CGPoint(x: c.x + r * cos(ang), y: c.y + r * sin(ang))
-        j == 0 ? p.move(to: pt) : p.addLine(to: pt)
+/// 画声纹标记：柱子从中轴向两侧长，圆头。width/gap/高度都按 unit 缩放
+func drawMark(_ ctx: CGContext, center: CGPoint, unit u: CGFloat, bars: [CGFloat], width: CGFloat, gap: CGFloat,
+              axisGap: CGFloat, top: CGColor, bottom: CGColor) {
+    let total = CGFloat(bars.count) * width + CGFloat(bars.count - 1) * gap
+    for (i, h) in bars.enumerated() {
+        let x = center.x + (-total / 2 + CGFloat(i) * (width + gap)) * u
+        if h > 0 {
+            let up = CGRect(x: x, y: center.y + axisGap / 2 * u, width: width * u, height: h * u)
+            ctx.addPath(CGPath(roundedRect: up, cornerWidth: width / 2 * u, cornerHeight: width / 2 * u, transform: nil))
+            ctx.setFillColor(top)
+            ctx.fillPath()
+        }
+        let d = bars[bars.count - 1 - i]
+        if d > 0 {
+            let down = CGRect(x: x, y: center.y - axisGap / 2 * u - d * u, width: width * u, height: d * u)
+            ctx.addPath(CGPath(roundedRect: down, cornerWidth: width / 2 * u, cornerHeight: width / 2 * u, transform: nil))
+            ctx.setFillColor(bottom)
+            ctx.fillPath()
+        }
     }
-    p.closeSubpath()
-    return p
-}
-
-/// 白色玻璃件：落影 + 本体 + 上部高光
-func glass(_ ctx: CGContext, _ path: CGPath, size: CGFloat) {
-    let box = path.boundingBox
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.035, color: color(0x1A0B4A, 0.35))
-    ctx.addPath(path)
-    ctx.setFillColor(color(0xFFFFFF))
-    ctx.fillPath()
-    ctx.restoreGState()
-    ctx.saveGState()
-    ctx.addPath(path)
-    ctx.clip()
-    linear(ctx, [color(0xFFFFFF), color(0xE9ECFF)], from: CGPoint(x: 0, y: box.maxY), to: CGPoint(x: 0, y: box.minY))
-    ctx.restoreGState()
 }
 
 func drawIcon(size: CGFloat) -> CGImage {
@@ -86,61 +66,47 @@ func drawIcon(size: CGFloat) -> CGImage {
     let o = size * 100 / 1024, w = size * 824 / 1024, u = w / 100
     let tile = CGRect(x: o, y: o, width: w, height: w)
     let tilePath = squircle(tile)
-    func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: o + x * u, y: o + y * u) }
 
     // 外投影
     ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.03, color: color(0x000000, 0.3))
+    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.03, color: color(0x000000, 0.35))
     ctx.addPath(tilePath)
-    ctx.setFillColor(color(0x4A7BE8))
+    ctx.setFillColor(color(0x121215))
     ctx.fillPath()
     ctx.restoreGState()
 
     ctx.saveGState()
     ctx.addPath(tilePath)
     ctx.clip()
-    // 青→紫渐变底，左上一点亮
-    linear(ctx, [color(0x2BB8F0), color(0x6D3FE0)], from: CGPoint(x: tile.minX, y: tile.maxY), to: CGPoint(x: tile.maxX, y: tile.minY))
-    radial(ctx, [color(0xFFFFFF, 0.18), color(0xFFFFFF, 0)], center: pt(22, 86), radius: 70 * u)
-
-    // 一笔：小尺寸加粗，免得线糊掉
-    let width = (size <= 64 ? 8.5 : 6.2) * u
-    let line = strokeCenterline(pt).copy(strokingWithWidth: width, lineCap: .round, lineJoin: .round, miterLimit: 1)
-    glass(ctx, line, size: size)
-    ctx.saveGState()
-    ctx.addPath(line)
-    ctx.clip()
-    ctx.setBlendMode(.screen)
-    linear(ctx, [color(0xFFFFFF, 0.5), color(0xFFFFFF, 0)], from: pt(0, 78), to: pt(0, 46))
-    ctx.restoreGState()
-    glass(ctx, sparkle(center: pt(73, 50), big: 18 * u, small: (size <= 64 ? 5.5 : 4.4) * u), size: size)
+    linear(ctx, [color(0x212125), color(0x0C0C0E)], from: CGPoint(x: 0, y: tile.maxY), to: CGPoint(x: 0, y: tile.minY))
+    let center = CGPoint(x: tile.midX, y: tile.midY)
+    let cyan = color(0x3CD3FE), amber = color(0xFFD600)
+    if size <= 64 {
+        drawMark(ctx, center: center, unit: u, bars: barsSmall, width: 11, gap: 4.5, axisGap: 3, top: cyan, bottom: amber)
+    } else {
+        drawMark(ctx, center: center, unit: u, bars: barsLarge, width: 8, gap: 3.2, axisGap: 2.4, top: cyan, bottom: amber)
+    }
     ctx.restoreGState()
 
-    // 外沿镜面亮边：左上亮、右下暗
+    // 外沿一圈极细的亮边，深色桌面上也分得清轮廓
     ctx.saveGState()
     ctx.addPath(tilePath)
-    ctx.setLineWidth(max(1, size * 0.005))
+    ctx.setLineWidth(max(1, size * 0.004))
     ctx.replacePathWithStrokedPath()
     ctx.clip()
-    linear(ctx, [color(0xFFFFFF, 0.55), color(0xFFFFFF, 0.08), color(0xFFFFFF, 0.25)],
-           from: CGPoint(x: tile.minX, y: tile.maxY), to: CGPoint(x: tile.maxX, y: tile.minY), locations: [0, 0.6, 1])
+    linear(ctx, [color(0xFFFFFF, 0.22), color(0xFFFFFF, 0.05)], from: CGPoint(x: 0, y: tile.maxY), to: CGPoint(x: 0, y: tile.minY))
     ctx.restoreGState()
     return ctx.makeImage()!
 }
 
-/// 菜单栏图标：18pt 单色，同 app 图标的"一笔"。template 为 true 时画黑色（系统按明暗着色），否则画红色（录音中）
+/// 菜单栏图标：18pt 单色，同 app 图标的 5 根版本。hex 为黑色时由系统按明暗着色；录音中画红色
 func drawMenuIcon(scale: CGFloat, hex: UInt32) -> CGImage {
     let px = 18 * scale
     let ctx = CGContext(data: nil, width: Int(px), height: Int(px), bitsPerComponent: 8, bytesPerRow: 0,
                         space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
-    ctx.setFillColor(color(hex))
-    // 中心线坐标 14–53 映射到 0.8–10.5pt，星在 14.3pt
-    let k = 9.7 / 39 * scale
-    let line = strokeCenterline { x, y in CGPoint(x: 0.8 * scale + (x - 14) * k, y: px / 2 + (y - 50) * k) }
-        .copy(strokingWithWidth: 1.6 * scale, lineCap: .round, lineJoin: .round, miterLimit: 1)
-    ctx.addPath(line)
-    ctx.addPath(sparkle(center: CGPoint(x: 14.3 * scale, y: px / 2), big: 3.5 * scale, small: 1 * scale))
-    ctx.fillPath()
+    let c = color(hex)
+    drawMark(ctx, center: CGPoint(x: px / 2, y: px / 2), unit: scale, bars: [3.4, 7.4, 3.4, 0, 0], width: 2.4,
+             gap: 0.9, axisGap: 0.8, top: c, bottom: c)
     return ctx.makeImage()!
 }
 
