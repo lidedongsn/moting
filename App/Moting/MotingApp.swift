@@ -59,7 +59,7 @@ struct MotingApp: App {
         .windowToolbarStyle(.unified)
         Settings {
             if let env {
-                SettingsRoot(live: recorder.live, processing: recorder.processing, env: env)
+                SettingsRoot(live: recorder.live, processing: recorder.processing, env: env, recorder: recorder)
             }
         }
         MenuBarExtra {

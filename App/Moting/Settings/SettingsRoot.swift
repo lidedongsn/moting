@@ -9,10 +9,13 @@ struct SettingsRoot: View {
     @ObservedObject var live: LiveTranscriptModel
     @ObservedObject var processing: ProcessingModel
     let env: AppEnvironment
+    @ObservedObject var recorder: RecordingController
     @StateObject private var downloads: ModelDownloads
+    @Environment(\.colorScheme) private var scheme
     @AppStorage(SettingsRoot.paneKey) private var pane = "general"
 
-    init(live: LiveTranscriptModel, processing: ProcessingModel, env: AppEnvironment) {
+    init(live: LiveTranscriptModel, processing: ProcessingModel, env: AppEnvironment, recorder: RecordingController) {
+        self.recorder = recorder
         self.live = live
         self.processing = processing
         self.env = env
@@ -43,7 +46,7 @@ struct SettingsRoot: View {
                     case "voice": VoicePane(env: env, downloads: downloads)
                     case "storage": StoragePane(env: env, live: live)
                     case "download": DownloadPane(env: env)
-                    default: GeneralPane()
+                    default: GeneralPane(recorder: recorder)
                     }
                 }
                 .padding(.horizontal, 30)
@@ -55,6 +58,7 @@ struct SettingsRoot: View {
         // 标题栏并入内容区后窗口会高出一截，高度随窗口撑满
         .frame(width: 800)
         .frame(minHeight: 620, maxHeight: .infinity)
+        .background(scheme == .dark ? Theme.darkCanvas : .clear)
         .background(WindowChrome())
         .ignoresSafeArea()
     }
@@ -88,6 +92,7 @@ struct SettingsRoot: View {
         .padding(.bottom, 10)
         .frame(width: 220)
         .frame(maxHeight: .infinity)
+        .background(scheme == .dark ? Theme.darkSidebar : .clear)
         .overlay(alignment: .trailing) { Divider() }
     }
 }

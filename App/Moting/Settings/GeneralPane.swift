@@ -1,7 +1,12 @@
+import MotingCapture
 import SwiftUI
 
 /// 设置·通用
 struct GeneralPane: View {
+    @ObservedObject var recorder: RecordingController
+    @StateObject private var mics = MicDevicesModel()
+    @AppStorage(MicPreference.uidKey) private var micUID = ""
+    @AppStorage(MicPreference.nameKey) private var micName = ""
     @AppStorage(ProcessingModel.autoTranscribeKey) private var autoTranscribe = true
     @AppStorage(ProcessingModel.batteryPolicyKey) private var batteryPolicy = "wait"
     @AppStorage(AppAppearance.key) private var appearance = AppAppearance.system.rawValue
@@ -19,6 +24,21 @@ struct GeneralPane: View {
                 }
             }
             .onChange(of: appearance) { _, v in (AppAppearance(rawValue: v) ?? .system).apply() }
+            .padding(.bottom, 16)
+            PaneCard {
+                row(title: "麦克风", detail: "下次开始录音时生效。选定的设备断开时，录音自动改用系统默认，不会中断。") {
+                    Picker("", selection: micSelection) {
+                        Text(systemDefaultMicTitle).tag("")
+                        ForEach(mics.devices) { Text($0.name).tag($0.uid) }
+                        // 选过但现在没连接的设备，也要留在列表里
+                        if !micUID.isEmpty, !mics.devices.contains(where: { $0.uid == micUID }) {
+                            Text("\(micName)（未连接）").tag(micUID)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+            }
             .padding(.bottom, 16)
             PaneCard {
                 row(title: "发现会议时提醒录音",
@@ -52,6 +72,17 @@ struct GeneralPane: View {
                 }
             }
         }
+    }
+
+    private var systemDefaultMicTitle: String {
+        mics.defaultName.map { "跟随系统（\($0)）" } ?? "跟随系统"
+    }
+
+    private var micSelection: Binding<String> {
+        Binding(get: { micUID }, set: { uid in
+            micUID = uid
+            micName = mics.devices.first { $0.uid == uid }?.name ?? ""
+        })
     }
 
     private func setCalendarNaming(_ on: Bool) {

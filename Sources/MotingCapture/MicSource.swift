@@ -2,7 +2,8 @@ import AVFoundation
 import CoreAudio
 import MotingCore
 
-/// 麦克风源。deviceUID 为 nil 时跟随系统默认输入，默认设备变化时自动切换
+/// 麦克风源。deviceUID 为 nil 时跟随系统默认输入，默认设备变化时自动切换；
+/// 选定的设备断开时改用系统默认，重新连上再切回来，录音不中断
 public final class MicSource: AudioSource {
     public let channel: AudioChannel = .mic
     private let deviceUID: String?
@@ -22,12 +23,10 @@ public final class MicSource: AudioSource {
             try r.start()
             reader = r
             watch(r.deviceID)
-            if deviceUID == nil {
-                unlisteners.append(CA.listen(AudioObjectID(kAudioObjectSystemObject),
-                                             kAudioHardwarePropertyDefaultInputDevice, queue: pump.queue) { [weak self] in
-                    self?.switchDevice(reason: "默认输入设备已变化")
-                })
-            }
+            unlisteners.append(InputDevices.observe(queue: pump.queue) { [weak self] in
+                guard let self, let target = try? self.targetDevice(), target != self.reader?.deviceID else { return }
+                self.switchDevice(reason: "输入设备已变化")
+            })
         }
     }
 
@@ -42,9 +41,20 @@ public final class MicSource: AudioSource {
     }
 
     private func makeReader() throws -> DeviceIOReader {
-        let id = try deviceUID.map(CA.device(forUID:)) ?? CA.defaultInputDevice()
+        let id = try targetDevice()
         guard id != kAudioObjectUnknown else { throw CaptureError.deviceUnavailable("没有可用的输入设备") }
         return try DeviceIOReader(deviceID: id, ring: pump.ring)
+    }
+
+    private func targetDevice() throws -> AudioObjectID {
+        try Self.pick(fixedUID: deviceUID, lookup: CA.device(forUID:), fallback: CA.defaultInputDevice)
+    }
+
+    /// 选定的设备还在就用它，否则用系统默认
+    static func pick(fixedUID: String?, lookup: (String) throws -> AudioObjectID,
+                     fallback: () throws -> AudioObjectID) throws -> AudioObjectID {
+        if let fixedUID, let device = try? lookup(fixedUID) { return device }
+        return try fallback()
     }
 
     /// 监听当前设备的采样率变化

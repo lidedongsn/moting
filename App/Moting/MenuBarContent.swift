@@ -10,6 +10,7 @@ struct MenuBarContent: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
     @State private var recent: [Meeting] = []
+    @Environment(\.colorScheme) private var scheme
 
     private var isRecording: Bool {
         recorder.state == .recording || recorder.state == .paused || recorder.state == .stopping
@@ -63,6 +64,7 @@ struct MenuBarContent: View {
         }
         .padding(14)
         .frame(width: 320)
+        .background(scheme == .dark ? Theme.darkSidebar : .clear)
         .task(id: recorder.state) { loadRecent() }
     }
 

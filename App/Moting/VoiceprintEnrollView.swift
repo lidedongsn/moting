@@ -74,7 +74,7 @@ struct VoiceprintEnrollView: View {
 
     private func start() {
         let buffer = SampleBuffer()
-        let source = MicSource()
+        let source = MicPreference.source()
         mic = source
         phase = .recording(0)
         do {

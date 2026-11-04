@@ -25,8 +25,8 @@ struct MainWindow: View {
     var body: some View {
         NavigationSplitView {
             sidebar
-                // 浅色：侧栏透出的桌面偏暗，叠一层白玻璃（设计稿 .side 42% 白）
-                .background(scheme == .light ? Color.white.opacity(0.45) : .clear)
+                // 浅色：侧栏透出的桌面偏暗，叠一层白玻璃（设计稿 .side 42% 白）；深色：实色
+                .background(scheme == .light ? Color.white.opacity(0.45) : Theme.darkSidebar)
                 .navigationSplitViewColumnWidth(min: 250, ideal: 286, max: 380)
         } detail: {
             ZStack {
@@ -42,8 +42,8 @@ struct MainWindow: View {
                     }
                 }
             }
-            // 浅色：系统窗口底是灰的，按设计稿在内容区叠一层白（.main 55% 白），深色不变
-            .background { if scheme == .light { Color.white.opacity(0.6).ignoresSafeArea() } }
+            // 浅色：系统窗口底是灰的，按设计稿在内容区叠一层白（.main 55% 白）；深色：比系统更深的实色
+            .background { (scheme == .light ? Color.white.opacity(0.6) : Theme.darkCanvas).ignoresSafeArea() }
             .toolbar {
                 // 有会议时录音按钮由详情页放在工具栏最右；没有选中会议时放在这里
                 if processing.selectedMeetingID == nil || !meetings.contains(where: { $0.id == processing.selectedMeetingID }) {
@@ -139,6 +139,7 @@ struct MainWindow: View {
             renaming = m
             return .handled
         }
+        .scrollContentBackground(.hidden)
         .searchable(text: $query, placement: .sidebar, prompt: "搜索会议和转写内容")
         .overlay {
             if !query.isEmpty && filtered.isEmpty {

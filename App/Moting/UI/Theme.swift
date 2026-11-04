@@ -23,6 +23,11 @@ enum Theme {
         speaker(indices[key] ?? (key == .me ? 0 : 1))
     }
 
+    /// 深色界面的三层底色：内容区最深，侧栏稍亮，卡片再亮一点（实色，不透出桌面）
+    static let darkCanvas = Color(hex: 0x0E0E10)
+    static let darkSidebar = Color(hex: 0x161618)
+    static let darkCard = Color(hex: 0x1C1C1F)
+
     /// 圆角：按 macOS 15 的尺度（窗口约 10，系统设置分组约 10，控件约 6）。以后换 macOS 26 的大圆角只改这里
     enum Radius {
         /// 内容卡片、横幅
@@ -63,8 +68,8 @@ struct GlassCard: ViewModifier {
     func body(content: Content) -> some View {
         content
             // 浅色下材质发灰，叠一层白（设计稿卡片约 75% 白）
-            .background(scheme == .light ? Color.white.opacity(0.6) : .clear, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .background(material, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .background(scheme == .light ? Color.white.opacity(0.6) : Theme.darkCard, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .background(scheme == .light ? AnyShapeStyle(material) : AnyShapeStyle(.clear), in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(Color.primary.opacity(scheme == .dark ? 0.12 : 0.08), lineWidth: 0.5)

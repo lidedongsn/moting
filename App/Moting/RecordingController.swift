@@ -96,7 +96,7 @@ final class RecordingController: ObservableObject {
         Task.detached {
             // start() 可能同步等待麦克风授权弹窗，放到后台线程
             let session = RecordingSession(paths: paths, repository: repository,
-                                           sources: [MicSource(), SystemAudioTapSource()])
+                                           sources: [MicPreference.source(), SystemAudioTapSource()])
             session.onEvent = { ch, event in box.record(ch, event) }
             session.onTrackAudio = { ch, samples, start in feeder.value?.feed(ch, samples, startSample: start) }
             do {
