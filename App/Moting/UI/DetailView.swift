@@ -189,9 +189,16 @@ struct DetailView: View {
     @ViewBuilder
     private var titleRow: some View {
         if editingTitle {
+            // 系统圆角输入框高度固定，放大字会被裁掉：用无边框的，字号和位置跟显示时一样
             TextField("会议标题", text: $title)
-                .textFieldStyle(.roundedBorder)
+                .textFieldStyle(.plain)
                 .font(Theme.titleFont)
+                .lineLimit(1)
+                .padding(.vertical, 2)
+                .padding(.horizontal, 8)
+                .background(Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+                .padding(.vertical, -2)
+                .padding(.horizontal, -8)
                 .focused($titleFocused)
                 .onSubmit(commitTitle)
                 .onExitCommand(perform: cancelTitle)
