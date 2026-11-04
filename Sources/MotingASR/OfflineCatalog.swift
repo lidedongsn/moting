@@ -128,6 +128,10 @@ public enum OfflineCatalog {
 
     public static let all: [OfflineModel] = [senseVoice, paraformerZh, xasrTransducer, qwen3ASR, fireRedASR2, whisperTurbo]
 
+    /// 设置页能选的模型。Whisper 暂不开放：sherpa-onnx 1.13.8 解码时会丢掉拆成多个 token 的汉字，
+    /// 同一条语音 2.0.1 是完整的。升级引擎并验证后再放开
+    public static let selectable = all.filter { $0.kind != .whisper }
+
     /// 默认离线模型；Task 9 对比后由用户选定
     public static var `default`: OfflineModel { senseVoice }
 

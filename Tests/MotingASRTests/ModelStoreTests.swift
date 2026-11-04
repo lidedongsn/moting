@@ -203,6 +203,9 @@ private func file(_ name: String, _ content: String) -> ModelFile {
     let m = OfflineCatalog.whisperTurbo
     #expect(m.kind == .whisper)
     #expect(OfflineCatalog.all.contains(m))
+    // 现在的识别引擎（1.13.8）解码 Whisper 会丢字，升级前不能让用户选
+    #expect(!OfflineCatalog.selectable.contains(m))
+    #expect(OfflineCatalog.selectable.contains(OfflineCatalog.default))
     // 自带标点；没有真正的热词能力，界面不能说支持
     #expect(m.hasPunctuation)
     #expect(!m.supportsHotwords)
