@@ -15,7 +15,8 @@ public enum CallCatalog {
     private static let entries: [(prefixes: [String], app: CallApp)] = [
         (["com.tencent.meeting"], call(L("腾讯会议"))),
         (["com.electron.lark", "com.bytedance.lark", "com.bytedance.feishu", "com.bytedance.macos.feishu", "com.larksuite"], call(L("飞书"))),
-        (["com.alibaba.DingTalkMac"], call(L("钉钉"))),
+        // 钉钉开会时用麦克风的是独立的 DingMeeting 进程，标识和主程序不同
+        (["com.alibaba.DingTalkMac", "com.dingtalk"], call(L("钉钉"))),
         (["com.tencent.WeWorkMac"], call(L("企业微信"))),
         (["us.zoom.xos"], call("Zoom")),
         (["com.microsoft.teams2", "com.microsoft.teams"], call("Teams")),
@@ -38,8 +39,16 @@ public enum CallCatalog {
     private static func chat(_ name: String) -> CallApp { CallApp(name: name, isBrowser: false, minHold: 20) }
     private static func browser(_ name: String) -> CallApp { CallApp(name: name, isBrowser: true, minHold: 20) }
 
-    public static func app(forBundleID id: String) -> CallApp? {
-        entries.first { e in e.prefixes.contains { id == $0 || id.hasPrefix($0 + ".") } }?.app
+    public static func app(forBundleID raw: String) -> CallApp? {
+        let id = withoutTeamPrefix(raw)
+        return entries.first { e in e.prefixes.contains { id == $0 || id.hasPrefix($0 + ".") } }?.app
+    }
+
+    /// 有些进程的标识前面带开发者团队 ID，如 5ZSL2CJU2T.com.dingtalk.meeting
+    private static func withoutTeamPrefix(_ id: String) -> String {
+        let parts = id.split(separator: ".", maxSplits: 1)
+        guard parts.count == 2, parts[0].count == 10, parts[0].allSatisfy({ $0.isASCII && ($0.isUppercase || $0.isNumber) }) else { return id }
+        return String(parts[1])
     }
 }
 

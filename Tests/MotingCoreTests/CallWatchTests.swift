@@ -122,3 +122,22 @@ private func run(_ w: inout CallWatch, _ ids: Set<String>, recording: Bool = fal
     w.observe(bundleIDs: [], recording: false, at: 16)
     #expect(w.prompt == nil)
 }
+
+@Test func dingTalkMeetingProcessIsRecognized() {
+    // 钉钉开会时用麦克风的是 DingMeeting，标识和主程序不同，还带开发者团队前缀
+    #expect(CallCatalog.app(forBundleID: "5ZSL2CJU2T.com.dingtalk.meeting")?.isBrowser == false)
+    #expect(CallCatalog.app(forBundleID: "com.dingtalk.meeting") != nil)
+    #expect(CallCatalog.app(forBundleID: "5ZSL2CJU2T.com.dingtalk.meeting") == CallCatalog.app(forBundleID: "com.alibaba.DingTalkMac"))
+}
+
+@Test func teamPrefixIsIgnoredForAnyApp() {
+    #expect(CallCatalog.app(forBundleID: "ABCDE12345.com.tencent.meeting") == CallCatalog.app(forBundleID: "com.tencent.meeting"))
+    #expect(CallCatalog.app(forBundleID: "ABCDE12345.us.zoom.xos")?.name == "Zoom")
+}
+
+@Test func unrelatedAppsAreStillIgnored() {
+    #expect(CallCatalog.app(forBundleID: "ABCDE12345.com.example.recorder") == nil)
+    #expect(CallCatalog.app(forBundleID: "com.apple.VoiceMemos") == nil)
+    // 只有 10 位大写字母数字才算团队前缀
+    #expect(CallCatalog.app(forBundleID: "com.tencent.meetingnot") == nil)
+}
