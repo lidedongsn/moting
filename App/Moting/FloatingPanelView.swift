@@ -16,8 +16,8 @@ struct FloatingPanelView: View {
 
     // macOS 26 深色系统色，与 app 图标一致
     // 悬浮窗固定为深色玻璃，直接用图标原色
-    static let micColor = Color(hex: 0x3CD3FE)
-    static let systemColor = Color(hex: 0xFFD600)
+    static let micColor = Theme.me
+    static let systemColor = Theme.them
     /// 字幕区顶部淡出带高度
     static let fadeHeight: CGFloat = 14
     private static let bottomID = "bottom"
@@ -65,7 +65,7 @@ struct FloatingPanelView: View {
                     Image(systemName: "pause.circle.fill").foregroundStyle(.secondary)
                     Text("精准转写已暂停").fontWeight(.semibold)
                 default:
-                    Image(systemName: "circle.lefthalf.filled").foregroundStyle(Color(hex: 0x7DE3FF))
+                    Image(systemName: "circle.lefthalf.filled").foregroundStyle(Theme.me)
                     Text("正在精准转写").fontWeight(.semibold)
                 }
                 Spacer()
@@ -85,7 +85,7 @@ struct FloatingPanelView: View {
                     Capsule().fill(.white.opacity(0.12))
                         .overlay(alignment: .leading) {
                             GeometryReader { g in
-                                Capsule().fill(LinearGradient(colors: [Self.micColor, Color(hex: 0x7DE3FF)], startPoint: .leading, endPoint: .trailing))
+                                Capsule().fill(LinearGradient(colors: [Self.micColor, Theme.me], startPoint: .leading, endPoint: .trailing))
                                     .frame(width: g.size.width * min(1, max(0.02, p)))
                             }
                         }

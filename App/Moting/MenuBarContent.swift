@@ -64,7 +64,7 @@ struct MenuBarContent: View {
         }
         .padding(14)
         .frame(width: 320)
-        .background(scheme == .dark ? Theme.darkSidebar : .clear)
+        .background(scheme == .dark ? Theme.chrome : .clear)
         .task(id: recorder.state) { loadRecent() }
     }
 
@@ -121,7 +121,7 @@ struct MenuBarContent: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 16)
         .frame(height: 56)
-        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
     }
 
     private func section(_ title: String) -> some View {

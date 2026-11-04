@@ -2,16 +2,17 @@ import AppKit
 import MotingCore
 import SwiftUI
 
-/// 设计稿的配色与材质（docs/superpowers/design/2026-10-30-moting-ui.html）
+/// 配色、字体和圆角
 enum Theme {
-    /// 浅色界面用加深版（文字可读），深色界面用图标原色
-    static let me = Color(light: 0x0FA3D8, dark: 0x3CD3FE)
-    static let them = Color(light: 0xC99700, dark: 0xFFD600)
-    static let record = Color(hex: 0xFF383C)
-    static let mark = Color(hex: 0xE3A400)
+    // 中性灰打底，彩色只用系统色：和 macOS 原生 app 一致，自动适配深浅模式和高对比度设置
+    static let me = Color(nsColor: .systemBlue)
+    static let them = Color(nsColor: .systemOrange)
+    static let record = Color(nsColor: .systemRed)
+    static let mark = Color(nsColor: .systemYellow)
     /// 说话人 1 之后按顺序循环
     private static let others: [Color] = [
-        them, Color(hex: 0xF27A5E), Color(hex: 0xA27BFF), Color(hex: 0x5ED39A), Color(hex: 0xFF6FAE), Color(hex: 0x7FB2FF),
+        them, Color(nsColor: .systemGreen), Color(nsColor: .systemPurple), Color(nsColor: .systemPink),
+        Color(nsColor: .systemTeal), Color(nsColor: .systemIndigo),
     ]
 
     /// index：0 = 我；1… = 其他人（SpeakerPalette 的编号）
@@ -23,20 +24,16 @@ enum Theme {
         speaker(indices[key] ?? (key == .me ? 0 : 1))
     }
 
-    /// 深色界面的三层底色：内容区最深，侧栏稍亮，卡片再亮一点（实色，不透出桌面）
-    static let darkSidebar = Color(hex: 0x161618)
-
     /// 主窗口底色：内容区是阅读的纸面，侧栏和底部播放条退后一层
-    static let canvas = Color(light: 0xFDFDFD, dark: 0x0E0E10)
-    static let chrome = Color(light: 0xF4F4F5, dark: 0x161618)
-    static let hairline = Color.primary.opacity(0.09)
-    /// 设置页：底色退后，白卡片浮在上面
-    static let settingsCanvas = Color(light: 0xF4F4F5, dark: 0x0E0E10)
-    static let settingsSidebar = Color(light: 0xEBEBED, dark: 0x161618)
-    static let card = Color(light: 0xFFFFFF, dark: 0x1C1C1F)
+    static let canvas = Color(light: 0xFFFFFF, dark: 0x131315)
+    static let chrome = Color(light: 0xF5F5F7, dark: 0x1C1C1E)
+    static let hairline = Color.primary.opacity(0.1)
+    /// 设置页：底色退后，卡片浮在上面
+    static let settingsCanvas = Color(light: 0xF5F5F7, dark: 0x131315)
+    static let settingsSidebar = Color(light: 0xEDEDF0, dark: 0x1C1C1E)
+    static let card = Color(light: 0xFFFFFF, dark: 0x242426)
 
-    /// 会议标题用衬线体：这是一份记录，不是一个面板
-    static let titleFont = Font.system(size: 28, weight: .semibold, design: .serif)
+    static let titleFont = Font.system(size: 26, weight: .bold)
     /// 转写稿和纪要的正文
     static let readingFont = Font.system(size: 15)
     static let readingLineSpacing: CGFloat = 5
@@ -124,7 +121,7 @@ func durationText(_ t: TimeInterval) -> String {
 }
 
 /// 全 app 唯一的一套按钮：7pt 圆角、28pt 高、实色、无描边无阴影。
-/// primary 是和播放键同款的黑白反色，一屏最多一个；record 只给录音相关的操作
+/// primary 是系统强调色，一屏最多一个；record 只给录音相关的操作
 struct AppButtonStyle: ButtonStyle {
     enum Kind { case primary, secondary, danger, record }
     var kind: Kind = .secondary
@@ -155,7 +152,7 @@ private struct AppButton: View {
     private var fill: Color {
         let pressed = configuration.isPressed, active = hovering && isEnabled
         switch kind {
-        case .primary: return Color.primary.opacity(pressed ? 0.7 : active ? 0.85 : 1)
+        case .primary: return Color.accentColor.opacity(pressed ? 0.75 : active ? 0.88 : 1)
         case .record: return Theme.record.opacity(pressed ? 0.75 : active ? 0.88 : 1)
         case .secondary, .danger: return Color.primary.opacity(pressed ? 0.18 : active ? 0.13 : 0.08)
         }
@@ -163,8 +160,7 @@ private struct AppButton: View {
 
     private var text: Color {
         switch kind {
-        case .primary: Theme.canvas
-        case .record: .white
+        case .primary, .record: .white
         case .secondary: .primary
         case .danger: Color(light: 0xD70015, dark: 0xFF6961)
         }

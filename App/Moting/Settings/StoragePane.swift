@@ -17,10 +17,10 @@ struct StoragePane: View {
 
     private var segments: [(String, Int64, Color)] {
         [(L("录音"), report.bytes(.recordings), Theme.me),
-         (L("在用模型"), report.bytes(.realtimeModel, inUse: true) + report.bytes(.offlineModel, inUse: true), Color.indigo),
+         (L("在用模型"), report.bytes(.realtimeModel, inUse: true) + report.bytes(.offlineModel, inUse: true), Theme.them),
          (L("未使用模型"), report.reclaimable, Color.secondary.opacity(0.55)),
-         (L("辅助模型"), report.bytes(.auxModel), Color.orange),
-         (L("其他"), report.bytes(.other), Color.green)]
+         (L("辅助模型"), report.bytes(.auxModel), Color.secondary.opacity(0.35)),
+         (L("其他"), report.bytes(.other), Color.secondary.opacity(0.2))]
     }
 
     var body: some View {

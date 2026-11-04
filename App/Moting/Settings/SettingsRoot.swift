@@ -23,16 +23,16 @@ struct SettingsRoot: View {
     }
 
     private struct Item: Identifiable {
-        let id: String, title: String, symbol: String, color: Color
+        let id: String, title: String, symbol: String, color: NSColor
     }
 
     private let items: [Item] = [
-        Item(id: "general", title: L("通用"), symbol: "gearshape.fill", color: .gray),
-        Item(id: "models", title: L("识别模型"), symbol: "waveform", color: Theme.me),
-        Item(id: "summary", title: L("AI 纪要"), symbol: "sparkles", color: .purple),
-        Item(id: "voice", title: L("热词与声纹"), symbol: "person.wave.2.fill", color: .orange),
-        Item(id: "storage", title: L("存储"), symbol: "internaldrive.fill", color: .green),
-        Item(id: "download", title: L("下载"), symbol: "arrow.down.circle.fill", color: .blue),
+        Item(id: "general", title: L("通用"), symbol: "gearshape.fill", color: .systemGray),
+        Item(id: "models", title: L("识别模型"), symbol: "waveform", color: .systemBlue),
+        Item(id: "summary", title: L("AI 纪要"), symbol: "sparkles", color: .systemPurple),
+        Item(id: "voice", title: L("热词与声纹"), symbol: "person.wave.2.fill", color: .systemOrange),
+        Item(id: "storage", title: L("存储"), symbol: "internaldrive.fill", color: .systemGreen),
+        Item(id: "download", title: L("下载"), symbol: "arrow.down.circle.fill", color: .systemTeal),
     ]
 
     var body: some View {
@@ -74,13 +74,13 @@ struct SettingsRoot: View {
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 22, height: 22)
-                            .background(item.color.gradient, in: RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
+                            .background(Color(nsColor: item.color), in: RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
                         Text(item.title).font(.system(size: 13.5, weight: on ? .semibold : .regular))
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(on ? Color.primary.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                    .background(on ? Color.accentColor.opacity(0.2) : .clear, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -143,7 +143,7 @@ struct PaneHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 24, weight: .semibold, design: .serif))
+            Text(title).font(.system(size: 22, weight: .bold))
             Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary)
         }
         .padding(.bottom, 14)

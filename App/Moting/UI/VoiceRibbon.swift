@@ -60,7 +60,7 @@ struct VoiceRibbon: View {
         for i in 0..<n {
             let x = CGFloat(i) * (barW + gap)
             let played = Double(i) / Double(n) <= progress
-            let dim = played ? 1.0 : 0.38
+            let dim = played ? 1.0 : 0.55
             let m = i < mine.count ? CGFloat(mine[i]) : 0
             let t = i < theirs.count ? CGFloat(theirs[i]) : 0
             let up = max(1.5, m * (laneHeight - 2))

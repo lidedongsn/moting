@@ -1,7 +1,7 @@
 // 生成 Moting 的 app 图标与菜单栏图标（CoreGraphics 绘制，透明背景）。
 // 用法：swift Scripts/render-icon.swift App/Moting/Assets.xcassets
-// 设计（2026-11-04）：深色底上的"一来一回"——青色（我）说完，琥珀色（对方）接上，两段旋转对称。
-// 和 app 底部的双声部声纹带是同一个图形，颜色也取自 Theme.me / Theme.them 的深色值
+// 设计（2026-11-04）：石墨色底上的"一来一回"——亮白（我）说完，灰（对方）接上，两段旋转对称。
+// 和 app 底部的双声部声纹带是同一个图形；logo 保持单色，彩色留给 app 内部
 import AppKit
 import CoreGraphics
 
@@ -78,9 +78,9 @@ func drawIcon(size: CGFloat) -> CGImage {
     ctx.saveGState()
     ctx.addPath(tilePath)
     ctx.clip()
-    linear(ctx, [color(0x212125), color(0x0C0C0E)], from: CGPoint(x: 0, y: tile.maxY), to: CGPoint(x: 0, y: tile.minY))
+    linear(ctx, [color(0x232326), color(0x0B0B0C)], from: CGPoint(x: 0, y: tile.maxY), to: CGPoint(x: 0, y: tile.minY))
     let center = CGPoint(x: tile.midX, y: tile.midY)
-    let cyan = color(0x3CD3FE), amber = color(0xFFD600)
+    let cyan = color(0xEDEDEF), amber = color(0x8E8E93)
     if size <= 64 {
         drawMark(ctx, center: center, unit: u, bars: barsSmall, width: 11, gap: 4.5, axisGap: 3, top: cyan, bottom: amber)
     } else {

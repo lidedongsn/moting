@@ -113,7 +113,7 @@ struct MainWindow: View {
                             .onTapGesture { click(m.id) }
                             .listRowBackground(
                                 RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                                    .fill(on ? Color.primary.opacity(0.08) : .clear)
+                                    .fill(on ? Color.accentColor.opacity(0.2) : .clear)
                                     .padding(.horizontal, 8)
                             )
                             .contextMenu { rowMenu(m) }
