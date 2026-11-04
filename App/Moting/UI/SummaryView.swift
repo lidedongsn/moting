@@ -125,9 +125,7 @@ struct SummaryView: View {
 
     private var empty: some View {
         VStack(spacing: 12) {
-            // 与 app 图标同一组青→紫
-            Image(systemName: "sparkles").font(.system(size: 30))
-                .foregroundStyle(LinearGradient(colors: [Color(hex: 0x2BB8F0), Color(hex: 0x6D3FE0)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            Image(systemName: "sparkles").font(.system(size: 22)).foregroundStyle(.secondary)
             if !model.isReady {
                 Text("先配置 AI 纪要服务").font(.system(size: 17, weight: .semibold))
                 Text("在设置里选择服务（DeepSeek、通义千问、Kimi 等）并填写 API Key 后，就能根据转写稿生成概要、决策和待办。")
@@ -136,7 +134,7 @@ struct SummaryView: View {
                     UserDefaults.standard.set("summary", forKey: SettingsRoot.paneKey)
                     openSettings()
                 } label: { Label("打开设置", systemImage: "gearshape") }
-                .buttonStyle(AccentPillStyle())
+                .buttonStyle(AppButtonStyle(kind: .primary))
                 .padding(.top, 4)
             } else if !hasTranscript {
                 Text("还没有转写内容").font(.system(size: 17, weight: .semibold))
@@ -148,7 +146,7 @@ struct SummaryView: View {
                      : L("会把这场会议的转写文字（不含录音）发送给 \(model.service.name)，生成概要、决策和待办。"))
                     .font(.system(size: 13)).foregroundStyle(.secondary)
                 Button { model.generate(meetingID) } label: { Label("生成纪要", systemImage: "sparkles") }
-                    .buttonStyle(AccentPillStyle())
+                    .buttonStyle(AppButtonStyle(kind: .primary))
                     .padding(.top, 4)
             }
             if let error = model.errors[meetingID] {
@@ -164,6 +162,7 @@ struct SummaryView: View {
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: 460)
+        .padding(.horizontal, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

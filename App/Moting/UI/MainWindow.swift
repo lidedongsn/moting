@@ -396,7 +396,6 @@ struct FirstMeetingView: View {
 /// 工具栏的录音按钮：平时为红色胶囊"开始录音"，录音中为计时 + 结束
 struct RecordButton: View {
     @ObservedObject var recorder: RecordingController
-    @State private var hovering = false
 
     var body: some View {
         switch recorder.state {
@@ -405,44 +404,21 @@ struct RecordButton: View {
                 Circle().fill(Theme.record).frame(width: 8, height: 8)
                 Text(clock(recorder.elapsed)).monospacedDigit().font(.system(size: 13, weight: .semibold))
                 Button(recorder.isStopping ? L("正在结束…") : L("结束")) { recorder.stop() }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.record)
-                    .controlSize(.small)
+                    .buttonStyle(AppButtonStyle(kind: .record))
                     .disabled(recorder.isStopping)
             }
             .padding(.horizontal, 6)
         default:
-            // 工具栏会把标准按钮压成纯图标，这里自绘红色胶囊
+            // 工具栏会把标准按钮压成纯图标，这里自绘
             Button { recorder.start() } label: {
-                HStack(spacing: 7) {
-                    Circle().fill(.white).frame(width: 9, height: 9)
-                    Text(recorder.isStarting ? L("正在启动…") : L("开始录音")).font(.system(size: 13, weight: .semibold))
+                HStack(spacing: 6) {
+                    Circle().fill(.white).frame(width: 8, height: 8)
+                    Text(recorder.isStarting ? L("正在启动…") : L("开始录音"))
                 }
-                .foregroundStyle(.white)
-                .padding(.leading, 11).padding(.trailing, 13)
-                .frame(height: 28)
-                .background(LinearGradient(colors: [Color(hex: 0xFF4B4F), Color(hex: 0xE5262B)], startPoint: .top, endPoint: .bottom),
-                            in: Capsule())
-                .brightness(hovering && !recorder.isStarting ? 0.1 : 0)
-                .shadow(color: Theme.record.opacity(hovering ? 0.5 : 0.35), radius: hovering ? 7 : 5, y: 2)
-                .animation(.easeOut(duration: 0.12), value: hovering)
             }
-            .buttonStyle(PressDimStyle())
-            // 工具栏里 onHover 收不到事件，用连续悬停
-            .onContinuousHover { phase in
-                if case .active = phase { hovering = true } else { hovering = false }
-            }
+            .buttonStyle(AppButtonStyle(kind: .record))
             .disabled(recorder.isStarting)
             .help("开始录音（⌥⌘R，任何 app 里都能按）")
         }
-    }
-}
-
-/// 按下时压暗一点（自绘按钮用）
-struct PressDimStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .brightness(configuration.isPressed ? -0.08 : 0)
-            .contentShape(Capsule())
     }
 }

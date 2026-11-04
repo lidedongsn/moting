@@ -346,14 +346,7 @@ struct FloatingPanelView: View {
     }
 
     private func pillButton(_ title: String, tint: Color? = nil, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .padding(.horizontal, 11)
-                .frame(height: 26)
-                .background(tint.map { AnyShapeStyle($0.opacity(0.9)) } ?? AnyShapeStyle(Color.white.opacity(0.1)), in: Capsule())
-        }
-        .buttonStyle(.plain)
+        Button(title, action: action).buttonStyle(AppButtonStyle(kind: tint == nil ? .secondary : .record))
     }
 }
 

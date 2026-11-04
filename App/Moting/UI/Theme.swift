@@ -47,6 +47,8 @@ enum Theme {
         static let card: CGFloat = 10
         /// 按钮、输入框、列表选中行、分段控件
         static let control: CGFloat = 6
+        /// 所有按钮
+        static let button: CGFloat = 7
         /// 小号分段控件里的滑块、设置侧栏图标
         static let small: CGFloat = 5
         /// 悬浮字幕窗、会议提醒这类浮在桌面上的小窗
@@ -121,46 +123,79 @@ func durationText(_ t: TimeInterval) -> String {
     return m >= 60 ? L("\(m / 60) 小时 \(m % 60) 分") : L("\(max(m, 1)) 分钟")
 }
 
-/// 工具栏胶囊按钮（设计稿 .tb）：系统工具栏在暗色下把文字画成次要灰，这里自绘
-struct ToolbarPillStyle: ButtonStyle {
+/// 全 app 唯一的一套按钮：7pt 圆角、28pt 高、实色、无描边无阴影。
+/// primary 是和播放键同款的黑白反色，一屏最多一个；record 只给录音相关的操作
+struct AppButtonStyle: ButtonStyle {
+    enum Kind { case primary, secondary, danger, record }
+    var kind: Kind = .secondary
     var iconOnly = false
 
     func makeBody(configuration: Configuration) -> some View {
-        ToolbarPill(configuration: configuration, iconOnly: iconOnly)
+        AppButton(configuration: configuration, kind: kind, iconOnly: iconOnly)
     }
 }
 
-/// 胶囊本体：悬停提亮、按下压暗（ButtonStyle 本身不能存悬停状态）
-private struct ToolbarPill: View {
+/// 图标和文字都按行高居中，系统 Label 是按基线对齐的，放进按钮里会显得歪
+private struct CenteredLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 5) {
+            configuration.icon.font(.system(size: 12, weight: .medium))
+            configuration.title
+        }
+    }
+}
+
+private struct AppButton: View {
     let configuration: ButtonStyleConfiguration
+    let kind: AppButtonStyle.Kind
     let iconOnly: Bool
     @State private var hovering = false
     @Environment(\.isEnabled) private var isEnabled
-    @Environment(\.colorScheme) private var scheme
+
+    private var fill: Color {
+        let pressed = configuration.isPressed, active = hovering && isEnabled
+        switch kind {
+        case .primary: return Color.primary.opacity(pressed ? 0.7 : active ? 0.85 : 1)
+        case .record: return Theme.record.opacity(pressed ? 0.75 : active ? 0.88 : 1)
+        case .secondary, .danger: return Color.primary.opacity(pressed ? 0.18 : active ? 0.13 : 0.08)
+        }
+    }
+
+    private var text: Color {
+        switch kind {
+        case .primary: Theme.canvas
+        case .record: .white
+        case .secondary: .primary
+        case .danger: Color(light: 0xD70015, dark: 0xFF6961)
+        }
+    }
 
     var body: some View {
-        let dark = scheme == .dark
-        let active = hovering && isEnabled
-        let fill: Color = dark
-            ? .white.opacity(configuration.isPressed ? 0.3 : active ? 0.22 : 0.1)
-            : configuration.isPressed ? .black.opacity(0.1) : active ? .black.opacity(0.05) : .white.opacity(0.65)
         configuration.label
-            .font(.system(size: 13))
-            .labelStyle(.titleAndIcon)
-            .foregroundStyle(Color(hex: dark ? 0xF5F5F7 : 0x1D1D1F))
+            .labelStyle(CenteredLabelStyle())
+            .font(.system(size: 13, weight: kind == .secondary || kind == .danger ? .regular : .medium))
+            .foregroundStyle(text)
+            .lineLimit(1)
+            .fixedSize()
             .padding(.horizontal, iconOnly ? 0 : 12)
             .frame(width: iconOnly ? 28 : nil, height: 28)
-            .background(fill, in: Capsule())
-            .overlay(Capsule().strokeBorder(dark ? Color.white.opacity(active ? 0.3 : 0.14)
-                                                 : Color.black.opacity(active ? 0.2 : 0.12), lineWidth: 0.5))
+            .background(fill, in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
             .opacity(isEnabled ? 1 : 0.4)
-            .contentShape(Capsule())
+            .contentShape(Rectangle())
             // 工具栏里 onHover 收不到事件，用连续悬停
             .onContinuousHover { phase in
                 if case .active = phase { hovering = true } else { hovering = false }
             }
-            .animation(.easeOut(duration: 0.12), value: hovering)
-            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+            .animation(.easeOut(duration: 0.1), value: hovering)
+    }
+}
+
+/// 工具栏按钮
+struct ToolbarPillStyle: ButtonStyle {
+    var iconOnly = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        AppButtonStyle(kind: .secondary, iconOnly: iconOnly).makeBody(configuration: configuration)
     }
 }
 
@@ -282,38 +317,6 @@ struct HoverGrowStyle: ButtonStyle {
                 .onHover { hovering = $0 }
                 .animation(.easeOut(duration: 0.12), value: hovering)
                 .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
-        }
-    }
-}
-
-/// 主操作胶囊（与工具栏胶囊同一家族）：青色实底白字，悬停提亮、按下压暗
-struct AccentPillStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        AccentPill(configuration: configuration)
-    }
-
-    private struct AccentPill: View {
-        let configuration: ButtonStyleConfiguration
-        @State private var hovering = false
-        @Environment(\.isEnabled) private var isEnabled
-
-        var body: some View {
-            let active = hovering && isEnabled
-            configuration.label
-                .font(.system(size: 13, weight: .semibold))
-                .labelStyle(.titleAndIcon)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .frame(height: 32)
-                .background(LinearGradient(colors: [Color(hex: 0x3CC8F5), Color(hex: 0x1499D6)], startPoint: .top, endPoint: .bottom),
-                            in: Capsule())
-                .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
-                .brightness(configuration.isPressed ? -0.08 : active ? 0.08 : 0)
-                .shadow(color: Color(hex: 0x1499D6).opacity(active ? 0.45 : 0.3), radius: active ? 7 : 5, y: 2)
-                .opacity(isEnabled ? 1 : 0.45)
-                .contentShape(Capsule())
-                .onHover { hovering = $0 }
-                .animation(.easeOut(duration: 0.12), value: hovering)
         }
     }
 }

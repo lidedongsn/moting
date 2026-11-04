@@ -60,7 +60,7 @@ struct VoiceprintEnrollView: View {
                     onDone()
                 }
                 if phase == .ready || isFailed {
-                    Button("开始") { start() }.buttonStyle(.borderedProminent)
+                    Button("开始") { start() }.buttonStyle(AppButtonStyle(kind: .primary))
                 }
             }
         }

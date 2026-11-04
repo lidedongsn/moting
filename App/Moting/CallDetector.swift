@@ -167,18 +167,8 @@ private struct CallPromptView: View {
             }
             HStack(spacing: 8) {
                 Spacer()
-                Button(action: secondary.1) {
-                    Text(secondary.0).font(.system(size: 12, weight: .medium))
-                        .padding(.horizontal, 12).frame(height: 26)
-                        .background(Color.white.opacity(0.12), in: Capsule())
-                }
-                .buttonStyle(.plain)
-                Button(action: primary.1) {
-                    Text(primary.0).font(.system(size: 12, weight: .semibold))
-                        .padding(.horizontal, 12).frame(height: 26)
-                        .background(Theme.record.opacity(0.95), in: Capsule())
-                }
-                .buttonStyle(.plain)
+                Button(secondary.0, action: secondary.1).buttonStyle(AppButtonStyle(kind: .secondary))
+                Button(primary.0, action: primary.1).buttonStyle(AppButtonStyle(kind: .record))
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 12)

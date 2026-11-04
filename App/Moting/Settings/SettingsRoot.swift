@@ -168,22 +168,14 @@ func bytesText(_ n: Int64) -> String {
 struct PaneButtonStyle: ButtonStyle {
     enum Kind { case normal, danger, primary }
     var kind: Kind = .normal
-    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12.5, weight: kind == .primary ? .semibold : .regular))
-            .foregroundStyle(kind == .primary ? Color.white : kind == .danger ? Color(light: 0xD70015, dark: 0xFF6961) : Color.primary)
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, 11)
-            .frame(height: 26)
-            .background(kind == .primary ? AnyShapeStyle(Theme.me) : AnyShapeStyle(Color.primary.opacity(0.07)),
-                        in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                .strokeBorder(kind == .primary ? Color.clear : Color.primary.opacity(0.12), lineWidth: 0.5))
-            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.35)
-            .contentShape(Rectangle())
+        let style: AppButtonStyle.Kind = switch kind {
+        case .normal: .secondary
+        case .danger: .danger
+        case .primary: .primary
+        }
+        return AppButtonStyle(kind: style).makeBody(configuration: configuration)
     }
 }
 

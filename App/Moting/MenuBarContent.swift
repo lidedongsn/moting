@@ -86,8 +86,7 @@ struct MenuBarContent: View {
             .foregroundStyle(.white)
             .padding(.horizontal, 16)
             .frame(height: 56)
-            .background(LinearGradient(colors: [Color(hex: 0xFF4B4F), Color(hex: 0xE5262B)], startPoint: .top, endPoint: .bottom),
-                        in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(recorder.isStarting)
@@ -122,8 +121,7 @@ struct MenuBarContent: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 16)
         .frame(height: 56)
-        .background(LinearGradient(colors: [Color(hex: 0x2C2C2E), Color(hex: 0x1C1C1E)], startPoint: .top, endPoint: .bottom),
-                    in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .background(Color(hex: 0x1C1C1F), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
     }
 
     private func section(_ title: String) -> some View {
