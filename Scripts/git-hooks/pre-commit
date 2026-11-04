@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# 提交前检查：拦下会议录音、数据库、模型、本机配置和个人信息。
+# 启用：git config core.hooksPath Scripts/git-hooks
+# 邮箱、Team ID 都在运行时从本机读取，不写进仓库。
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+problems=()
+
+# 1. 按文件名拦
+while IFS= read -r f; do
+  case "${f}" in
+    App/Local.xcconfig|.env|.env.*|*/hotwords.txt|hotwords.txt) problems+=("本机配置或个人数据：${f}") ;;
+    *.pcm|*.wav|*.m4a|*.mp3|*.caf|*.flac) problems+=("音频文件：${f}") ;;
+    *.sqlite|*.sqlite-*|*.db) problems+=("数据库文件：${f}") ;;
+    *.onnx|*.gguf|*.safetensors) problems+=("模型文件：${f}") ;;
+    *.p12|*.cer|*.mobileprovision|*.provisionprofile) problems+=("证书或签名文件：${f}") ;;
+    meetings/*|*/meetings/*) problems+=("会议目录里的文件：${f}") ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+
+# 2. 超过 1MB 的文件
+while IFS= read -r f; do
+  size=$(git cat-file -s ":${f}" 2>/dev/null || echo 0)
+  [ "$size" -gt 1048576 ] && problems+=("文件太大（$((size / 1024))KB），可能是数据或模型：${f}")
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+
+# 3. 新增内容里的个人信息和密钥（只看新增的行）
+patterns=(
+  'sk-[A-Za-z0-9_-]{24,}'                 # OpenAI 兼容 API key
+  'hf_[A-Za-z0-9]{24,}'                   # Hugging Face token
+  'gh[pousr]_[A-Za-z0-9]{30,}'            # GitHub token
+  'AKIA[0-9A-Z]{16}'                      # AWS key
+  '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+  'Bearer [A-Za-z0-9._-]{30,}'
+  "/Users/$(id -un)/"                     # 本机用户目录的绝对路径
+)
+email=$(git config user.email || true)
+[ -n "$email" ] && patterns+=("$email")
+team=$(sed -nE 's/^DEVELOPMENT_TEAM *= *([A-Z0-9]+).*/\1/p' "$ROOT/App/Local.xcconfig" 2>/dev/null)
+[ -n "$team" ] && patterns+=("$team")
+
+added=$(git diff --cached -U0 --diff-filter=ACMR --no-color | grep -E '^\+' | grep -vE '^\+\+\+ ')
+for p in "${patterns[@]}"; do
+  hit=$(printf '%s\n' "$added" | grep -nE -e "$p" | head -3)
+  [ -n "$hit" ] && problems+=("新增内容命中「${p}」：${hit:0:160}")
+done
+
+if [ ${#problems[@]} -gt 0 ]; then
+  echo "提交被拦下：发现可能不该进仓库的内容" >&2
+  for p in "${problems[@]}"; do echo "  - $p" >&2; done
+  echo "确认无误要强行提交：git commit --no-verify" >&2
+  exit 1
+fi

@@ -136,7 +136,8 @@ private final class Fixture {
     f.system.emitSamples(32_000)
     let stopAt = f.clock.now
     // 停设备、销毁聚合设备耗时 5 秒
-    f.mic.onStop = { f.clock.advance(5) }
+    // 只捕获 clock：捕获 f 会和 f.mic 互相持有，夹具不释放，临时目录删不掉
+    f.mic.onStop = { [clock = f.clock] in clock.advance(5) }
     try f.session.stop()
     #expect(try f.repo.meeting(m.id)?.endedAt == stopAt)
     #expect(abs(try f.samples(m.id, .mic) - 32_000) <= 1)

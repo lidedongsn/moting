@@ -1,10 +1,41 @@
-.build/
+# 构建产物
+.build*/
 .swiftpm/
-App/*.xcodeproj
-App/Local.xcconfig
-.superpowers/
 DerivedData/
+App/*.xcodeproj
 *.xcuserstate
-.DS_Store
+xcuserdata/
 Vendor/
-.build-ui/
+
+# 本机配置（开发者 Team ID 等）
+App/Local.xcconfig
+.env
+.env.*
+
+# 会议数据和模型：只应在 ~/Library/Application Support/Moting/，绝不进仓库
+*.pcm
+*.wav
+*.m4a
+*.mp3
+*.caf
+*.flac
+*.sqlite
+*.sqlite-*
+*.db
+meetings/
+models/
+hotwords.txt
+*.onnx
+*.gguf
+*.safetensors
+
+# 证书和签名材料
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+
+# 工具的工作目录
+.superpowers/
+.claude/settings.local.json
+.DS_Store
