@@ -14,8 +14,9 @@ fi
 
 cd "$ROOT/App"
 xcodegen generate -q
+# 版本号用提交数：每次都递增。版本号和修改时间不变时，访达、程序坞、通知中心会一直显示缓存的旧图标
 xcodebuild -project Moting.xcodeproj -scheme Moting -configuration Release \
-  -derivedDataPath "$ROOT/.build/xcode" build > "$ROOT/.build/install-build.log" 2>&1 || {
+  -derivedDataPath "$ROOT/.build/xcode" CURRENT_PROJECT_VERSION="$(git -C "$ROOT" rev-list --count HEAD)" build > "$ROOT/.build/install-build.log" 2>&1 || {
   grep -E "error:" "$ROOT/.build/install-build.log" | sort -u | head -20 >&2
   echo "编译失败，完整日志：$ROOT/.build/install-build.log" >&2
   exit 1
@@ -30,6 +31,8 @@ if pgrep -x Moting > /dev/null; then
 fi
 
 rm -rf "$DEST"
+# ditto 会保留时间戳，先刷新，否则装好的 app 修改时间还是第一次编译的时候
+touch "$APP"
 ditto "$APP" "$DEST"
 # 让启动台 / Spotlight 立即看到新版本；构建目录里的副本从系统注销，
 # 否则 Dock 可能指向调试版、显示旧图标
