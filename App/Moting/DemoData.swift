@@ -135,6 +135,7 @@ enum DemoScene {
             case "recording", "paused":
                 recorder.showDemoRecording(paused: name == "paused")
                 recorder.live.showDemoLines(demoLines)
+                recorder.showDemoDisk()
             case "processing":
                 // 走真实流程：录音结束后悬浮窗才缩成进度卡片
                 recorder.showDemoRecording(paused: false)

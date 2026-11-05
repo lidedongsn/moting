@@ -21,6 +21,7 @@ struct MainWindow: View {
     @State private var marked: Set<UUID> = []
     @State private var renaming: Meeting?
     @State private var showOnboarding = false
+    @State private var diskFree: Int64?
     /// 转写稿有手动修改，等确认才重新转写
     @State private var pendingRetranscribe: Meeting?
     @AppStorage(Onboarding.completedKey) private var onboardingCompleted = false
@@ -180,22 +181,34 @@ struct MainWindow: View {
         .safeAreaInset(edge: .bottom) { storageCard }
     }
 
-    /// 占用空间退到一行：数据始终看得见，但不抢内容的位置
+    /// 占用空间退到一行：数据始终看得见，但不抢内容的位置。磁盘快满时才变成提醒
     private var storageCard: some View {
-        HStack {
-            Text("占用 \(bytes(usage.recordings + usage.models))")
+        let warning = DiskSpace.level(free: diskFree) != .ok
+        return HStack(spacing: 6) {
+            if warning, let diskFree {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color(nsColor: .systemOrange))
+                Text("磁盘只剩 \(bytes(diskFree))").foregroundStyle(Color(nsColor: .systemOrange))
+            } else {
+                Text("占用 \(bytes(usage.recordings + usage.models))").foregroundStyle(.tertiary)
+            }
             Spacer()
             Button("管理") {
                 UserDefaults.standard.set("storage", forKey: SettingsRoot.paneKey)
                 openSettings()
             }
             .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(warning ? .primary : .secondary)
         }
         .font(.system(size: 12))
-        .foregroundStyle(.tertiary)
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
+        .task {
+            // 录音前就要看到提醒：每分钟看一次，占不了什么资源
+            while !Task.isCancelled {
+                diskFree = AppEnvironment.freeDiskSpace(paths: env.paths)
+                try? await Task.sleep(for: .seconds(60))
+            }
+        }
     }
 
     // MARK: - 选择与管理

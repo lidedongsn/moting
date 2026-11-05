@@ -143,11 +143,6 @@ struct FloatingPanelView: View {
                 Text("已暂停").font(.system(size: 12)).foregroundStyle(.white.opacity(0.6))
             }
             LevelPair(meter: recorder.meter, micColor: Self.micColor, systemColor: Self.systemColor)
-            if !recorder.warnings.isEmpty {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.caption).foregroundStyle(Color(nsColor: .systemOrange))
-                    .help(recorder.warnings.joined(separator: "\n"))
-            }
             Spacer(minLength: 4)
             IconButton(symbol: "minus", help: L("收起")) { ui.collapsed = true }
         }
@@ -160,6 +155,12 @@ struct FloatingPanelView: View {
         HStack(spacing: 10) {
             recDot
             Text(recorder.elapsed.clockText).font(.system(size: 13, weight: .semibold)).monospacedDigit()
+            // 收起时看不到警告文字，留个图标，悬停看详情
+            if !recorder.warnings.isEmpty {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 12)).foregroundStyle(Color(nsColor: .systemOrange))
+                    .help(recorder.warnings.joined(separator: "\n"))
+            }
             HStack(spacing: 6) {
                 if let line = live.lines.last {
                     Text(line.channel == .mic ? L("我") : L("对方"))

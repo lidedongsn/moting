@@ -2951,6 +2951,56 @@
         }
       }
     },
+    "磁盘只剩 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only %@ of disk left"
+          }
+        }
+      }
+    },
+    "磁盘只剩 %@，大约还能录 %lld 小时": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only %@ of disk space left, enough for about %lld hours of recording"
+          }
+        }
+      }
+    },
+    "磁盘快满了，只剩 %@。录音可能中断，请尽快腾出空间或结束录音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk almost full, only %@ left. Recording may stop, so free up space or end the recording soon"
+          }
+        }
+      }
+    },
+    "磁盘空间快用完了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk space is running out"
+          }
+        }
+      }
+    },
+    "磁盘还剩 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ of disk available"
+          }
+        }
+      }
+    },
     "稍后再说": {
       "localizations": {
         "en": {

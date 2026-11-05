@@ -68,6 +68,10 @@ final class ProcessingModel: ObservableObject {
     /// 录音结束后调用：入队（用电池时等待插电）
     /// 录音结束后调用：按"通用"设置决定是否自动精准转写、用电池时是否立即处理
     /// 太短的录音被丢弃时提示一下，免得以为没录上
+    func noteDiskCritical(text: String?) {
+        notifier.post(title: L("磁盘空间快用完了"), body: text ?? "", meetingID: nil)
+    }
+
     func noteDiscarded(seconds: TimeInterval) {
         notifier.post(title: L("录音太短，已丢弃"), body: L("这次只录了 \(Int(seconds.rounded())) 秒，没有保存，也不会转写。"), meetingID: nil)
     }

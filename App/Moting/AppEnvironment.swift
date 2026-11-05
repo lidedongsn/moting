@@ -1,5 +1,6 @@
 import Foundation
 import MotingASR
+import MotingCore
 import MotingPipeline
 import MotingRecording
 import MotingStorage
@@ -65,6 +66,16 @@ final class AppEnvironment: ObservableObject {
         }
         try env.pipeline.recoverAfterLaunch()
         return env
+    }
+
+    /// 数据目录所在磁盘的可用空间
+    nonisolated static func freeDiskSpace(paths: AppPaths) -> Int64? {
+        #if DEBUG
+        // 调试用：启动参数 -diskFreeOverride <字节数> 模拟磁盘快满
+        let fake = UserDefaults.standard.object(forKey: "diskFreeOverride") as? Int64 ?? Int64(UserDefaults.standard.string(forKey: "diskFreeOverride") ?? "")
+        if let fake { return fake }
+        #endif
+        return DiskSpace.freeBytes(at: paths.root)
     }
 
     /// 当前选定的会后离线模型

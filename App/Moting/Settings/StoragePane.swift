@@ -24,12 +24,25 @@ struct StoragePane: View {
          (L("其他"), report.bytes(.other), Color.secondary.opacity(0.2))]
     }
 
+    /// 这台 Mac 还剩多少空间；不足时变成提醒色
+    @ViewBuilder
+    private var diskFreeLabel: some View {
+        if let free = AppEnvironment.freeDiskSpace(paths: env.paths) {
+            let warning = DiskSpace.level(free: free) != .ok
+            Label(L("磁盘还剩 \(bytesText(free))"), systemImage: warning ? "exclamationmark.triangle.fill" : "internaldrive")
+                .font(.system(size: 12))
+                .foregroundStyle(warning ? Color(nsColor: .systemOrange) : Color.secondary)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             PaneHeader(title: L("存储"), subtitle: L("Moting 的所有文件都在一个文件夹里，可以在这里查看和删除。"))
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(bytesText(report.total)).font(.system(size: 32, weight: .bold)).monospacedDigit()
                 Text("共占用").foregroundStyle(.secondary)
+                Spacer()
+                diskFreeLabel
             }
             GeometryReader { g in
                 HStack(spacing: 0) {

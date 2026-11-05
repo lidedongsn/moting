@@ -66,6 +66,8 @@ final class RecordingController: ObservableObject {
     @Published private(set) var isStarting = false
     @Published private(set) var isStopping = false
     @Published var lastError: String?
+    /// 录音中的磁盘可用空间；不在录音时是 nil
+    @Published private(set) var diskFree: Int64?
 
     #if DEBUG
     /// 演示录音状态：界面和录音时一样，但不碰麦克风
@@ -76,6 +78,8 @@ final class RecordingController: ObservableObject {
     }
 
     func showDemoStopped() { state = .stopped }
+
+    func showDemoDisk() { checkDisk() }
     #endif
 
     private let env: AppEnvironment?
@@ -84,6 +88,8 @@ final class RecordingController: ObservableObject {
     private var session: RecordingSession?
     private var ticker: Timer?
     private var levelTicker: Timer?
+    private var diskTicker: Timer?
+    private var diskAlert = DiskSpace.CriticalAlert()
     private var monitor = MonitorBox()
 
     init(env: AppEnvironment?) {
@@ -136,6 +142,9 @@ final class RecordingController: ObservableObject {
         ticker = nil
         levelTicker?.invalidate()
         levelTicker = nil
+        diskTicker?.invalidate()
+        diskTicker = nil
+        diskFree = nil
         Task.detached {
             let error: Error?
             do { try session.stop(); error = nil } catch let e { error = e }
@@ -193,6 +202,11 @@ final class RecordingController: ObservableObject {
         processing.recordingChanged(true)
         isStarting = false
         refresh()
+        diskAlert = DiskSpace.CriticalAlert()
+        checkDisk()
+        diskTicker = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.checkDisk() }
+        }
         ticker = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
@@ -201,6 +215,26 @@ final class RecordingController: ObservableObject {
                 guard let self, self.state == .recording else { self?.meter.update([:]); return }
                 self.meter.update(self.monitor.takePeaks())
             }
+        }
+    }
+
+    private func checkDisk() {
+        guard let env else { return }
+        let free = AppEnvironment.freeDiskSpace(paths: env.paths)
+        diskFree = free
+        if diskAlert.shouldNotify(level: DiskSpace.level(free: free)), let free {
+            processing.noteDiskCritical(text: Self.diskWarning(free: free))
+        }
+    }
+
+    /// 磁盘空间不足时显示的话；空间够时是 nil
+    static func diskWarning(free: Int64?) -> String? {
+        guard let free else { return nil }
+        let size = ByteCountFormatter.string(fromByteCount: free, countStyle: .file)
+        switch DiskSpace.level(free: free) {
+        case .ok: return nil
+        case .low: return L("磁盘只剩 \(size)，大约还能录 \(Int(DiskSpace.recordableHours(free: free))) 小时")
+        case .critical: return L("磁盘快满了，只剩 \(size)。录音可能中断，请尽快腾出空间或结束录音")
         }
     }
 
@@ -229,6 +263,10 @@ final class RecordingController: ObservableObject {
 
     /// 当前需要提醒用户的问题，没有则为空
     var warnings: [String] {
+        channelWarnings + [Self.diskWarning(free: diskFree)].compactMap { $0 }
+    }
+
+    private var channelWarnings: [String] {
         AudioChannel.allCases.compactMap { ch in
             let who = ch == .mic ? L("麦克风（我）") : L("系统音频（对方）")
             switch statuses[ch] ?? .ok {
