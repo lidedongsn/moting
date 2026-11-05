@@ -415,6 +415,7 @@ struct DetailView: View {
                 .init(value: .marks, title: L("标记"), badge: marks.isEmpty ? nil : "\(marks.count)"),
             ], size: .small)
             Spacer()
+            if tab == .notes { copyNotesButton }
         }
     }
 
@@ -422,6 +423,10 @@ struct DetailView: View {
 
     private var notes: some View {
         SummaryView(meetingID: meeting.id, model: processing.summary, hasTranscript: !segments.isEmpty)
+    }
+
+    private var copyNotesButton: some View {
+        CopyNotesButton(meetingID: meeting.id, title: title, model: processing.summary)
     }
 
     private var inspector: some View {
@@ -432,9 +437,10 @@ struct DetailView: View {
                     .init(value: .marks, title: L("标记"), badge: marks.isEmpty ? nil : "\(marks.count)"),
                 ], size: .small)
                 Spacer()
+                if inspectorTab == .notes { copyNotesButton }
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            .frame(height: 44)
             Group {
                 if inspectorTab == .marks { marksList } else { notes }
             }
@@ -447,24 +453,25 @@ struct DetailView: View {
 
     private var transcriptColumn: some View {
         VStack(spacing: 0) {
-            if hasFinal && hasDraft {
-                HStack {
-                    Spacer()
+            HStack(spacing: 8) {
+                Text("转写稿").font(.system(size: 13, weight: .semibold))
+                if hasFinal && hasDraft {
                     PillTabs(selection: $showDraft, items: [
                         .init(value: false, title: L("精准")),
                         .init(value: true, title: L("实时草稿")),
                     ], size: .small)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-            } else if transcriptKind == .draft {
-                HStack {
-                    Spacer()
+                } else if transcriptKind == .draft {
                     Text("实时字幕草稿").font(.system(size: 12)).foregroundStyle(.tertiary)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
+                Spacer()
+                if !segments.isEmpty {
+                    CopyButton(help: L("拷贝转写稿")) { CopyText.transcript(title: title, segments: segments, names: names) }
+                }
             }
+            // 左边和下面的头像对齐
+            .padding(.leading, 32)
+            .padding(.trailing, 20)
+            .frame(height: 44)
             transcript
         }
     }
@@ -506,7 +513,7 @@ struct DetailView: View {
                     }
                     .frame(maxWidth: 720, alignment: .leading)
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
+                    .padding(.bottom, 14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .onChange(of: currentTurn) { _, id in
@@ -675,6 +682,26 @@ struct DetailView: View {
         let md = MarkdownExporter.export(meeting: m, segments: segments, marks: marks, names: names,
                                          summary: processing.summary.stored(meeting.id)?.summary)
         do { try md.write(to: url, atomically: true, encoding: .utf8) } catch { recorder.lastError = L("导出失败：\(error.localizedDescription)") }
+    }
+}
+
+/// 拷贝纪要：单独一个视图，只在纪要变化时读一次数据库（详情页播放时每秒刷新 10 次，不能放在那里读）
+private struct CopyNotesButton: View {
+    let meetingID: UUID
+    let title: String
+    @ObservedObject var model: SummaryModel
+    @State private var summary: MeetingSummary?
+
+    var body: some View {
+        // 没有纪要时也要有个视图：空的 Group 上 .task 不会执行，就永远读不到纪要
+        ZStack {
+            if let summary {
+                CopyButton(help: L("拷贝纪要")) { CopyText.notes(title: title, summary: summary) }
+            } else {
+                Color.clear.frame(width: 1, height: 1)
+            }
+        }
+        .task(id: "\(meetingID)-\(model.revision)") { summary = model.stored(meetingID)?.summary }
     }
 }
 

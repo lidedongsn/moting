@@ -125,6 +125,25 @@ struct IconButton: View {
     }
 }
 
+/// 复制按钮：点一下把文字放进剪贴板，图标变成对勾 1.5 秒
+struct CopyButton: View {
+    let help: String
+    let text: () -> String
+    @State private var copied = false
+
+    var body: some View {
+        IconButton(symbol: copied ? "checkmark" : "doc.on.doc", help: help, isOn: copied) {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text(), forType: .string)
+            copied = true
+            Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                copied = false
+            }
+        }
+    }
+}
+
 extension View {
     func hudPanel(radius: CGFloat = Theme.Radius.panel) -> some View {
         modifier(HUDPanel(radius: radius))

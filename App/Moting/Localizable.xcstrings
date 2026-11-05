@@ -2041,6 +2041,26 @@
         }
       }
     },
+    "拷贝纪要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Notes"
+          }
+        }
+      }
+    },
+    "拷贝转写稿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Transcript"
+          }
+        }
+      }
+    },
     "接通电源后自动精准转写。": {
       "localizations": {
         "en": {
