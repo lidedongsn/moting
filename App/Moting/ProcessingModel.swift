@@ -80,17 +80,21 @@ final class ProcessingModel: ObservableObject {
         let defaults = UserDefaults.standard
         guard defaults.object(forKey: Self.autoTranscribeKey) as? Bool ?? true else { return }
         lastRecordedMeetingID = meetingID
-        lastStatus = enqueue(meetingID)?.status
-        if lastStatus == .waitingForPower, defaults.string(forKey: Self.batteryPolicyKey) == "now" {
-            processNow(meetingID)
-        }
+        lastStatus = enqueue(meetingID, userInitiated: false)?.status
     }
 
+    /// userInitiated：用户手动点的转写，用电池时也马上开始
     @discardableResult
-    func enqueue(_ meetingID: UUID) -> Job? {
+    func enqueue(_ meetingID: UUID, userInitiated: Bool = true) -> Job? {
         guard let env else { return nil }
         do {
-            return try env.pipeline.enqueue(meetingID: meetingID, modelID: env.offlineModel.id)
+            var job = try env.pipeline.enqueue(meetingID: meetingID, modelID: env.offlineModel.id)
+            let stored = UserDefaults.standard.string(forKey: Self.batteryPolicyKey)
+            if job.status == .waitingForPower, BatteryPolicy.processNow(stored: stored, userInitiated: userInitiated) {
+                try env.pipeline.processNow(meetingID: meetingID)
+                job.status = .queued
+            }
+            return job
         } catch {
             NSLog("会后处理入队失败：\(error)")
             return nil

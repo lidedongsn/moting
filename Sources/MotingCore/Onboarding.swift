@@ -26,3 +26,14 @@ public enum Onboarding {
         return done / Double(total)
     }
 }
+
+/// 用电池时精准转写要不要马上开始
+public enum BatteryPolicy {
+    public static let now = "now"
+    public static let wait = "wait"
+
+    /// 默认马上处理；只有用户在设置里选了等电源才等。用户手动点转写时永远不等
+    public static func processNow(stored: String?, userInitiated: Bool) -> Bool {
+        userInitiated || stored != wait
+    }
+}

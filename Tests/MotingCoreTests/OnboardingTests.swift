@@ -29,3 +29,19 @@ import Testing
     #expect(Onboarding.overallProgress([.init(size: 10, fraction: 1.5)]) == 1)
     #expect(Onboarding.overallProgress([.init(size: 10, fraction: -1)]) == 0)
 }
+
+// MARK: - 用电池时要不要处理
+
+@Test func onBatteryProcessesImmediatelyByDefault() {
+    // X-ASR 转写 1 小时会议只要约 1.6 分钟，没必要让用户等插电
+    #expect(BatteryPolicy.processNow(stored: nil, userInitiated: false))
+    #expect(BatteryPolicy.processNow(stored: "now", userInitiated: false))
+}
+
+@Test func waitingForPowerIsOnlyWhenTheUserChoseIt() {
+    #expect(!BatteryPolicy.processNow(stored: "wait", userInitiated: false))
+}
+
+@Test func userClickingTranscribeNeverWaits() {
+    #expect(BatteryPolicy.processNow(stored: "wait", userInitiated: true))
+}
