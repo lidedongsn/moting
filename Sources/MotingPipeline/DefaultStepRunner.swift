@@ -52,6 +52,9 @@ public struct DefaultStepRunner: PipelineStepRunner {
             try DiarizeStep(transcripts: transcripts, speakers: speakers) {
                 try SherpaDiarizer(segmentation: OfflineCatalog.segmentation, embedding: OfflineCatalog.embedding,
                                    directory: { store.directory(for: $0) })
+            } embedder: { samples in
+                try VoiceprintMatcher(embeddingModel: OfflineCatalog.embedding,
+                                      directory: store.directory(for: OfflineCatalog.embedding)).embedding(samples)
             }.run(versionID: v, systemTrack: paths.trackURL(job.meetingID, .system), progress: progress)
         case .filterVoice:
             guard let v = job.versionID else { throw PipelineError.missingVersion }

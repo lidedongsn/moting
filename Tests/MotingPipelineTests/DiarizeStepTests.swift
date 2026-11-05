@@ -19,7 +19,7 @@ private final class DEnv {
     let version: UUID
     let track: URL
 
-    init(segments: [(AudioChannel, Double, Double)]) throws {
+    init(segments: [(AudioChannel, Double, Double)], trackSeconds: Int = 1) throws {
         let db = try AppDatabase.inMemory()
         let m = Meeting(id: UUID(), title: "t", startedAt: Date(), endedAt: nil, status: .processing)
         try MeetingRepository(db: db).insert(m, tracks: [])
@@ -33,7 +33,7 @@ private final class DEnv {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         track = root.appendingPathComponent("system.pcm")
         let w = try PCMTrackWriter(url: track)
-        try w.append([Float](repeating: 0.1, count: 16_000))
+        try w.append([Float](repeating: 0.1, count: 16_000 * trackSeconds))
         try w.close()
     }
 
@@ -110,4 +110,22 @@ func realDiarizationOnFourSpeakerSample() async throws {
     try DiarizeStep(transcripts: e.transcripts, speakers: e.speakers, diarizer: { d })
         .run(versionID: e.version, systemTrack: e.track) { _ in }
     #expect(try e.speakers.names(meetingID: e.meetingID).isEmpty)
+}
+
+@Test func segmentOutsideAnyTurnGetsTheNearestSpeakerInstead() throws {
+    // 回归：分离没覆盖到的短句以前没有标签，会多显示出一个"对方"
+    let e = try DEnv(segments: [(.system, 0, 4), (.system, 10, 11)])
+    let d = FakeDiarizer(turns: [SpeakerTurn(start: 0, end: 4, speaker: 0)])
+    try DiarizeStep(transcripts: e.transcripts, diarizer: { d }).run(versionID: e.version, systemTrack: e.track) { _ in }
+    let segs = try e.transcripts.segments(versionID: e.version)
+    #expect(segs.allSatisfy { $0.speakerLabel == "说话人 1" })
+}
+
+@Test func splitVoiceIsNumberedAsOnePersonWhenEmbeddingsAreAvailable() throws {
+    let e = try DEnv(segments: [(.system, 0, 4), (.system, 5, 9)], trackSeconds: 10)
+    let d = FakeDiarizer(turns: [SpeakerTurn(start: 0, end: 4.5, speaker: 7), SpeakerTurn(start: 4.6, end: 9, speaker: 8)])
+    try DiarizeStep(transcripts: e.transcripts, diarizer: { d }, embedder: { _ in [1, 0] })
+        .run(versionID: e.version, systemTrack: e.track) { _ in }
+    let segs = try e.transcripts.segments(versionID: e.version)
+    #expect(Set(segs.map(\.speakerLabel)) == ["说话人 1"])
 }
