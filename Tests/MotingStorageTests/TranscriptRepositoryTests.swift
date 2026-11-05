@@ -66,3 +66,86 @@ private func seg(_ v: UUID, _ start: TimeInterval, _ text: String, _ ch: AudioCh
     #expect(try repo.meetingIDs(matching: "不存在的词").isEmpty)
     #expect(try repo.meetingIDs(matching: "100%_").isEmpty)   // 通配符按普通字符处理
 }
+
+// MARK: - 手动编辑
+
+private func editFixture() throws -> (TranscriptRepository, UUID, TranscriptSegment) {
+    let db = try AppDatabase.inMemory()
+    let meetings = MeetingRepository(db: db)
+    let m = Meeting(id: UUID(), title: "t", startedAt: Date(timeIntervalSince1970: 0), endedAt: nil, status: .done)
+    try meetings.insert(m, tracks: [])
+    let repo = TranscriptRepository(db: db)
+    let v = try repo.createVersion(meetingID: m.id, kind: .final, engine: "e", model: "m", createdAt: Date())
+    let s = TranscriptSegment(versionID: v, channel: .mic, start: 1, end: 2, text: "原来的错字")
+    try repo.append(s)
+    return (repo, v, s)
+}
+
+@Test func editingKeepsTheOriginalText() throws {
+    let (repo, v, s) = try editFixture()
+    #expect(try !repo.hasEdits(versionID: v))
+    try repo.setText(segmentID: s.id, text: "改好的文字")
+    let got = try #require(try repo.segments(versionID: v).first)
+    #expect(got.text == "改好的文字")
+    #expect(got.originalText == "原来的错字")
+    #expect(got.isEdited)
+    #expect(got.start == 1 && got.end == 2, "时间不变，点句播放才准")
+    #expect(try repo.hasEdits(versionID: v))
+}
+
+@Test func secondEditStillRemembersTheFirstOriginal() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.setText(segmentID: s.id, text: "第一次")
+    try repo.setText(segmentID: s.id, text: "第二次")
+    let got = try #require(try repo.segments(versionID: v).first)
+    #expect(got.text == "第二次")
+    #expect(got.originalText == "原来的错字")
+}
+
+@Test func restoringReturnsToRecognizedText() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.setText(segmentID: s.id, text: "改好的文字")
+    try repo.restoreText(segmentID: s.id)
+    let got = try #require(try repo.segments(versionID: v).first)
+    #expect(got.text == "原来的错字")
+    #expect(!got.isEdited)
+    #expect(try !repo.hasEdits(versionID: v))
+}
+
+@Test func typingTheOriginalBackIsNotAnEdit() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.setText(segmentID: s.id, text: "改好的文字")
+    try repo.setText(segmentID: s.id, text: "原来的错字")
+    #expect(try !repo.hasEdits(versionID: v))
+}
+
+@Test func savingUnchangedTextIsNotAnEdit() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.setText(segmentID: s.id, text: "原来的错字")
+    #expect(try !repo.hasEdits(versionID: v))
+}
+
+@Test func blankTextIsIgnoredSoASentenceCannotVanishByAccident() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.setText(segmentID: s.id, text: "   \n")
+    let got = try #require(try repo.segments(versionID: v).first)
+    #expect(got.text == "原来的错字")
+    #expect(!got.isEdited)
+}
+
+@Test func editedTextIsFoundBySearchAndOldTextIsNot() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.setText(segmentID: s.id, text: "新的专有名词")
+    let meeting = try #require(try repo.meetingID(ofVersion: v))
+    #expect(try repo.meetingIDs(matching: "专有名词") == [meeting])
+    #expect(try repo.meetingIDs(matching: "错字").isEmpty)
+}
+
+@Test func meetingHasEditsLooksAtTheLatestFinalTranscript() throws {
+    let (repo, v, s) = try editFixture()
+    let meeting = try #require(try repo.meetingID(ofVersion: v))
+    try repo.markCompleted(v, at: Date())
+    #expect(try !repo.finalTranscriptHasEdits(meetingID: meeting))
+    try repo.setText(segmentID: s.id, text: "改好的文字")
+    #expect(try repo.finalTranscriptHasEdits(meetingID: meeting))
+}

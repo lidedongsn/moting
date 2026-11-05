@@ -23,6 +23,7 @@ struct SegmentRecord: Codable, FetchableRecord, PersistableRecord {
     var start: Double
     var end: Double
     var text: String
+    var originalText: String?
 }
 
 public final class TranscriptRepository: Sendable {
@@ -46,7 +47,8 @@ public final class TranscriptRepository: Sendable {
     public func append(_ s: TranscriptSegment) throws {
         try db.writer.write { db in
             try SegmentRecord(id: s.id.uuidString, versionId: s.versionID.uuidString, channel: s.channel.rawValue,
-                              speakerLabel: s.speakerLabel, start: s.start, end: s.end, text: s.text).insert(db)
+                              speakerLabel: s.speakerLabel, start: s.start, end: s.end, text: s.text,
+                              originalText: s.originalText).insert(db)
         }
     }
 
@@ -103,6 +105,43 @@ public final class TranscriptRepository: Sendable {
         }
     }
 
+    // MARK: - 手动编辑
+
+    /// 改一句话。第一次改时保存识别的原文；改回原文就不算改过；空白内容忽略，避免一句话被误删
+    public func setText(segmentID: UUID, text: String) throws {
+        let new = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !new.isEmpty else { return }
+        try db.writer.write { db in
+            guard var r = try SegmentRecord.fetchOne(db, key: segmentID.uuidString), r.text != new else { return }
+            let original = r.originalText ?? r.text
+            r.text = new
+            r.originalText = new == original ? nil : original
+            try r.update(db)
+        }
+    }
+
+    /// 恢复成识别的原文
+    public func restoreText(segmentID: UUID) throws {
+        try db.writer.write { db in
+            guard var r = try SegmentRecord.fetchOne(db, key: segmentID.uuidString), let original = r.originalText else { return }
+            r.text = original
+            r.originalText = nil
+            try r.update(db)
+        }
+    }
+
+    public func hasEdits(versionID: UUID) throws -> Bool {
+        try db.writer.read { db in
+            try SegmentRecord.filter(Column("versionId") == versionID.uuidString && Column("originalText") != nil).fetchCount(db) > 0
+        }
+    }
+
+    /// 这场会议当前的正式稿有没有手动修改：重新转写会把它们覆盖掉，要先提醒
+    public func finalTranscriptHasEdits(meetingID: UUID) throws -> Bool {
+        guard let version = try latestVersion(meetingID: meetingID, kind: .final) else { return false }
+        return try hasEdits(versionID: version)
+    }
+
     public func deleteSegments(ids: [UUID]) throws {
         guard !ids.isEmpty else { return }
         try db.writer.write { db in
@@ -130,8 +169,10 @@ public final class TranscriptRepository: Sendable {
             try SegmentRecord.filter(Column("versionId") == versionID.uuidString).order(Column("start")).fetchAll(db)
                 .compactMap { r in
                     guard let id = UUID(uuidString: r.id), let ch = AudioChannel(rawValue: r.channel) else { return nil }
-                    return TranscriptSegment(id: id, versionID: versionID, channel: ch, speakerLabel: r.speakerLabel,
-                                             start: r.start, end: r.end, text: r.text)
+                    var s = TranscriptSegment(id: id, versionID: versionID, channel: ch, speakerLabel: r.speakerLabel,
+                                              start: r.start, end: r.end, text: r.text)
+                    s.originalText = r.originalText
+                    return s
                 }
         }
     }

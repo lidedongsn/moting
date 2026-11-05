@@ -611,6 +611,16 @@
         }
       }
     },
+    "仍然重新转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribe Again Anyway"
+          }
+        }
+      }
+    },
     "代理地址": {
       "localizations": {
         "en": {
@@ -757,6 +767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save"
+          }
+        }
+      }
+    },
+    "保存修改失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't save your changes: %@"
           }
         }
       }
@@ -1511,6 +1531,16 @@
         }
       }
     },
+    "已修改": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edited"
+          }
+        }
+      }
+    },
     "已允许": {
       "localizations": {
         "en": {
@@ -1881,6 +1911,16 @@
         }
       }
     },
+    "恢复原文：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore original: %@"
+          }
+        }
+      }
+    },
     "我": {
       "localizations": {
         "en": {
@@ -1977,6 +2017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Search meetings and transcripts"
+          }
+        }
+      }
+    },
+    "播放这句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play This Sentence"
           }
         }
       }
@@ -3191,6 +3241,16 @@
         }
       }
     },
+    "编辑这段": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit This Passage"
+          }
+        }
+      }
+    },
     "缺少转写结果，请重新转写": {
       "localizations": {
         "en": {
@@ -3521,6 +3581,16 @@
         }
       }
     },
+    "这场会议的转写稿有你改过的句子，重新转写会生成新的转写稿，这些修改不会保留。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've edited sentences in this transcript. Transcribing again creates a new transcript without those edits."
+          }
+        }
+      }
+    },
     "这场会议还没有转写内容。": {
       "localizations": {
         "en": {
@@ -3697,6 +3767,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Transcribe Again"
+          }
+        }
+      }
+    },
+    "重新转写会丢掉手动修改": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing again will discard your edits"
           }
         }
       }

@@ -15,6 +15,9 @@ public struct TranscriptSegment: Identifiable, Codable, Sendable, Equatable {
     public var start: TimeInterval
     public var end: TimeInterval
     public var text: String
+    /// 手动改过时保存识别的原文；没改过是 nil
+    public var originalText: String?
+    public var isEdited: Bool { originalText != nil }
 
     public init(id: UUID = UUID(), versionID: UUID, channel: AudioChannel, speakerLabel: String? = nil,
                 start: TimeInterval, end: TimeInterval, text: String) {

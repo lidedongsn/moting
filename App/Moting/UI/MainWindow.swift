@@ -21,6 +21,8 @@ struct MainWindow: View {
     @State private var marked: Set<UUID> = []
     @State private var renaming: Meeting?
     @State private var showOnboarding = false
+    /// 转写稿有手动修改，等确认才重新转写
+    @State private var pendingRetranscribe: Meeting?
     @AppStorage(Onboarding.completedKey) private var onboardingCompleted = false
     @State private var renameText = ""
 
@@ -82,6 +84,15 @@ struct MainWindow: View {
             } catch {
                 recorder.lastError = L("读取会议列表失败：\(error.localizedDescription)")
             }
+        }
+        .confirmationDialog("重新转写会丢掉手动修改", isPresented: Binding(get: { pendingRetranscribe != nil }, set: { if !$0 { pendingRetranscribe = nil } }),
+                            titleVisibility: .visible) {
+            Button("仍然重新转写", role: .destructive) {
+                if let m = pendingRetranscribe { processing.enqueue(m.id) }
+                pendingRetranscribe = nil
+            }
+        } message: {
+            Text("这场会议的转写稿有你改过的句子，重新转写会生成新的转写稿，这些修改不会保留。")
         }
         .sheet(isPresented: $showOnboarding) {
             OnboardingView(env: env, live: recorder.live) {
@@ -239,8 +250,14 @@ struct MainWindow: View {
             Button("删除 \(group.count) 场会议…", role: .destructive) { requestDelete(group) }
         } else {
             Button("重命名…") { renameText = m.title; renaming = m }
-            Button("精准转写") { processing.enqueue(m.id) }
-                .disabled(m.status == .recording || m.status == .processing)
+            Button("精准转写") {
+                if (try? env.transcripts.finalTranscriptHasEdits(meetingID: m.id)) == true {
+                    pendingRetranscribe = m
+                } else {
+                    processing.enqueue(m.id)
+                }
+            }
+            .disabled(m.status == .recording || m.status == .processing)
             Button("在 Finder 中显示") {
                 NSWorkspace.shared.activateFileViewerSelecting([env.paths.meetingDirectory(m.id)])
             }

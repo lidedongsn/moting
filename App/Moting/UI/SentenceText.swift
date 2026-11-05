@@ -10,6 +10,7 @@ struct SentenceText: NSViewRepresentable {
     let isPlaying: Bool
     let onSeek: (TranscriptSegment) -> Void
     let onTogglePlay: () -> Void
+    let onEdit: () -> Void
 
     func makeNSView(context: Context) -> SentenceTextView {
         // 显式用 TextKit 1，悬停高亮和按坐标找字都靠 NSLayoutManager
@@ -32,6 +33,7 @@ struct SentenceText: NSViewRepresentable {
     func updateNSView(_ view: SentenceTextView, context: Context) {
         view.onSeek = onSeek
         view.onTogglePlay = onTogglePlay
+        view.onEdit = onEdit
         view.apply(turnText, current: currentSegment, isPlaying: isPlaying)
     }
 
@@ -44,6 +46,7 @@ struct SentenceText: NSViewRepresentable {
 final class SentenceTextView: NSTextView {
     var onSeek: ((TranscriptSegment) -> Void)?
     var onTogglePlay: (() -> Void)?
+    var onEdit: (() -> Void)?
     private var turnText: TurnText?
     private var applied: (text: String, current: UUID?, isPlaying: Bool)?
     private var hovered: UUID?
@@ -104,6 +107,18 @@ final class SentenceTextView: NSTextView {
         // 单击不留键盘焦点，空格键继续控制播放
         window?.makeFirstResponder(nil)
     }
+
+    /// 右键菜单最上面加"编辑这段"，系统的拷贝、查询等保留
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event) ?? NSMenu()
+        let item = NSMenuItem(title: L("编辑这段"), action: #selector(beginEdit), keyEquivalent: "")
+        item.target = self
+        menu.insertItem(item, at: 0)
+        menu.insertItem(.separator(), at: 1)
+        return menu
+    }
+
+    @objc private func beginEdit() { onEdit?() }
 
     override func keyDown(with event: NSEvent) {
         if event.charactersIgnoringModifiers == " " { onTogglePlay?() } else { super.keyDown(with: event) }
