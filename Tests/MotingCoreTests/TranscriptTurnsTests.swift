@@ -88,3 +88,60 @@ private func seg(_ ch: AudioChannel, _ label: String?, _ start: Double, _ end: D
     #expect(TranscriptTurns.playbackStart(of: s, kind: .draft) == 9)
     #expect(TranscriptTurns.playbackStart(of: seg(.mic, nil, 0.1, 1), kind: .final) == 0)
 }
+
+// MARK: - 编辑后把文字对回各句
+
+private func twoSentences() -> [TranscriptSegment] {
+    [seg(.mic, nil, 0, 1, "第一句。"), seg(.mic, nil, 2, 3, "第二句。")]
+}
+
+@Test func unchangedTextProducesNoChanges() {
+    let s = twoSentences()
+    let r = TurnEdit.changes(original: s, runs: [(s[0].id, "第一句。"), (s[1].id, "第二句。")])
+    #expect(r.texts.isEmpty && r.removed.isEmpty)
+}
+
+@Test func editedSentenceKeepsItsOwnIdentity() {
+    let s = twoSentences()
+    let r = TurnEdit.changes(original: s, runs: [(s[0].id, "第一句。"), (s[1].id, "改过的第二句。")])
+    #expect(r.texts == [s[1].id: "改过的第二句。"])
+    #expect(r.removed.isEmpty)
+}
+
+@Test func runsOfTheSameSentenceAreJoined() {
+    // 在句子中间打字可能把一句拆成几段带相同标记的文字
+    let s = twoSentences()
+    let r = TurnEdit.changes(original: s, runs: [(s[0].id, "第一"), (s[0].id, "新"), (s[0].id, "句。"), (s[1].id, "第二句。")])
+    #expect(r.texts == [s[0].id: "第一新句。"])
+}
+
+@Test func deletedSentenceIsRemoved() {
+    let s = twoSentences()
+    let r = TurnEdit.changes(original: s, runs: [(s[1].id, "第二句。")])
+    #expect(r.removed == [s[0].id])
+    #expect(r.texts.isEmpty)
+}
+
+@Test func blankSentenceCountsAsDeleted() {
+    let s = twoSentences()
+    let r = TurnEdit.changes(original: s, runs: [(s[0].id, "  \n"), (s[1].id, "第二句。")])
+    #expect(r.removed == [s[0].id])
+}
+
+@Test func untaggedTextJoinsThePreviousSentence() {
+    let s = twoSentences()
+    let r = TurnEdit.changes(original: s, runs: [(s[0].id, "第一句。"), (nil, "补充。"), (s[1].id, "第二句。")])
+    #expect(r.texts == [s[0].id: "第一句。补充。"])
+}
+
+@Test func untaggedTextAtTheVeryStartJoinsTheFirstSentence() {
+    let s = twoSentences()
+    let r = TurnEdit.changes(original: s, runs: [(nil, "开头。"), (s[0].id, "第一句。"), (s[1].id, "第二句。")])
+    #expect(r.texts == [s[0].id: "开头。第一句。"])
+}
+
+@Test func spaceBetweenEnglishSentencesIsNotAnEdit() {
+    let a = seg(.mic, nil, 0, 1, "Hello."), b = seg(.mic, nil, 2, 3, "Bye.")
+    let r = TurnEdit.changes(original: [a, b], runs: [(a.id, "Hello. "), (b.id, "Bye.")])
+    #expect(r.texts.isEmpty && r.removed.isEmpty)
+}

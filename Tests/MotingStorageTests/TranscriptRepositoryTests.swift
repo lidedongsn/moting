@@ -149,3 +149,35 @@ private func editFixture() throws -> (TranscriptRepository, UUID, TranscriptSegm
     try repo.setText(segmentID: s.id, text: "改好的文字")
     #expect(try repo.finalTranscriptHasEdits(meetingID: meeting))
 }
+
+@Test func removedSentenceDisappearsButCountsAsAnEditAndCanComeBack() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.removeSegment(s.id)
+    #expect(try repo.segments(versionID: v).isEmpty)
+    #expect(try repo.hasEdits(versionID: v))
+    let meeting = try #require(try repo.meetingID(ofVersion: v))
+    #expect(try repo.meetingIDs(matching: "错字").isEmpty)
+    try repo.restoreAll(versionID: v)
+    let got = try #require(try repo.segments(versionID: v).first)
+    #expect(got.text == "原来的错字")
+    #expect(!got.isEdited)
+    #expect(try repo.meetingIDs(matching: "错字") == [meeting])
+}
+
+@Test func removingAnEditedSentenceRemembersTheRecognizedText() throws {
+    let (repo, v, s) = try editFixture()
+    try repo.setText(segmentID: s.id, text: "改过")
+    try repo.removeSegment(s.id)
+    try repo.restoreAll(versionID: v)
+    #expect(try repo.segments(versionID: v).first?.text == "原来的错字")
+}
+
+@Test func restoreAllOnlyTouchesEditedSentences() throws {
+    let (repo, v, s) = try editFixture()
+    let other = TranscriptSegment(versionID: v, channel: .system, start: 3, end: 4, text: "没动过")
+    try repo.append(other)
+    try repo.setText(segmentID: s.id, text: "改过")
+    try repo.restoreAll(versionID: v)
+    #expect(try repo.segments(versionID: v).map(\.text) == ["原来的错字", "没动过"])
+    #expect(try !repo.hasEdits(versionID: v))
+}

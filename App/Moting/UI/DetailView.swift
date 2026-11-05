@@ -52,6 +52,10 @@ struct DetailView: View {
     /// 正在编辑的发言；编辑时空格键要留给输入框
     @State private var editingTurn: UUID?
     @State private var confirmRetranscribe = false
+    @State private var confirmRestoreAll = false
+    /// 正在显示的转写稿版本，以及它有没有改过或删过的句子（删掉的句子不在 segments 里）
+    @State private var currentVersion: UUID?
+    @State private var versionHasEdits = false
     @State private var title: String
     @State private var editingTitle = false
     @FocusState private var titleFocused: Bool
@@ -146,6 +150,11 @@ struct DetailView: View {
         } message: {
             Text("这场会议的转写稿有你改过的句子，重新转写会生成新的转写稿，这些修改不会保留。")
         }
+        .confirmationDialog("恢复全部原文？", isPresented: $confirmRestoreAll, titleVisibility: .visible) {
+            Button("恢复", role: .destructive, action: restoreAll)
+        } message: {
+            Text("这份转写稿里改过和删掉的句子都会回到识别的原文。")
+        }
         .alert("说话人改名", isPresented: Binding(get: { renamingSpeaker != nil }, set: { if !$0 { renamingSpeaker = nil } })) {
             TextField("名字（留空恢复默认）", text: $speakerNameText)
             Button("保存") {
@@ -173,6 +182,7 @@ struct DetailView: View {
                 Button("导出为 Markdown", action: exportMarkdown)
                 Button(hasFinal ? L("重新转写") : L("精准转写")) { retranscribe() }
                     .disabled(meeting.status == .recording || job?.status == .running || job?.status == .queued)
+                if versionHasEdits { Button("恢复全部原文…") { confirmRestoreAll = true } }
                 Button("在 Finder 中显示") {
                     NSWorkspace.shared.activateFileViewerSelecting([env.paths.meetingDirectory(meeting.id)])
                 }
@@ -487,8 +497,10 @@ struct DetailView: View {
                                      onRename: renameAction(turn),
                                      isEditing: editingTurn == turn.id,
                                      onBeginEdit: { editingTurn = turn.id },
-                                     onEndEdit: { changes in finishEditing(changes) },
-                                     onRestore: { segment in restore(segment) },
+                                     onDone: { editingTurn = nil },
+                                     onCancel: { editingTurn = nil },
+                                     onCommit: save,
+                                     onRestore: { restore(turn) },
                                      onSeek: playSegment,
                                      onTogglePlay: { player.toggle() })
                             .id(turn.id)
@@ -511,20 +523,29 @@ struct DetailView: View {
         player.play()
     }
 
-    /// changes 为 nil 表示取消
-    private func finishEditing(_ changes: [UUID: String]?) {
-        editingTurn = nil
-        guard let changes else { return }
+    private func save(_ edit: TurnEdit.Result) {
+        guard !edit.texts.isEmpty || !edit.removed.isEmpty else { return }
         do {
-            for (id, text) in changes { try env.transcripts.setText(segmentID: id, text: text) }
+            for (id, text) in edit.texts { try env.transcripts.setText(segmentID: id, text: text) }
+            for id in edit.removed { try env.transcripts.removeSegment(id) }
         } catch {
             recorder.lastError = L("保存修改失败：\(error.localizedDescription)")
         }
         load()
     }
 
-    private func restore(_ segment: TranscriptSegment) {
-        do { try env.transcripts.restoreText(segmentID: segment.id) } catch {
+    private func restore(_ turn: TranscriptTurn) {
+        do {
+            for s in turn.segments where s.isEdited { try env.transcripts.restoreText(segmentID: s.id) }
+        } catch {
+            recorder.lastError = L("保存修改失败：\(error.localizedDescription)")
+        }
+        load()
+    }
+
+    private func restoreAll() {
+        guard let version = currentVersion else { return }
+        do { try env.transcripts.restoreAll(versionID: version) } catch {
             recorder.lastError = L("保存修改失败：\(error.localizedDescription)")
         }
         load()
@@ -611,9 +632,13 @@ struct DetailView: View {
         if let (v, kind) = chosen {
             segments = (try? env.transcripts.segments(versionID: v)) ?? []
             transcriptKind = kind
+            currentVersion = v
+            versionHasEdits = (try? env.transcripts.hasEdits(versionID: v)) ?? false
         } else {
             segments = []
             transcriptKind = nil
+            currentVersion = nil
+            versionHasEdits = false
         }
         turns = TranscriptTurns.group(segments)
         turnTexts = Dictionary(uniqueKeysWithValues: turns.map { ($0.id, TurnText($0)) })
@@ -677,7 +702,7 @@ struct SpeakerAvatar: View {
 
 /// 转写稿的一段发言：头像、名字、时间，下面是连续的几句话，点哪句从哪句开始播。
 /// 当前句用强调色，当前段带淡底；播放时其余文字变暗，暂停时恢复，方便阅读。
-/// 悬停出现铅笔，进入逐句编辑：每句保留自己的时间，播放和高亮不受影响
+/// 编辑时文字原地可改，像改文档一样；各句的时间由 SentenceText 在内部对齐
 struct TurnView: View {
     let turn: TranscriptTurn
     let turnText: TurnText
@@ -690,12 +715,15 @@ struct TurnView: View {
     let onRename: (() -> Void)?
     let isEditing: Bool
     let onBeginEdit: () -> Void
-    /// nil 表示取消；否则是改过的句子
-    let onEndEdit: ([UUID: String]?) -> Void
-    let onRestore: (TranscriptSegment) -> Void
+    let onDone: () -> Void
+    let onCancel: () -> Void
+    let onCommit: (TurnEdit.Result) -> Void
+    let onRestore: () -> Void
     let onSeek: (TranscriptSegment) -> Void
     let onTogglePlay: () -> Void
     @State private var hovering = false
+    @State private var editHeight: CGFloat?
+    @State private var handle = SentenceTextHandle()
 
     private var hasEdits: Bool { turn.segments.contains(where: \.isEdited) }
 
@@ -712,7 +740,12 @@ struct TurnView: View {
                     if hasMark { Text("★").font(.system(size: 11)).foregroundStyle(Theme.mark) }
                     if hasEdits && !isEditing { Text("已修改").font(.system(size: 11)).foregroundStyle(.tertiary) }
                     Spacer(minLength: 0)
-                    if !isEditing {
+                    if isEditing {
+                        Button("完成", action: onDone)
+                            .buttonStyle(.plain)
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(Color.accentColor)
+                    } else {
                         Button(action: onBeginEdit) {
                             Image(systemName: "pencil").font(.system(size: 12)).foregroundStyle(.secondary)
                                 .frame(width: 22, height: 18).contentShape(Rectangle())
@@ -722,11 +755,14 @@ struct TurnView: View {
                         .opacity(hovering ? 1 : 0)
                     }
                 }
+                SentenceText(turnText: turnText, segments: turn.segments, currentSegment: currentSegment, isPlaying: isPlaying,
+                             isEditing: isEditing, handle: handle, onSeek: onSeek, onTogglePlay: onTogglePlay,
+                             onBeginEdit: onBeginEdit, onDone: onDone, onCancel: onCancel, onCommit: onCommit,
+                             onRestore: onRestore, onHeight: { editHeight = $0 })
+                    .frame(height: isEditing ? editHeight : nil)
                 if isEditing {
-                    TurnEditor(segments: turn.segments, onEnd: onEndEdit, onRestore: onRestore, onPlay: onSeek)
-                } else {
-                    SentenceText(turnText: turnText, currentSegment: currentSegment, isPlaying: isPlaying,
-                                 onSeek: onSeek, onTogglePlay: onTogglePlay, onEdit: onBeginEdit)
+                    Text("⌘↩ 完成    Esc 取消    ⌥空格 从光标处播放")
+                        .font(.system(size: 11)).foregroundStyle(.tertiary).padding(.top, 2)
                 }
             }
         }
@@ -735,72 +771,6 @@ struct TurnView: View {
         .background(isEditing ? Color.primary.opacity(0.05) : isCurrent ? Color.accentColor.opacity(0.1) : .clear,
                     in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .onHover { hovering = $0 }
-    }
-}
-
-/// 逐句编辑：每句一个输入框。⌘↩ 保存，Esc 取消；每句可以单独播放、恢复原文
-private struct TurnEditor: View {
-    let segments: [TranscriptSegment]
-    let onEnd: ([UUID: String]?) -> Void
-    let onRestore: (TranscriptSegment) -> Void
-    let onPlay: (TranscriptSegment) -> Void
-    @State private var drafts: [UUID: String] = [:]
-    @FocusState private var focused: UUID?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(segments) { s in
-                HStack(alignment: .top, spacing: 6) {
-                    Button { onPlay(s) } label: {
-                        Image(systemName: "play.fill").font(.system(size: 9)).foregroundStyle(.secondary)
-                            .frame(width: 20, height: 24).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help("播放这句")
-                    TextField("", text: binding(s), axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .font(Theme.readingFont)
-                        .lineSpacing(3)
-                        .focused($focused, equals: s.id)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(Theme.canvas, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                            .strokeBorder(focused == s.id ? Color.accentColor : Theme.hairline, lineWidth: focused == s.id ? 1.5 : 0.5))
-                    if s.isEdited {
-                        Button { restore(s) } label: {
-                            Image(systemName: "arrow.uturn.backward").font(.system(size: 11)).foregroundStyle(.secondary)
-                                .frame(width: 22, height: 24).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .help(L("恢复原文：\(s.originalText ?? "")"))
-                    }
-                }
-            }
-            HStack(spacing: 8) {
-                Spacer()
-                Button("取消") { onEnd(nil) }.buttonStyle(AppButtonStyle())
-                    .keyboardShortcut(.cancelAction)
-                Button("保存", action: save).buttonStyle(AppButtonStyle(kind: .primary))
-                    .keyboardShortcut(.return, modifiers: .command)
-            }
-            .padding(.top, 2)
-        }
-        .onAppear {
-            drafts = Dictionary(uniqueKeysWithValues: segments.map { ($0.id, $0.text) })
-            focused = segments.first?.id
-        }
-    }
-
-    private func binding(_ s: TranscriptSegment) -> Binding<String> {
-        Binding(get: { drafts[s.id] ?? s.text }, set: { drafts[s.id] = $0 })
-    }
-
-    private func restore(_ s: TranscriptSegment) {
-        drafts[s.id] = s.originalText
-        onRestore(s)
-    }
-
-    private func save() {
-        onEnd(drafts.filter { id, text in segments.first { $0.id == id }?.text != text })
+        .onChange(of: isEditing) { _, editing in if !editing { editHeight = nil } }
     }
 }

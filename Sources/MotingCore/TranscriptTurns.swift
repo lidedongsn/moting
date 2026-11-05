@@ -71,3 +71,32 @@ extension TranscriptTurns {
         max(0, segment.start - (kind == .final ? 0.2 : 1))
     }
 }
+
+/// 整段编辑后把文字对回各句：每句的时间不变，所以点句播放和高亮仍然准确
+public enum TurnEdit {
+    public struct Result: Equatable, Sendable {
+        public var texts: [UUID: String] = [:]
+        public var removed: [UUID] = []
+    }
+
+    /// runs：编辑器里按顺序的文字，带所属句子的标记；没有标记的（比如粘贴进来的）归到前一句，开头的归到第一句
+    public static func changes(original: [TranscriptSegment], runs: [(id: UUID?, text: String)]) -> Result {
+        var joined: [UUID: String] = [:]
+        var last = original.first?.id
+        for run in runs {
+            guard let id = run.id ?? last else { continue }
+            joined[id, default: ""] += run.text
+            last = id
+        }
+        var result = Result()
+        for s in original {
+            let text = (joined[s.id] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if text.isEmpty {
+                result.removed.append(s.id)
+            } else if text != s.text.trimmingCharacters(in: .whitespacesAndNewlines) {
+                result.texts[s.id] = text
+            }
+        }
+        return result
+    }
+}

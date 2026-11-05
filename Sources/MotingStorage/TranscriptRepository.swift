@@ -130,6 +130,24 @@ public final class TranscriptRepository: Sendable {
         }
     }
 
+    /// 整句删掉：文字清空、原文留着，可以恢复；读取时不再返回
+    public func removeSegment(_ segmentID: UUID) throws {
+        try db.writer.write { db in
+            guard var r = try SegmentRecord.fetchOne(db, key: segmentID.uuidString) else { return }
+            r.originalText = r.originalText ?? r.text
+            r.text = ""
+            try r.update(db)
+        }
+    }
+
+    /// 恢复这份转写稿所有改过和删掉的句子
+    public func restoreAll(versionID: UUID) throws {
+        try db.writer.write { db in
+            try db.execute(sql: "UPDATE segment SET text = originalText, originalText = NULL WHERE versionId = ? AND originalText IS NOT NULL",
+                           arguments: [versionID.uuidString])
+        }
+    }
+
     public func hasEdits(versionID: UUID) throws -> Bool {
         try db.writer.read { db in
             try SegmentRecord.filter(Column("versionId") == versionID.uuidString && Column("originalText") != nil).fetchCount(db) > 0
@@ -166,7 +184,7 @@ public final class TranscriptRepository: Sendable {
 
     public func segments(versionID: UUID) throws -> [TranscriptSegment] {
         try db.writer.read { db in
-            try SegmentRecord.filter(Column("versionId") == versionID.uuidString).order(Column("start")).fetchAll(db)
+            try SegmentRecord.filter(Column("versionId") == versionID.uuidString && Column("text") != "").order(Column("start")).fetchAll(db)
                 .compactMap { r in
                     guard let id = UUID(uuidString: r.id), let ch = AudioChannel(rawValue: r.channel) else { return nil }
                     var s = TranscriptSegment(id: id, versionID: versionID, channel: ch, speakerLabel: r.speakerLabel,

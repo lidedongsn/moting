@@ -401,6 +401,16 @@
         }
       }
     },
+    "⌘↩ 完成    Esc 取消    ⌥空格 从光标处播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘↩ Done    Esc Cancel    ⌥Space Play from cursor"
+          }
+        }
+      }
+    },
     "⌥⌘R": {
       "localizations": {
         "en": {
@@ -1911,12 +1921,42 @@
         }
       }
     },
-    "恢复原文：%@": {
+    "恢复": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restore original: %@"
+            "value": "Restore"
+          }
+        }
+      }
+    },
+    "恢复全部原文…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore All Original Text…"
+          }
+        }
+      }
+    },
+    "恢复全部原文？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore all original text?"
+          }
+        }
+      }
+    },
+    "恢复这段原文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Original Passage"
           }
         }
       }
@@ -2017,16 +2057,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Search meetings and transcripts"
-          }
-        }
-      }
-    },
-    "播放这句": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play This Sentence"
           }
         }
       }
@@ -3567,6 +3597,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No AI notes service is set up. Choose a service and enter an API key in Settings."
+          }
+        }
+      }
+    },
+    "这份转写稿里改过和删掉的句子都会回到识别的原文。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every edited or deleted sentence in this transcript returns to the recognized text."
           }
         }
       }
