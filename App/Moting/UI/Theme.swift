@@ -38,15 +38,16 @@ enum Theme {
     static let readingFont = Font.system(size: 15)
     static let readingLineSpacing: CGFloat = 5
 
-    /// 圆角：按 macOS 15 的尺度（窗口约 10，系统设置分组约 10，控件约 6）。以后换 macOS 26 的大圆角只改这里
+    // 字号只用这几档：11 注释、12 次要、13 正文和控件、15 阅读、17 小标题、22 / 26 页面标题。
+    // 不用半号：差半号看不出层次，只像没对齐
+
+    /// 圆角：按 macOS 15 的尺度。以后换大圆角只改这里
     enum Radius {
         /// 内容卡片、横幅
         static let card: CGFloat = 10
         /// 按钮、输入框、列表选中行、分段控件
-        static let control: CGFloat = 6
-        /// 所有按钮
-        static let button: CGFloat = 7
-        /// 小号分段控件里的滑块、设置侧栏图标
+        static let control: CGFloat = 7
+        /// 分段控件里的滑块、设置侧栏图标
         static let small: CGFloat = 5
         /// 悬浮字幕窗、会议提醒这类浮在桌面上的小窗
         static let panel: CGFloat = 12
@@ -101,20 +102,21 @@ struct HUDPanel: ViewModifier {
     }
 }
 
-/// 只有图标的小按钮：平时没有底，悬停才出现，不抢字幕的注意力
-struct HUDIconButton: View {
+/// 全 app 唯一的小图标按钮：13pt 中等字重、24×24 点击区，平时没有底，悬停才出现
+struct IconButton: View {
     let symbol: String
     let help: String
+    var isOn = false
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(hovering ? 1 : 0.7))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isOn ? Color.accentColor : Color.primary.opacity(hovering ? 0.9 : 0.6))
                 .frame(width: 24, height: 24)
-                .background(.white.opacity(hovering ? 0.14 : 0), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                .background(Color.primary.opacity(hovering ? 0.1 : 0), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -209,13 +211,13 @@ private struct AppButton: View {
     var body: some View {
         configuration.label
             .labelStyle(CenteredLabelStyle())
-            .font(.system(size: 13, weight: kind == .secondary || kind == .danger ? .regular : .medium))
+            .font(.system(size: 13, weight: iconOnly || kind == .primary || kind == .record ? .medium : .regular))
             .foregroundStyle(text)
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, iconOnly ? 0 : 12)
             .frame(width: iconOnly ? 28 : nil, height: 28)
-            .background(fill, in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+            .background(fill, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             .opacity(isEnabled ? 1 : 0.4)
             .contentShape(Rectangle())
             // 工具栏里 onHover 收不到事件，用连续悬停
@@ -261,7 +263,7 @@ struct PillTabs<Value: Hashable>: View {
                         Text(item.title).fontWeight(on ? .semibold : .regular)
                         if let badge = item.badge { Text(badge).foregroundStyle(.secondary) }
                     }
-                    .font(.system(size: small ? 11.5 : 13.5))
+                    .font(.system(size: small ? 12 : 13))
                     .foregroundStyle(on ? Color.primary : Color.secondary)
                     .padding(.horizontal, small ? 9 : 15)
                     .frame(height: small ? 22 : 30)

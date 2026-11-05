@@ -69,9 +69,9 @@ struct ModelsPane: View {
                     } else if !selected {
                         Button("删除", action: remove).buttonStyle(PaneButtonStyle(kind: .danger))
                     } else if let m = benchmark?.minutesPerHour {
-                        Text("1 小时会议约 \(Int(m.rounded())) 分钟").font(.system(size: 12.5)).foregroundStyle(.secondary)
+                        Text("1 小时会议约 \(Int(m.rounded())) 分钟").font(.system(size: 13)).foregroundStyle(.secondary)
                     } else {
-                        Text("在用").font(.system(size: 12.5)).foregroundStyle(.secondary)
+                        Text("在用").font(.system(size: 13)).foregroundStyle(.secondary)
                     }
                 }
                 .frame(width: 78, alignment: .trailing)
@@ -87,7 +87,7 @@ struct ModelsPane: View {
     private func meter(_ b: Benchmark?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(b.map { L("准确率 \(String(format: "%.1f", 100 - $0.cer))%") } ?? L("准确率 未实测"))
-                .font(.system(size: 11.5)).foregroundStyle(.secondary)
+                .font(.system(size: 12)).foregroundStyle(.secondary)
             Capsule().fill(Color.primary.opacity(0.08))
                 .overlay(alignment: .leading) {
                     if let b {

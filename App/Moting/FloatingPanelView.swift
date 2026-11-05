@@ -63,7 +63,7 @@ struct FloatingPanelView: View {
                 if processing.lastStatus == .running || processing.lastStatus == .queued || processing.lastStatus == .paused {
                     Text("\(Int(p * 100))%").monospacedDigit().foregroundStyle(.white.opacity(0.75))
                 }
-                HUDIconButton(symbol: "xmark", help: L("关闭（转写在后台继续）")) { processing.dismissLastRecorded() }
+                IconButton(symbol: "xmark", help: L("关闭（转写在后台继续）")) { processing.dismissLastRecorded() }
             }
             .font(.system(size: 13))
             .padding(.leading, 14).padding(.trailing, ui.collapsed ? 9 : 10).padding(.top, ui.collapsed ? 0 : 10)
@@ -149,7 +149,7 @@ struct FloatingPanelView: View {
                     .help(recorder.warnings.joined(separator: "\n"))
             }
             Spacer(minLength: 4)
-            HUDIconButton(symbol: "minus", help: L("收起")) { ui.collapsed = true }
+            IconButton(symbol: "minus", help: L("收起")) { ui.collapsed = true }
         }
         .padding(.leading, 14).padding(.trailing, 10)
         .padding(.top, 10).padding(.bottom, 6)
@@ -163,13 +163,13 @@ struct FloatingPanelView: View {
             HStack(spacing: 6) {
                 if let line = live.lines.last {
                     Text(line.channel == .mic ? L("我") : L("对方"))
-                        .font(.system(size: 12.5, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(line.channel == .mic ? Self.micColor : Self.systemColor)
                         .fixedSize()
                     // 只截断正文开头，保留最新的字
-                    Text(line.text).font(.system(size: 12.5)).lineLimit(1).truncationMode(.head)
+                    Text(line.text).font(.system(size: 13)).lineLimit(1).truncationMode(.head)
                 } else {
-                    Text(recorder.state == .paused ? L("已暂停") : L("录音中")).font(.system(size: 12.5)).foregroundStyle(.white.opacity(0.6))
+                    Text(recorder.state == .paused ? L("已暂停") : L("录音中")).font(.system(size: 13)).foregroundStyle(.white.opacity(0.6))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -257,9 +257,9 @@ struct FloatingPanelView: View {
                             withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
                         } label: {
                             Label("回到最新", systemImage: "arrow.down")
-                                .font(.system(size: 11.5, weight: .medium))
+                                .font(.system(size: 12, weight: .medium))
                                 .padding(.horizontal, 10).frame(height: 26)
-                                .background(Color(white: 0.2), in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+                                .background(Color(white: 0.2), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                         }
                         .buttonStyle(.plain)
                         .padding(.bottom, 4)
@@ -364,7 +364,7 @@ private struct MiniLevel: View {
         let v = Self.loudness(level)
         HStack(spacing: 4) {
             Image(systemName: symbol)
-                .font(.system(size: 9.5, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(v > 0 ? color : Color.white.opacity(0.45))
                 .frame(width: 11)
             HStack(spacing: 2) {

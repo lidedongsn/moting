@@ -38,7 +38,7 @@ struct SummaryView: View {
                     Label(error, systemImage: "exclamationmark.triangle.fill").font(.caption).foregroundStyle(.orange)
                 }
                 section(L("概要")) {
-                    Text(s.overview).font(.system(size: 14)).lineSpacing(4).textSelection(.enabled)
+                    Text(s.overview).font(.system(size: 13)).lineSpacing(4).textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if !s.decisions.isEmpty {
@@ -62,7 +62,7 @@ struct SummaryView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             ForEach(s.topics, id: \.title) { t in
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text(t.title).font(.system(size: 13.5, weight: .medium))
+                                    Text(t.title).font(.system(size: 13, weight: .medium))
                                     ForEach(t.points, id: \.self) { bullet($0) }
                                 }
                             }
@@ -75,9 +75,7 @@ struct SummaryView: View {
                             .lineLimit(1)
                     }
                     Spacer()
-                    Button { model.generate(meetingID) } label: { Image(systemName: "arrow.clockwise") }
-                        .buttonStyle(.plain)
-                        .help("会再次把转写文字发送给 \(model.service.name)")
+                    IconButton(symbol: "arrow.clockwise", help: L("会再次把转写文字发送给 \(model.service.name)")) { model.generate(meetingID) }
                 }
                 .font(.system(size: 12))
                 .foregroundStyle(.tertiary)
@@ -97,7 +95,7 @@ struct SummaryView: View {
     private func bullet(_ text: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Circle().fill(.tertiary).frame(width: 4, height: 4).alignmentGuide(.firstTextBaseline) { $0[.bottom] + 4 }
-            Text(text).font(.system(size: 13.5)).lineSpacing(3).textSelection(.enabled)
+            Text(text).font(.system(size: 13)).lineSpacing(3).textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -111,7 +109,7 @@ struct SummaryView: View {
             }
             .buttonStyle(.plain)
             VStack(alignment: .leading, spacing: 3) {
-                Text(t.task).font(.system(size: 13.5)).fixedSize(horizontal: false, vertical: true)
+                Text(t.task).font(.system(size: 13)).fixedSize(horizontal: false, vertical: true)
                     .strikethrough(t.done).foregroundStyle(t.done ? .secondary : .primary)
                     .textSelection(.enabled)
                 let meta = [t.owner, t.due].compactMap { $0 }

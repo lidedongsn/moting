@@ -61,7 +61,7 @@ struct SummaryPane: View {
     /// 隐私说明：发什么、发给谁、Key 存哪里
     private var privacy: some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: service.isLocal ? "desktopcomputer" : "lock.shield.fill").font(.system(size: 18)).foregroundStyle(Theme.me)
+            Image(systemName: service.isLocal ? "desktopcomputer" : "lock.shield.fill").font(.system(size: 17)).foregroundStyle(Theme.me)
             VStack(alignment: .leading, spacing: 4) {
                 if service.isLocal {
                     Text("纪要由这台 Mac 上的模型生成，转写文字不会离开这台电脑。")
@@ -71,7 +71,7 @@ struct SummaryPane: View {
                     Text("API Key 只保存在这台 Mac 的钥匙串里，不写入任何文件，也不随 iCloud 同步。").foregroundStyle(.secondary)
                 }
             }
-            .font(.system(size: 12.5))
+            .font(.system(size: 13))
             .fixedSize(horizontal: false, vertical: true)
         }
         .padding(14)
@@ -101,7 +101,7 @@ struct SummaryPane: View {
                     .paneInput()
                     .frame(width: 300)
             } else {
-                Text(service.baseURL).font(.system(size: 12.5, design: .monospaced)).foregroundStyle(.secondary)
+                Text(service.baseURL).font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
                     .textSelection(.enabled)
             }
         }
@@ -113,7 +113,7 @@ struct SummaryPane: View {
             HStack(spacing: 6) {
                 TextField("模型名", text: $model.service.model)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 12.5, design: .monospaced))
+                    .font(.system(size: 13, design: .monospaced))
                     .paneInput()
                     .frame(width: 220)
                 if !choices.isEmpty {
@@ -148,7 +148,7 @@ struct SummaryPane: View {
                 }
                 Spacer(minLength: 0)
                 if model.hasKey && !editingKey {
-                    Text("sk-••••••••").font(.system(size: 12.5, design: .monospaced)).foregroundStyle(.secondary)
+                    Text("sk-••••••••").font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
                     Button("更换") { keyText = ""; editingKey = true }.buttonStyle(PaneButtonStyle())
                     Button("删除") { try? model.setKey(""); checkResult = nil; auto = false }.buttonStyle(PaneButtonStyle(kind: .danger))
                 } else {

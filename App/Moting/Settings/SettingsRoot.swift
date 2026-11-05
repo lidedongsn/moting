@@ -75,7 +75,7 @@ struct SettingsRoot: View {
                             .foregroundStyle(.white)
                             .frame(width: 22, height: 22)
                             .background(Color(nsColor: item.color), in: RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
-                        Text(item.title).font(.system(size: 13.5, weight: on ? .semibold : .regular))
+                        Text(item.title).font(.system(size: 13, weight: on ? .semibold : .regular))
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 10)

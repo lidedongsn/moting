@@ -58,6 +58,7 @@ struct DetailView: View {
     @State private var versionHasEdits = false
     @State private var title: String
     @State private var editingTitle = false
+    @State private var titleHovering = false
     @FocusState private var titleFocused: Bool
     @State private var segments: [TranscriptSegment] = []
     @State private var allSegmentsForColors: [TranscriptSegment] = []
@@ -215,7 +216,7 @@ struct DetailView: View {
                 .lineLimit(1)
                 .padding(.vertical, 2)
                 .padding(.horizontal, 8)
-                .background(Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+                .background(Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
                 .padding(.vertical, -2)
                 .padding(.horizontal, -8)
                 .focused($titleFocused)
@@ -224,15 +225,15 @@ struct DetailView: View {
                 .onChange(of: titleFocused) { _, f in if !f { commitTitle() } }
                 .onAppear { titleFocused = true }
         } else {
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 Text(title)
                     .font(Theme.titleFont)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { editingTitle = true }
-                Button { editingTitle = true } label: { Image(systemName: "pencil").foregroundStyle(.tertiary) }
-                    .buttonStyle(.borderless)
-                    .help("重命名")
+                IconButton(symbol: "square.and.pencil", help: L("重命名")) { editingTitle = true }
+                    .opacity(titleHovering ? 1 : 0)
             }
+            .onHover { titleHovering = $0 }
         }
     }
 
@@ -322,11 +323,8 @@ struct DetailView: View {
                     .foregroundStyle(playbackRate == 1 ? Color.secondary : Theme.me)
             }
             .help("播放速度（点击切换 1× / 1.25× / 1.5× / 2×）")
-            Button { skipSilence.toggle() } label: {
-                Image(systemName: "forward.end.alt").foregroundStyle(skipSilence ? Theme.me : Color.secondary)
-                    .frame(width: 22, height: 22).contentShape(Rectangle())
-            }
-            .help(skipSilence ? L("已开启：长于半秒的静音只停半秒") : L("开启后跳过长时间没人说话的部分"))
+            IconButton(symbol: "forward.end.alt", help: skipSilence ? L("已开启：长于半秒的静音只停半秒") : L("开启后跳过长时间没人说话的部分"),
+                       isOn: skipSilence) { skipSilence.toggle() }
         }
         .buttonStyle(.plain)
         .font(.system(size: 12, weight: .medium))
@@ -743,16 +741,12 @@ struct TurnView: View {
                     if isEditing {
                         Button("完成", action: onDone)
                             .buttonStyle(.plain)
-                            .font(.system(size: 12.5, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Color.accentColor)
                     } else {
-                        Button(action: onBeginEdit) {
-                            Image(systemName: "pencil").font(.system(size: 12)).foregroundStyle(.secondary)
-                                .frame(width: 22, height: 18).contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .help("编辑这段")
-                        .opacity(hovering ? 1 : 0)
+                        IconButton(symbol: "square.and.pencil", help: L("编辑这段"), action: onBeginEdit)
+                            .padding(.vertical, -4)     // 不撑高这一行
+                            .opacity(hovering ? 1 : 0)
                     }
                 }
                 SentenceText(turnText: turnText, segments: turn.segments, currentSegment: currentSegment, isPlaying: isPlaying,

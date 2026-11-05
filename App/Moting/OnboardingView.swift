@@ -98,10 +98,10 @@ struct OnboardingView: View {
             Image(nsImage: NSImage(named: "AppIcon") ?? NSApp.applicationIconImage).resizable().frame(width: 88, height: 88)
             Text("欢迎使用 Moting").font(Theme.titleFont)
             Text("录下每一场会议，分清谁说了什么，会后自动生成转写稿和纪要。")
-                .font(.system(size: 14)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                .font(.system(size: 13)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Label("录音和转写都在这台 Mac 上完成，不需要联网。只有你主动生成 AI 纪要时，才会发送转写文字。", systemImage: "lock.fill")
-                .font(.system(size: 12.5)).foregroundStyle(.secondary)
+                .font(.system(size: 13)).foregroundStyle(.secondary)
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Theme.chrome, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
@@ -116,7 +116,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("需要这些权限").font(Theme.titleFont)
             Text("录音需要同时听到你和对方。只在你开始录音时才会使用。")
-                .font(.system(size: 14)).foregroundStyle(.secondary).padding(.bottom, 14)
+                .font(.system(size: 13)).foregroundStyle(.secondary).padding(.bottom, 14)
             VStack(spacing: 0) {
                 permissionRow(symbol: "mic.fill", color: .systemBlue, title: L("麦克风"), detail: L("录下你说的话"),
                               state: permissions.mic, request: permissions.requestMic, settings: "Privacy_Microphone")
@@ -146,7 +146,7 @@ struct OnboardingView: View {
             Spacer(minLength: 8)
             switch state {
             case .granted:
-                Label("已允许", systemImage: "checkmark.circle.fill").font(.system(size: 12.5)).foregroundStyle(Color(nsColor: .systemGreen))
+                Label("已允许", systemImage: "checkmark.circle.fill").font(.system(size: 13)).foregroundStyle(Color(nsColor: .systemGreen))
             case .denied:
                 Button("打开系统设置") { PermissionsModel.openSettings(settings) }.buttonStyle(AppButtonStyle())
             case .undetermined:
@@ -194,7 +194,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("下载语音模型").font(Theme.titleFont)
             Text("模型保存在这台 Mac 上，识别时不需要联网。")
-                .font(.system(size: 14)).foregroundStyle(.secondary).padding(.bottom, 14)
+                .font(.system(size: 13)).foregroundStyle(.secondary).padding(.bottom, 14)
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 1) {
@@ -203,7 +203,7 @@ struct OnboardingView: View {
                     }
                     Spacer()
                     if allInstalled {
-                        Label("已下载", systemImage: "checkmark.circle.fill").font(.system(size: 12.5)).foregroundStyle(Color(nsColor: .systemGreen))
+                        Label("已下载", systemImage: "checkmark.circle.fill").font(.system(size: 13)).foregroundStyle(Color(nsColor: .systemGreen))
                     } else if !isDownloading {
                         Button(downloadError == nil ? L("下载") : L("重试"), action: startDownloads).buttonStyle(AppButtonStyle(kind: .primary))
                     } else {
@@ -264,8 +264,8 @@ struct OnboardingView: View {
 
     private func tip(_ symbol: String, _ text: String) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(.secondary).frame(width: 20)
-            Text(text).font(.system(size: 13.5))
+            Image(systemName: symbol).font(.system(size: 13)).foregroundStyle(.secondary).frame(width: 20)
+            Text(text).font(.system(size: 13))
         }
     }
 }

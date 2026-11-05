@@ -75,7 +75,7 @@ struct MenuBarContent: View {
             .foregroundStyle(.white)
             .padding(.horizontal, 12)
             .frame(height: 36)
-            .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.button + 1, style: .continuous))
+            .background(Theme.record, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -101,7 +101,7 @@ struct MenuBarContent: View {
         }
         .padding(.leading, 12).padding(.trailing, 8)
         .frame(height: 44)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.button + 1, style: .continuous))
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
     }
 
     private func menuRow(_ title: String, action: @escaping () -> Void) -> some View {

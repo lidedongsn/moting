@@ -341,7 +341,7 @@ struct MeetingRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(meeting.title).font(.system(size: 13.5, weight: .medium)).lineLimit(1)
+                Text(meeting.title).font(.system(size: 13, weight: .medium)).lineLimit(1)
                 Spacer(minLength: 4)
                 tag
             }
@@ -418,7 +418,7 @@ struct FirstMeetingView: View {
             VStack(spacing: 8) {
                 Text("录下第一场会议").font(Theme.titleFont)
                 Text("Moting 同时录你的麦克风和对方的声音，在这台 Mac 上转写，不需要联网。")
-                    .font(.system(size: 14)).foregroundStyle(.secondary)
+                    .font(.system(size: 13)).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 400)
             }
