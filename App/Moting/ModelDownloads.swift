@@ -35,7 +35,7 @@ final class ModelDownloads: ObservableObject {
             } catch {
                 await MainActor.run { [weak self] in
                     self?.progress[m.id] = nil
-                    self?.errors[m.id] = L("下载失败：\(error.localizedDescription)。如果你用代理上网，请在「下载」页填写代理地址。")
+                    self?.errors[m.id] = L("下载失败：\(error.localizedDescription)。如果你用代理上网，请在「网络」页填写代理地址。")
                 }
             }
         }

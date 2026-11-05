@@ -93,7 +93,7 @@ struct DownloadPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PaneHeader(title: L("下载"), subtitle: L("模型从 hf-mirror、HuggingFace 或 GitHub 下载。"))
+            PaneHeader(title: L("网络"), subtitle: L("模型从 hf-mirror、HuggingFace 或 GitHub 下载。"))
             PaneCard {
                 VStack(alignment: .leading, spacing: 8) {
                     TextField("代理地址", text: $proxy, prompt: Text("例如 127.0.0.1:7897，留空表示不用代理"))

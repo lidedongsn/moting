@@ -1,5 +1,4 @@
 import Foundation
-import MotingCore
 
 /// 会议 / 通话软件
 public struct CallApp: Hashable, Sendable {

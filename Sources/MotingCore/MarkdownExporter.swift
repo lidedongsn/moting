@@ -1,5 +1,4 @@
 import Foundation
-import MotingCore
 
 /// 会议导出为 Markdown（spec 5.7）：标题、时间、参会人、AI 纪要、重点标记、转写稿
 public enum MarkdownExporter {

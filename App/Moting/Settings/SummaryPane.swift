@@ -140,10 +140,8 @@ struct SummaryPane: View {
                     if model.hasKey && !editingKey {
                         Label("已保存在钥匙串", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(.green)
                     } else if let page = service.keyPage, let url = URL(string: page) {
-                        HStack(spacing: 4) {
-                            Text("在 \(service.name) 控制台创建：").font(.caption).foregroundStyle(.secondary)
-                            Link(url.host ?? page, destination: url).font(.caption)
-                        }
+                        Text("在 \(service.name) 控制台创建：").font(.caption).foregroundStyle(.secondary)
+                        Link(url.host ?? page, destination: url).font(.caption).lineLimit(1).fixedSize()
                     }
                 }
                 Spacer(minLength: 0)

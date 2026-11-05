@@ -32,7 +32,7 @@ struct SettingsRoot: View {
         Item(id: "summary", title: L("AI 纪要"), symbol: "sparkles", color: .systemPurple),
         Item(id: "voice", title: L("热词与声纹"), symbol: "person.wave.2.fill", color: .systemOrange),
         Item(id: "storage", title: L("存储"), symbol: "internaldrive.fill", color: .systemGreen),
-        Item(id: "download", title: L("下载"), symbol: "arrow.down.circle.fill", color: .systemTeal),
+        Item(id: "download", title: L("网络"), symbol: "network", color: .systemTeal),
     ]
 
     var body: some View {
@@ -59,8 +59,15 @@ struct SettingsRoot: View {
         .frame(width: 800)
         .frame(minHeight: 620, maxHeight: .infinity)
         .background(Theme.settingsCanvas)
+        // 打开或切页时不要自动选中第一个输入框，模型名、API Key 容易被误改
+        .onAppear(perform: clearFocus)
+        .onChange(of: pane) { _, _ in clearFocus() }
         .background(WindowChrome())
         .ignoresSafeArea()
+    }
+
+    private func clearFocus() {
+        DispatchQueue.main.async { NSApp.keyWindow?.makeFirstResponder(nil) }
     }
 
     /// 左侧分栏：通高，右边一条竖线和内容隔开，红绿灯落在它的顶部

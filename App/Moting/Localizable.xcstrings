@@ -476,17 +476,17 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Downloads"
+            "value": "Download"
           }
         }
       }
     },
-    "下载失败：%@。如果你用代理上网，请在「下载」页填写代理地址。": {
+    "下载失败：%@。如果你用代理上网，请在「网络」页填写代理地址。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Download failed: %@. If you use a proxy, enter its address on the Downloads page."
+            "value": "Download failed: %@. If you use a proxy, enter its address on the Network page."
           }
         }
       }
@@ -3337,6 +3337,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The transcript is missing. Please transcribe again"
+          }
+        }
+      }
+    },
+    "网络": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network"
           }
         }
       }
