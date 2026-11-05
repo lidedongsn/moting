@@ -10,7 +10,7 @@ struct GeneralPane: View {
     @AppStorage(MicPreference.nameKey) private var micName = ""
     @AppStorage(AppLanguage.key) private var language = AppLanguage.system.rawValue
     @AppStorage(ProcessingModel.autoTranscribeKey) private var autoTranscribe = true
-    @AppStorage(ProcessingModel.batteryPolicyKey) private var batteryPolicy = "wait"
+    @AppStorage(ProcessingModel.batteryPolicyKey) private var batteryPolicy = BatteryPolicy.now
     @AppStorage(AppAppearance.key) private var appearance = AppAppearance.system.rawValue
     @AppStorage(CallDetector.enabledKey) private var callDetection = true
     @AppStorage(CalendarNaming.enabledKey) private var calendarNaming = false
@@ -84,10 +84,10 @@ struct GeneralPane: View {
                     Toggle("", isOn: $autoTranscribe).toggleStyle(.switch).labelsHidden()
                 }
                 Divider().padding(.leading, 14)
-                row(title: L("使用电池时"), detail: L("精准转写会持续占用 CPU 几分钟，耗电较多。")) {
+                row(title: L("使用电池时"), detail: L("1 小时的会议，精准转写大约需要几分钟。")) {
                     Picker("", selection: $batteryPolicy) {
-                        Text("等接通电源再处理").tag("wait")
-                        Text("立即处理").tag("now")
+                        Text("立即处理").tag(BatteryPolicy.now)
+                        Text("等接通电源再处理").tag(BatteryPolicy.wait)
                     }
                     .labelsHidden()
                     .fixedSize()

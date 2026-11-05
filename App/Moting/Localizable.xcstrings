@@ -241,6 +241,16 @@
         }
       }
     },
+    "1 小时的会议，精准转写大约需要几分钟。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing a 1-hour meeting takes a few minutes."
+          }
+        }
+      }
+    },
     "1×": {
       "localizations": {
         "en": {
@@ -3097,16 +3107,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Transcribe"
-          }
-        }
-      }
-    },
-    "精准转写会持续占用 CPU 几分钟，耗电较多。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transcription keeps the CPU busy for a few minutes and uses more battery."
           }
         }
       }
