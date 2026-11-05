@@ -11,7 +11,21 @@ public final class AppDatabase: Sendable {
 
     public static func open(at url: URL) throws -> AppDatabase {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        return try AppDatabase(writer: DatabasePool(path: url.path))
+        var config = Configuration()
+        // 删除时把内容清零，不留在文件的空闲页里：删掉的会议就是真的没了
+        config.prepareDatabase { db in try db.execute(sql: "PRAGMA secure_delete = ON") }
+        let database = try AppDatabase(writer: DatabasePool(path: url.path, configuration: config))
+        try database.clearFreePages()
+        return database
+    }
+
+    /// 老版本删过的内容可能还留在空闲页里；有空闲页就整理一次，文件也会变小
+    private func clearFreePages() throws {
+        try writer.barrierWriteWithoutTransaction { db in
+            guard try Int.fetchOne(db, sql: "PRAGMA freelist_count") ?? 0 > 0 else { return }
+            try db.execute(sql: "VACUUM")
+            try db.checkpoint(.truncate)
+        }
     }
 
     public static func inMemory() throws -> AppDatabase {

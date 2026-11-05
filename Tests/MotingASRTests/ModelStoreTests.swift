@@ -204,3 +204,40 @@ private func file(_ name: String, _ content: String) -> ModelFile {
     #expect(OfflineCatalog.default == OfflineCatalog.xasrTransducer)
     #expect(OfflineCatalog.default.supportsHotwords)
 }
+
+// MARK: - 临时文件
+
+@Test func downloadTempFilesStayInsideTheModelFolderAndAreRemoved() async throws {
+    let s = Sandbox()
+    let m = model([try s.publish(s.mirrorA, repo: "org/test", name: "a.onnx", content: "aaaa")])
+    let store = ModelStore(root: s.models, mirrors: [s.mirrorA])
+    try await store.install(m) { _ in }
+    #expect(store.isInstalled(m))
+    let temp = s.models.appendingPathComponent(ModelStore.tempFolderName)
+    #expect((try? FileManager.default.contentsOfDirectory(atPath: temp.path))?.isEmpty ?? true)
+}
+
+@Test func leftoversFromACrashedDownloadAreCleanedOnLaunch() async throws {
+    let s = Sandbox()
+    let m = model([try s.publish(s.mirrorA, repo: "org/test", name: "a.onnx", content: "aaaa")])
+    let store = ModelStore(root: s.models, mirrors: [s.mirrorA])
+    try await store.install(m) { _ in }
+    let fm = FileManager.default
+    let temp = s.models.appendingPathComponent(ModelStore.tempFolderName)
+    try fm.createDirectory(at: temp, withIntermediateDirectories: true)
+    try Data(count: 10).write(to: temp.appendingPathComponent("moting-dl-x"))
+    let part = store.directory(for: m).appendingPathComponent("half.bin.part")
+    try Data(count: 10).write(to: part)
+
+    store.cleanLeftovers()
+
+    #expect(!fm.fileExists(atPath: temp.path))
+    #expect(!fm.fileExists(atPath: part.path))
+    #expect(store.isInstalled(m), "装好的模型不能被清掉")
+}
+
+@Test func cleaningAnEmptyStoreIsHarmless() {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent("moting-none-\(UUID().uuidString)")
+    ModelStore(root: root).cleanLeftovers()
+    #expect(!FileManager.default.fileExists(atPath: root.path))
+}

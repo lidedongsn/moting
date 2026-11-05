@@ -30,6 +30,20 @@ public final class ModelStore: @unchecked Sendable {
         _proxy = proxy
     }
 
+    /// 下载用的临时目录：放在模型目录里，不往系统临时目录写，存储页也算得到
+    public static let tempFolderName = ".tmp"
+    private var tempFolder: URL { root.appendingPathComponent(Self.tempFolderName, isDirectory: true) }
+
+    /// app 启动时调用：清掉上次下载中途退出留下的临时文件。这时还没有下载在进行
+    public func cleanLeftovers() {
+        let fm = FileManager.default
+        try? fm.removeItem(at: tempFolder)
+        guard let files = fm.enumerator(at: root, includingPropertiesForKeys: nil) else { return }
+        for case let url as URL in files where url.pathExtension == "part" {
+            try? fm.removeItem(at: url)
+        }
+    }
+
     public func directory(for m: some DownloadableModel) -> URL {
         root.appendingPathComponent(m.id, isDirectory: true)
     }
@@ -126,7 +140,7 @@ public final class ModelStore: @unchecked Sendable {
         for url in urls {
             var tmp: URL?
             do {
-                tmp = try await FileDownloader.download(url, proxy: proxy, progress: progress)
+                tmp = try await FileDownloader.download(url, proxy: proxy, tempFolder: tempFolder, progress: progress)
                 try? FileManager.default.removeItem(at: part)
                 try FileManager.default.moveItem(at: tmp!, to: part)
             } catch {
@@ -147,10 +161,10 @@ public final class ModelStore: @unchecked Sendable {
     /// 下载压缩包 → 整包 SHA-256 → 只解出列出的文件 → 逐个核对大小后移入模型目录；临时文件全部清理
     private func installArchive(_ m: some DownloadableModel, url: URL, sha256: String, size: Int64, prefix: String,
                                 into dir: URL, progress: @escaping @Sendable (Double) -> Void) async throws {
-        let work = FileManager.default.temporaryDirectory.appendingPathComponent("moting-archive-\(UUID().uuidString)")
+        let work = tempFolder.appendingPathComponent("moting-archive-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: work) }
-        let tmp = try await FileDownloader.download(url, proxy: proxy) { bytes in progress(Double(bytes) / Double(max(size, 1)) * 0.9) }
+        let tmp = try await FileDownloader.download(url, proxy: proxy, tempFolder: tempFolder) { bytes in progress(Double(bytes) / Double(max(size, 1)) * 0.9) }
         let archive = work.appendingPathComponent(url.lastPathComponent)
         defer { try? FileManager.default.removeItem(at: tmp) }
         try FileManager.default.moveItem(at: tmp, to: archive)
@@ -193,20 +207,22 @@ public final class ModelStore: @unchecked Sendable {
 
 /// 带字节进度的单文件下载，返回临时文件路径（调用方负责移走）
 private final class FileDownloader: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    private let tempFolder: URL
     private var continuation: CheckedContinuation<URL, Error>?
     private let progress: @Sendable (Int64) -> Void
 
-    private init(progress: @escaping @Sendable (Int64) -> Void) {
+    private init(tempFolder: URL, progress: @escaping @Sendable (Int64) -> Void) {
+        self.tempFolder = tempFolder
         self.progress = progress
     }
 
-    static func download(_ url: URL, proxy: URL?, progress: @escaping @Sendable (Int64) -> Void) async throws -> URL {
-        let d = FileDownloader(progress: progress)
-        let config = URLSessionConfiguration.default
+    static func download(_ url: URL, proxy: URL?, tempFolder: URL, progress: @escaping @Sendable (Int64) -> Void) async throws -> URL {
+        let d = FileDownloader(tempFolder: tempFolder, progress: progress)
+        // ephemeral：不写 Cookie 和缓存（~/Library/HTTPStorages、Caches），不在 app 目录之外留文件
+        let config = URLSessionConfiguration.ephemeral
         // 30 秒没有数据就放弃，尽快换下一个来源
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 6 * 3600
-        // 不写系统网络缓存（~/Library/Caches/<bundle id>），不在 app 目录之外留文件
         config.urlCache = nil
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         if let proxy, let host = proxy.host {
@@ -236,8 +252,9 @@ private final class FileDownloader: NSObject, URLSessionDownloadDelegate, @unche
             return
         }
         // location 在回调返回后即被删除，先移到自己的临时位置
-        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("moting-dl-\(UUID().uuidString)")
+        let tmp = tempFolder.appendingPathComponent("moting-dl-\(UUID().uuidString)")
         do {
+            try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
             try FileManager.default.moveItem(at: location, to: tmp)
             continuation?.resume(returning: tmp)
         } catch {

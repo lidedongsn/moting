@@ -57,6 +57,12 @@ final class AppEnvironment: ObservableObject {
         if DemoData.root != nil { try DemoData.seedIfEmpty(paths: paths, env: env) }
         #endif
         try RecordingRecovery.run(repository: env.repository, paths: paths, now: Date())
+        // 下载和恢复任务开始之前清理：上次中途退出留下的临时文件；老版本写的 Cookie 现在已经用不到
+        env.modelStore.cleanLeftovers()
+        if let id = Bundle.main.bundleIdentifier {
+            let home = FileManager.default.homeDirectoryForCurrentUser
+            try? FileManager.default.removeItem(at: home.appendingPathComponent("Library/HTTPStorages/\(id)", isDirectory: true))
+        }
         try env.pipeline.recoverAfterLaunch()
         return env
     }

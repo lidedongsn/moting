@@ -2,6 +2,7 @@ import AppKit
 import MotingASR
 import MotingCore
 import MotingPipeline
+import MotingStorage
 import MotingSummary
 import SwiftUI
 
@@ -169,13 +170,13 @@ struct StoragePane: View {
         refresh()
     }
 
-    /// 删除数据目录与缓存目录、钥匙串里的 AI 纪要 Key、清空设置，然后退出
+    /// 删除数据目录、系统替 app 生成的缓存和窗口状态、钥匙串里的 AI 纪要 Key、清空设置，然后退出
     private func deleteAll() {
         let fm = FileManager.default
         try? APIKeyStore.default.deleteAll()
         try? fm.removeItem(at: env.paths.root)
-        if let caches = fm.urls(for: .cachesDirectory, in: .userDomainMask).first {
-            try? fm.removeItem(at: caches.appendingPathComponent(Bundle.main.bundleIdentifier ?? "com.lidedongsn.moting"))
+        if let id = Bundle.main.bundleIdentifier {
+            for url in AppPaths.systemLeftovers(home: fm.homeDirectoryForCurrentUser, bundleID: id) { try? fm.removeItem(at: url) }
         }
         if let id = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: id) }
         NSApp.terminate(nil)

@@ -14,6 +14,17 @@ public struct AppPaths: Sendable {
         return AppPaths(root: support.appendingPathComponent("Moting", isDirectory: true))
     }
 
+    /// 系统替 app 在数据目录之外生成的东西：彻底删除时要一起清掉
+    public static func systemLeftovers(home: URL, bundleID: String) -> [URL] {
+        let library = home.appendingPathComponent("Library", isDirectory: true)
+        return [
+            library.appendingPathComponent("Caches/\(bundleID)", isDirectory: true),
+            library.appendingPathComponent("HTTPStorages/\(bundleID)", isDirectory: true),
+            library.appendingPathComponent("HTTPStorages/\(bundleID).binarycookies"),
+            library.appendingPathComponent("Saved Application State/\(bundleID).savedState", isDirectory: true),
+        ]
+    }
+
     public var databaseURL: URL { root.appendingPathComponent("moting.sqlite") }
 
     public func meetingDirectory(_ id: UUID) -> URL {

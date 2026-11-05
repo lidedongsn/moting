@@ -144,3 +144,11 @@ private func meeting(_ t: TimeInterval, status: MeetingStatus = .recording) -> M
     #expect(try repo.meeting(m.id)?.status == .processing)
     #expect(try repo.meeting(m.id)?.endedAt == end)
 }
+
+@Test func uninstallCoversEverythingOutsideTheDataFolder() {
+    let home = URL(fileURLWithPath: "/Users/x")
+    let paths = AppPaths.systemLeftovers(home: home, bundleID: "com.example.app").map(\.path)
+    #expect(paths.contains("/Users/x/Library/Caches/com.example.app"))
+    #expect(paths.contains("/Users/x/Library/HTTPStorages/com.example.app"))
+    #expect(paths.contains("/Users/x/Library/Saved Application State/com.example.app.savedState"))
+}
