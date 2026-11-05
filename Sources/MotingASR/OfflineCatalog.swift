@@ -2,7 +2,7 @@ import Foundation
 import MotingCore
 
 public enum OfflineModelKind: String, Sendable {
-    case senseVoice, paraformer, transducer, qwen3ASR, fireRedASR, whisper
+    case senseVoice, paraformer, transducer, qwen3ASR, fireRedASR
 }
 
 /// 会后精准转写用的离线识别模型
@@ -113,27 +113,10 @@ public enum OfflineCatalog {
         // 实测：WenetSpeech test_meeting 400 条（43.8 分钟，2026-11-02，M2 低优先级）
         benchmark: Benchmark(cer: 5.18, minutesPerHour: 25.6))
 
-    /// 约 100 种语言、自动判断语种，给中英之外的会议用
-    public static let whisperTurbo = OfflineModel(
-        id: "offline-whisper-turbo-int8", displayName: L("Whisper turbo（多语言）"),
-        source: .huggingFace(repo: "csukuangfj/sherpa-onnx-whisper-turbo"),
-        files: [
-            ModelFile(name: "turbo-encoder.int8.onnx", sha256: "b02dcdf54f348741e93fe732b67d933c8dcb6735655f710640143081db38878b", size: 674_716_297),
-            ModelFile(name: "turbo-decoder.int8.onnx", sha256: "20accd02388482eb3a46bd615631adfdc85e1eb2c7db9ea3f02a40ffe6b81547", size: 361_080_764),
-            ModelFile(name: "turbo-tokens.txt", sha256: "b34b360dbb493e781e479794586d661700670d65564001f23024971d1f2fa126", size: 816_730),
-        ],
-        kind: .whisper,
-        roles: ["encoder": "turbo-encoder.int8.onnx", "decoder": "turbo-decoder.int8.onnx", "tokens": "turbo-tokens.txt"],
-        hasPunctuation: true, supportsHotwords: false)
+    public static let all: [OfflineModel] = [senseVoice, paraformerZh, xasrTransducer, qwen3ASR, fireRedASR2]
 
-    public static let all: [OfflineModel] = [senseVoice, paraformerZh, xasrTransducer, qwen3ASR, fireRedASR2, whisperTurbo]
-
-    /// 设置页能选的模型。Whisper 暂不开放：sherpa-onnx 1.13.8 解码时会丢掉拆成多个 token 的汉字，
-    /// 同一条语音 2.0.1 是完整的。升级引擎并验证后再放开
-    public static let selectable = all.filter { $0.kind != .whisper }
-
-    /// 默认离线模型；Task 9 对比后由用户选定
-    public static var `default`: OfflineModel { senseVoice }
+    /// 默认离线模型：实测比 SenseVoice 更准更快，也支持热词
+    public static var `default`: OfflineModel { xasrTransducer }
 
     public static func model(id: String) -> OfflineModel? {
         all.first { $0.id == id }

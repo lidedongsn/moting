@@ -20,6 +20,8 @@ struct MainWindow: View {
     /// 多选时选中的会议；为空表示只选中了当前这一场（processing.selectedMeetingID）
     @State private var marked: Set<UUID> = []
     @State private var renaming: Meeting?
+    @State private var showOnboarding = false
+    @AppStorage(Onboarding.completedKey) private var onboardingCompleted = false
     @State private var renameText = ""
 
     var body: some View {
@@ -61,7 +63,17 @@ struct MainWindow: View {
         .navigationTitle("")
         .task {
             do {
+                var first = true
                 for try await list in env.repository.observeAll() {
+                    if first {
+                        // 只在打开时判断一次：引导中途有了会议也不要突然关掉
+                        first = false
+                        if Onboarding.shouldShow(completed: onboardingCompleted, hasMeetings: !list.isEmpty) {
+                            showOnboarding = true
+                        } else {
+                            onboardingCompleted = true
+                        }
+                    }
                     meetings = list
                     marked.formIntersection(list.map(\.id))
                     if processing.selectedMeetingID == nil { processing.selectedMeetingID = list.first?.id }
@@ -70,6 +82,13 @@ struct MainWindow: View {
             } catch {
                 recorder.lastError = L("读取会议列表失败：\(error.localizedDescription)")
             }
+        }
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView(env: env, live: recorder.live) {
+                onboardingCompleted = true
+                showOnboarding = false
+            }
+            .interactiveDismissDisabled()
         }
         .task(id: query) {
             // 转写内容搜索放后台，输入时不卡

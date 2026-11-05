@@ -199,23 +199,8 @@ private func file(_ name: String, _ content: String) -> ModelFile {
     #expect(store.isInstalled(m))
 }
 
-@Test func whisperIsAMultilingualOptionWithoutHotwords() throws {
-    let m = OfflineCatalog.whisperTurbo
-    #expect(m.kind == .whisper)
-    #expect(OfflineCatalog.all.contains(m))
-    // 现在的识别引擎（1.13.8）解码 Whisper 会丢字，升级前不能让用户选
-    #expect(!OfflineCatalog.selectable.contains(m))
-    #expect(OfflineCatalog.selectable.contains(OfflineCatalog.default))
-    // 自带标点；没有真正的热词能力，界面不能说支持
-    #expect(m.hasPunctuation)
-    #expect(!m.supportsHotwords)
-    #expect(Set(m.roles.keys) == ["encoder", "decoder", "tokens"])
-    #expect(m.roles.values.allSatisfy { role in m.files.contains { $0.name == role } })
-}
-
-@Test func whisperRecognizerReportsMissingFilesInsteadOfCrashing() {
-    let dir = FileManager.default.temporaryDirectory.appendingPathComponent("moting-no-whisper-\(UUID().uuidString)")
-    #expect(throws: OfflineASRError.self) {
-        _ = try SherpaOfflineRecognizer(model: OfflineCatalog.whisperTurbo, directory: dir, hotwords: [])
-    }
+@Test func defaultOfflineModelIsXASR() {
+    // 实测比 SenseVoice 更准更快，也支持热词
+    #expect(OfflineCatalog.default == OfflineCatalog.xasrTransducer)
+    #expect(OfflineCatalog.default.supportsHotwords)
 }

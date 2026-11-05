@@ -25,7 +25,7 @@ struct ModelsPane: View {
             }
             Text("会后精准转写").font(.headline).padding(.top, 22).padding(.bottom, 8)
             PaneCard {
-                ForEach(Array(OfflineCatalog.selectable.enumerated()), id: \.element.id) { i, m in
+                ForEach(Array(OfflineCatalog.all.enumerated()), id: \.element.id) { i, m in
                     if i > 0 { Divider().padding(.leading, 44) }
                     row(name: m.displayName, size: m.totalSize, hotwords: m.supportsHotwords, benchmark: m.benchmark,
                         selected: offlineID == m.id, installed: downloads.isInstalled(m), usage: downloads.usage(m),

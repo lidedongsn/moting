@@ -47,7 +47,8 @@ final class ProcessingModel: ObservableObject {
         self.env = env
         summary = SummaryModel(env: env, notifier: notifier)
         guard let env else { return }
-        notifier.requestAuthorization()
+        // 新用户在新手引导里授权，不要一启动就弹
+        if UserDefaults.standard.bool(forKey: Onboarding.completedKey) { notifier.requestAuthorization() }
         notifier.onOpenMeeting = { [weak self] id in self?.openMeeting(id) }
         env.pipeline.onProgress = { [weak self] id, p in
             Task { @MainActor in

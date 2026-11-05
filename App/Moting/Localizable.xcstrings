@@ -311,6 +311,16 @@
         }
       }
     },
+    "Moting 一直在菜单栏，关掉主窗口也能录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moting stays in the menu bar, so you can record with the main window closed"
+          }
+        }
+      }
+    },
     "Moting 同时录你的麦克风和对方的声音，在这台 Mac 上转写，不需要联网。": {
       "localizations": {
         "en": {
@@ -357,16 +367,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "SenseVoice (Zh/En/Ja/Ko/Yue)"
-          }
-        }
-      }
-    },
-    "Whisper turbo（多语言）": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Whisper turbo (multilingual)"
           }
         }
       }
@@ -441,6 +441,16 @@
         }
       }
     },
+    "上一步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
     "下次开始录音时生效。选定的设备断开时，录音自动改用系统默认，不会中断。": {
       "localizations": {
         "en": {
@@ -477,6 +487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Captions for this recording start automatically once the download finishes"
+          }
+        }
+      }
+    },
+    "下载语音模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download speech models"
           }
         }
       }
@@ -537,6 +557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Applies to the main window, Settings and the menu bar panel. The floating captions window is always dark so it stays readable over a meeting."
+          }
+        }
+      }
+    },
+    "也可以先跳过：用到时会自动下载，已经录下的声音不会丢。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can skip this for now. Models download when needed, and nothing you record is lost."
           }
         }
       }
@@ -731,6 +761,16 @@
         }
       }
     },
+    "允许": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        }
+      }
+    },
     "先填写 API Key": {
       "localizations": {
         "en": {
@@ -757,6 +797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Total"
+          }
+        }
+      }
+    },
+    "共约 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@ in total"
           }
         }
       }
@@ -807,6 +857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Decisions"
+          }
+        }
+      }
+    },
+    "准备好了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're all set"
           }
         }
       }
@@ -1071,6 +1131,16 @@
         }
       }
     },
+    "后台下载，继续": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue While Downloading"
+          }
+        }
+      }
+    },
     "启动失败：%@": {
       "localizations": {
         "en": {
@@ -1281,6 +1351,16 @@
         }
       }
     },
+    "实时字幕和会后精准转写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live captions and post-meeting transcription"
+          }
+        }
+      }
+    },
     "实时字幕在用": {
       "localizations": {
         "en": {
@@ -1391,6 +1471,16 @@
         }
       }
     },
+    "已下载": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloaded"
+          }
+        }
+      }
+    },
     "已下载 · %@": {
       "localizations": {
         "en": {
@@ -1417,6 +1507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saved in Keychain"
+          }
+        }
+      }
+    },
+    "已允许": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allowed"
           }
         }
       }
@@ -1501,6 +1601,16 @@
         }
       }
     },
+    "开会时点「开始录音」，或在任何 app 里按 ⌥⌘R": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click Record during a meeting, or press ⌥⌘R in any app"
+          }
+        }
+      }
+    },
     "开会时点悬浮窗或菜单栏里的 ★，会在这里留下时间点。": {
       "localizations": {
         "en": {
@@ -1527,6 +1637,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Start"
+          }
+        }
+      }
+    },
+    "开始使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Using Moting"
           }
         }
       }
@@ -1561,12 +1681,52 @@
         }
       }
     },
+    "开始设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get Started"
+          }
+        }
+      }
+    },
     "当前精准转写模型「%@」不支持热词。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "The current transcription model, %@, doesn't support hotwords."
+          }
+        }
+      }
+    },
+    "录下会议里其他人的声音，你听到的声音不受影响": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records other participants. What you hear isn't affected"
+          }
+        }
+      }
+    },
+    "录下你说的话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records what you say"
+          }
+        }
+      }
+    },
+    "录下每一场会议，分清谁说了什么，会后自动生成转写稿和纪要。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record every meeting, see who said what, and get a transcript and notes afterward."
           }
         }
       }
@@ -1621,6 +1781,16 @@
         }
       }
     },
+    "录音和转写都在这台 Mac 上完成，不需要联网。只有你主动生成 AI 纪要时，才会发送转写文字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording and transcription happen on this Mac with no internet needed. The transcript is only sent when you generate AI notes."
+          }
+        }
+      }
+    },
     "录音太短，已丢弃": {
       "localizations": {
         "en": {
@@ -1667,6 +1837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Still recording."
+          }
+        }
+      }
+    },
+    "录音需要同时听到你和对方。只在你开始录音时才会使用。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To record a meeting, Moting needs to hear both you and the others. They're only used while you record."
           }
         }
       }
@@ -1737,6 +1917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open Moting"
+          }
+        }
+      }
+    },
+    "打开系统设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
           }
         }
       }
@@ -2201,6 +2391,16 @@
         }
       }
     },
+    "模型保存在这台 Mac 上，识别时不需要联网。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models stay on this Mac, so recognition works without internet."
+          }
+        }
+      }
+    },
     "模型名": {
       "localizations": {
         "en": {
@@ -2217,6 +2417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't read the model's response. The raw output was saved, and you can regenerate later."
+          }
+        }
+      }
+    },
+    "欢迎使用 Moting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to Moting"
           }
         }
       }
@@ -2661,6 +2871,16 @@
         }
       }
     },
+    "稍后再说": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Now"
+          }
+        }
+      }
+    },
     "立即处理": {
       "localizations": {
         "en": {
@@ -2851,6 +3071,16 @@
         }
       }
     },
+    "系统音频": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Audio"
+          }
+        }
+      }
+    },
     "系统音频重建失败：%@": {
       "localizations": {
         "en": {
@@ -2991,6 +3221,16 @@
         }
       }
     },
+    "腾讯会议、飞书、钉钉开始通话时，会问你要不要录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When Tencent Meeting, Feishu or DingTalk starts a call, Moting asks whether to record"
+          }
+        }
+      }
+    },
     "自定义": {
       "localizations": {
         "en": {
@@ -3047,6 +3287,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings…"
+          }
+        }
+      }
+    },
+    "设置代理…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Up Proxy…"
           }
         }
       }
@@ -3177,6 +3427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "You can generate notes after transcription."
+          }
+        }
+      }
+    },
+    "转写完成时告诉你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tells you when a transcript is ready"
           }
         }
       }
@@ -3381,6 +3641,16 @@
         }
       }
     },
+    "通知（可选）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications (optional)"
+          }
+        }
+      }
+    },
     "重命名": {
       "localizations": {
         "en": {
@@ -3481,6 +3751,16 @@
         }
       }
     },
+    "需要这些权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moting needs these permissions"
+          }
+        }
+      }
+    },
     "音量": {
       "localizations": {
         "en": {
@@ -3557,6 +3837,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The microphone track didn't closely match your voiceprint, so nearby voices weren't removed this time. You can enroll again in Settings."
+          }
+        }
+      }
+    },
+    "麦克风或系统音频还没有允许，录音时可能录不到声音。之后可以在系统设置里打开。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone or system audio isn't allowed yet, so recordings may miss sound. You can allow them later in System Settings."
           }
         }
       }
