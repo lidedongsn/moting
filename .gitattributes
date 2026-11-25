@@ -1,0 +1,19 @@
+* text=auto
+
+*.swift text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.m text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.xcstrings text eol=lf
+*.xcconfig text eol=lf
+Scripts/git-hooks/* text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.icns binary

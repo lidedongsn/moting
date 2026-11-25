@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: macOS · Build and test
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify toolchain
+        run: |
+          test "$(uname -m)" = arm64
+          xcodebuild -version
+          swift --version
+          git show --format= --check HEAD
+          for script in Scripts/*.sh Scripts/git-hooks/pre-commit; do
+            bash -n "$script"
+          done
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare native dependency
+        run: ./Scripts/fetch-sherpa-onnx.sh
+
+      - name: Run Swift tests
+        run: swift test --jobs 2
+
+      - name: Generate Xcode project
+        run: |
+          cp App/Local.xcconfig.example App/Local.xcconfig
+          (cd App && xcodegen generate)
+
+      - name: Build Debug application
+        run: |
+          xcodebuild -project App/Moting.xcodeproj -scheme Moting \
+            -configuration Debug -derivedDataPath .build/xcode \
+            -jobs 2 CODE_SIGNING_ALLOWED=NO build
+
+      - name: Build Release application
+        run: |
+          xcodebuild -project App/Moting.xcodeproj -scheme Moting \
+            -configuration Release -derivedDataPath .build/xcode \
+            -jobs 2 CODE_SIGNING_ALLOWED=NO build

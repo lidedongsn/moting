@@ -1,0 +1,23 @@
+name: 功能建议
+description: 描述使用场景和希望改进的行为。
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 使用场景
+      description: 当前遇到了什么问题？请避免包含会议内容或个人信息。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 希望应用提供什么行为？
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 其他方案
+      description: 是否尝试过现有功能或其他解决方式？

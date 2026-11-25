@@ -1,0 +1,43 @@
+name: 问题报告
+description: 报告可复现的功能异常或崩溃。
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: 请勿附加真实会议音频、转写稿、声纹、API Key 或未经脱敏的日志。
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境
+      description: 请填写 macOS 版本、Mac 芯片、Moting 版本或提交号；音频问题请补充设备和模型名称。
+      placeholder: |
+        macOS：
+        芯片：
+        Moting 版本或提交号：
+        音频设备与模型（如适用）：
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请使用合成数据描述可重复的操作步骤。
+      placeholder: |
+        1. 打开……
+        2. 点击……
+        3. 出现……
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 可附加已脱敏的错误信息或截图。
+    validations:
+      required: true

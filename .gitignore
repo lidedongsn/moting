@@ -11,6 +11,7 @@ Vendor/
 App/Local.xcconfig
 .env
 .env.*
+!.env.example
 
 # 会议数据和模型：只应在 ~/Library/Application Support/Moting/，绝不进仓库
 *.pcm
@@ -22,8 +23,11 @@ App/Local.xcconfig
 *.sqlite
 *.sqlite-*
 *.db
+*.db-*
 meetings/
 models/
+voiceprint/
+*.f32
 hotwords.txt
 *.onnx
 *.gguf
@@ -34,8 +38,11 @@ hotwords.txt
 *.cer
 *.mobileprovision
 *.provisionprofile
+*.pem
+*.key
 
 # 工具的工作目录
 .superpowers/
 .claude/settings.local.json
 .DS_Store
+*.log
