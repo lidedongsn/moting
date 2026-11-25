@@ -35,6 +35,12 @@ Moting 是一款 macOS 会议录音与转写应用：分别录制麦克风和系
 
 ## 快速开始
 
+### 下载安装
+
+从 [GitHub Releases](https://github.com/lidedongsn/moting/releases/latest) 下载 `Moting-0.1.0-macOS-arm64.zip`，解压后将 `Moting.app` 拖入“应用程序”。支持 Apple Silicon 和 macOS 14.2 及以上版本。
+
+当前下载包采用临时签名，未经 Apple 公证。首次打开的限制、安装步骤与校验方法见 [发布说明](docs/releases/v0.1.0.md)。
+
 ### 准备依赖与工程
 
 在仓库根目录执行：

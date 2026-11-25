@@ -6,6 +6,7 @@
 - [开发、测试与贡献流程](../CONTRIBUTING.md)
 - [第三方组件与许可索引](../THIRD_PARTY_NOTICES.md)
 - [MIT 许可证](../LICENSE)
+- [0.1.0 发布说明](releases/v0.1.0.md)
 
 ## 设计与实施记录
 
