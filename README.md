@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="#快速开始">快速开始</a> ·
+  <a href="#界面预览">界面预览</a> ·
   <a href="#数据与隐私">数据与隐私</a> ·
   <a href="CONTRIBUTING.md">参与开发</a> ·
   <a href="docs/README.md">项目文档</a>
@@ -24,6 +25,27 @@ Moting 是一款 macOS 会议录音与转写应用：分别录制麦克风和系
 - 会议回放、转写稿编辑、文本复制与 Markdown 导出。
 - 可配置 OpenAI 兼容接口或本机 Ollama，生成会议纪要。
 - 本机模型下载与管理、存储用量查看，以及日历标题匹配。
+
+## 界面预览
+
+以下为应用实际界面截图。会议名称、人物和转写内容均为虚构演示数据。
+
+### 会议转写与 AI 纪要
+
+在同一窗口中浏览会议、按说话人查看转写、回放音频，并整理摘要、决策与待办。
+
+![会议总览：左侧会议列表，中间按说话人排列的转写稿，右侧 AI 纪要与待办，底部音频回放条](docs/screenshots/meeting-overview.png)
+
+<table>
+  <tr>
+    <th width="40%">录音与实时字幕</th>
+    <th width="60%">识别模型管理</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/live-recording.png" alt="录音悬浮窗：双路音量、实时字幕、标记重点、暂停和结束控制" width="500"></td>
+    <td valign="top"><img src="docs/screenshots/model-settings.png" alt="识别模型设置：分别管理会中实时字幕与会后精准转写模型" width="800"></td>
+  </tr>
+</table>
 
 ## 环境要求
 
